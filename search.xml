@@ -122,6 +122,15 @@
 <p>需要注意我们这里的md 头部有注释</p>
 <figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">---</span><br><span class="line">title: 图片测试</span><br><span class="line">tags:</span><br><span class="line">  - null</span><br><span class="line">  - null</span><br><span class="line">categories:</span><br><span class="line">  - x</span><br><span class="line">description:</span><br><span class="line">  - x</span><br><span class="line">date: 2019-12-29 16:32:39</span><br><span class="line">---</span><br></pre></td></tr></table></figure>
 <p>需要加上这个才能通过hexo的编译，出现问题不要慌，耐心解决问题就好了</p>
+<h4 id="加入文章总字数统计"><a href="#加入文章总字数统计" class="headerlink" title="加入文章总字数统计"></a>加入文章总字数统计</h4><p>效果如下：</p>
+<p><img src="../images/Hexo-Next%E4%B8%BB%E9%A2%98%E6%8A%98%E8%85%BE/image-20191229181102967.png" alt="image-20191229181102967"></p>
+<p>添加依赖：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">yarn add hexo-wordcount</span><br></pre></td></tr></table></figure>
+
+<p>修改主配置文件，加入一下内容：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="comment"># word count setting</span></span><br><span class="line"><span class="comment"># Post wordcount display settings</span></span><br><span class="line"><span class="comment"># Dependencies: https://github.com/willin/hexo-wordcount</span></span><br><span class="line"><span class="comment"># 文章字数展示设置</span></span><br><span class="line">post_wordcount:</span><br><span class="line">  <span class="comment"># 文本显示</span></span><br><span class="line">  item_text: <span class="literal">true</span></span><br><span class="line">  <span class="comment"># 文章字数统计</span></span><br><span class="line">  wordcount: <span class="literal">true</span></span><br><span class="line">  <span class="comment"># 阅读时长</span></span><br><span class="line">  min2read: <span class="literal">true</span></span><br><span class="line">  <span class="comment"># 站点总字数统计</span></span><br><span class="line">  totalcount: <span class="literal">true</span></span><br><span class="line">  <span class="comment"># 该post_wordcount的所有设置另起一行显示</span></span><br><span class="line">  separated_meta: <span class="literal">true</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="后记"><a href="#后记" class="headerlink" title="后记"></a>后记</h3><p>还是最开始那句话，折腾这些美化的东西意义不大，最重要的还是博客的内容，这才是关键。</p>
 ]]></content>
       <categories>
         <category>折腾日记</category>
