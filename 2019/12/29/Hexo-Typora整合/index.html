@@ -53,16 +53,16 @@
 <meta property="og:site_name" content="Fire in the rain">
 <meta property="og:description" content="Hexo 与 Typora整合，开启无缝写作">
 <meta property="og:locale" content="zh_CN">
-<meta property="og:image" content="https://lzhaoyang.github.io/.io//image-20191229231450217.png">
-<meta property="og:image" content="https://lzhaoyang.github.io/.io//image-20191229231512705.png">
-<meta property="og:image" content="https://lzhaoyang.github.io/.io//image-20191229232113126.png">
-<meta property="og:image" content="https://lzhaoyang.github.io/.io//image-20191229232240970.png">
+<meta property="og:image" content="https://lzhaoyang.github.io/2019/12/29/Hexo-Typora%E6%95%B4%E5%90%88/image-20191229231450217.png">
+<meta property="og:image" content="https://lzhaoyang.github.io/2019/12/29/Hexo-Typora%E6%95%B4%E5%90%88/image-20191229231512705.png">
+<meta property="og:image" content="https://lzhaoyang.github.io/2019/12/29/Hexo-Typora%E6%95%B4%E5%90%88/image-20191229232113126.png">
+<meta property="og:image" content="https://lzhaoyang.github.io/2019/12/29/Hexo-Typora%E6%95%B4%E5%90%88/image-20191229232240970.png">
 <meta property="article:published_time" content="2019-12-29T15:09:22.000Z">
 <meta property="article:modified_time" content="2019-12-29T15:31:01.088Z">
 <meta property="article:author" content="sunrise">
 <meta property="article:tag" content="Hexo">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="https://lzhaoyang.github.io/.io//image-20191229231450217.png">
+<meta name="twitter:image" content="https://lzhaoyang.github.io/2019/12/29/Hexo-Typora%E6%95%B4%E5%90%88/image-20191229231450217.png">
 
 <link rel="canonical" href="https://lzhaoyang.github.io/2019/12/29/Hexo-Typora%E6%95%B4%E5%90%88/">
 
@@ -307,9 +307,9 @@
 
       
         <p>写markdwon 文档首推typora，那种wyswyg的感觉是真的爽，我们的静态博客也是使用markdwon来编写的，比如hexo，所以如果可以将两者结合那将会是非常爽的事。这篇整合的笔记，还是因为我在发布我的hexo博客的是否，发现在博客文章页面是可以显示图的，但是点击图片就显示不出，原因一看就是出在图片的路径上。</p>
-<p><img src="/.io//image-20191229231450217.png" alt="image-20191229231450217"></p>
+<p><img src="/2019/12/29/Hexo-Typora%E6%95%B4%E5%90%88/image-20191229231450217.png" alt="image-20191229231450217"></p>
 <p>点击之后：</p>
-<p><img src="/.io//image-20191229231512705.png" alt="image-20191229231512705"></p>
+<p><img src="/2019/12/29/Hexo-Typora%E6%95%B4%E5%90%88/image-20191229231512705.png" alt="image-20191229231512705"></p>
 <p>经过一番研究，找到了一下的解决方案</p>
 <h3 id="安装hexo-asset-image插件"><a href="#安装hexo-asset-image插件" class="headerlink" title="安装hexo-asset-image插件"></a>安装hexo-asset-image插件</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">在博客根目录运行</span><br><span class="line">yarn add hexo-asset-image </span><br><span class="line">等待插件安装完成</span><br></pre></td></tr></table></figure>
 
@@ -317,10 +317,10 @@
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">post_asset_folder: <span class="literal">true</span></span><br></pre></td></tr></table></figure>
 
 <h3 id="修改post-md-模版"><a href="#修改post-md-模版" class="headerlink" title="修改post.md 模版"></a>修改post.md 模版</h3><p>为啥要修改post模版呢？ 我们要和typora整合，typora在写md文档时可以识别我们标题头的配置文件，把图片的根路径设置和我们制定的路径一样，这样我们在typora中黏贴图片，就会和我们制定的目录对应上。</p>
-<p>找到根目录下的文件夹，修改post 为一下内容。<img src="/.io//image-20191229232113126.png" alt="image-20191229232113126"></p>
+<p>找到根目录下的文件夹，修改post 为一下内容。<img src="/2019/12/29/Hexo-Typora%E6%95%B4%E5%90%88/image-20191229232113126.png" alt="image-20191229232113126"></p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">---</span><br><span class="line">title: &#123;&#123; title &#125;&#125;</span><br><span class="line">tags:</span><br><span class="line">  - </span><br><span class="line">  - </span><br><span class="line">categories:</span><br><span class="line">  - x</span><br><span class="line">description: </span><br><span class="line">  - x</span><br><span class="line">date: &#123;&#123; date &#125;&#125;</span><br><span class="line">typora-root-url: &#123;&#123; title &#125;&#125;</span><br><span class="line">---</span><br></pre></td></tr></table></figure>
 
-<h3 id="设置typora"><a href="#设置typora" class="headerlink" title="设置typora"></a>设置typora</h3><p><img src="/.io//image-20191229232240970.png" alt="image-20191229232240970"></p>
+<h3 id="设置typora"><a href="#设置typora" class="headerlink" title="设置typora"></a>设置typora</h3><p><img src="/2019/12/29/Hexo-Typora%E6%95%B4%E5%90%88/image-20191229232240970.png" alt="image-20191229232240970"></p>
 <p>发现这样鼓捣之后，还是达不到效果，而且默认生成的页面中的图片url 前缀带有io什么鬼，搜索全网找到了问题所在，原来是 hexo-asset-image  这个插件有一个bug。</p>
 <blockquote>
 <p>图片路径会从原本/xxx.jpg变成 /.io/xxx.jpg](<a href="https://github.com/xcodebuild/hexo-asset-image/issues/47#" target="_blank" rel="noopener">https://github.com/xcodebuild/hexo-asset-image/issues/47#</a>)</p>
@@ -503,6 +503,7 @@
 
 
       </div>
+      <iframe frameborder="no" border="0" marginwidth="0" marginheight="0" width=330 height=86 src="//music.163.com/outchain/player?type=2&id=520459951&auto=0&height=66"></iframe>
 
     </div>
   </aside>
