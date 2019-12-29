@@ -4,9 +4,9 @@
     <title>Hexo-Typora整合</title>
     <url>/2019/12/29/Hexo-Typora%E6%95%B4%E5%90%88/</url>
     <content><![CDATA[<p>写markdwon 文档首推typora，那种wyswyg的感觉是真的爽，我们的静态博客也是使用markdwon来编写的，比如hexo，所以如果可以将两者结合那将会是非常爽的事。这篇整合的笔记，还是因为我在发布我的hexo博客的是否，发现在博客文章页面是可以显示图的，但是点击图片就显示不出，原因一看就是出在图片的路径上。</p>
-<p><img src="/2019/12/29/Hexo-Typora%E6%95%B4%E5%90%88/image-20191229231450217.png" alt="image-20191229231450217"></p>
+<p><img src="/.io//image-20191229231450217.png" alt="image-20191229231450217"></p>
 <p>点击之后：</p>
-<p><img src="/2019/12/29/Hexo-Typora%E6%95%B4%E5%90%88/image-20191229231512705.png" alt="image-20191229231512705"></p>
+<p><img src="/.io//image-20191229231512705.png" alt="image-20191229231512705"></p>
 <p>经过一番研究，找到了一下的解决方案</p>
 <h3 id="安装hexo-asset-image插件"><a href="#安装hexo-asset-image插件" class="headerlink" title="安装hexo-asset-image插件"></a>安装hexo-asset-image插件</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">在博客根目录运行</span><br><span class="line">yarn add hexo-asset-image </span><br><span class="line">等待插件安装完成</span><br></pre></td></tr></table></figure>
 
@@ -14,10 +14,10 @@
 <figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">post_asset_folder: <span class="literal">true</span></span><br></pre></td></tr></table></figure>
 
 <h3 id="修改post-md-模版"><a href="#修改post-md-模版" class="headerlink" title="修改post.md 模版"></a>修改post.md 模版</h3><p>为啥要修改post模版呢？ 我们要和typora整合，typora在写md文档时可以识别我们标题头的配置文件，把图片的根路径设置和我们制定的路径一样，这样我们在typora中黏贴图片，就会和我们制定的目录对应上。</p>
-<p>找到根目录下的文件夹，修改post 为一下内容。<img src="/2019/12/29/Hexo-Typora%E6%95%B4%E5%90%88/image-20191229232113126.png" alt="image-20191229232113126"></p>
+<p>找到根目录下的文件夹，修改post 为一下内容。<img src="/.io//image-20191229232113126.png" alt="image-20191229232113126"></p>
 <figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">---</span><br><span class="line">title: &#123;&#123; title &#125;&#125;</span><br><span class="line">tags:</span><br><span class="line">  - </span><br><span class="line">  - </span><br><span class="line">categories:</span><br><span class="line">  - x</span><br><span class="line">description: </span><br><span class="line">  - x</span><br><span class="line">date: &#123;&#123; date &#125;&#125;</span><br><span class="line">typora-root-url: &#123;&#123; title &#125;&#125;</span><br><span class="line">---</span><br></pre></td></tr></table></figure>
 
-<h3 id="设置typora"><a href="#设置typora" class="headerlink" title="设置typora"></a>设置typora</h3><p><img src="/2019/12/29/Hexo-Typora%E6%95%B4%E5%90%88/image-20191229232240970.png" alt="image-20191229232240970"></p>
+<h3 id="设置typora"><a href="#设置typora" class="headerlink" title="设置typora"></a>设置typora</h3><p><img src="/.io//image-20191229232240970.png" alt="image-20191229232240970"></p>
 <p>发现这样鼓捣之后，还是达不到效果，而且默认生成的页面中的图片url 前缀带有io什么鬼，搜索全网找到了问题所在，原来是 hexo-asset-image  这个插件有一个bug。</p>
 <blockquote>
 <p>图片路径会从原本/xxx.jpg变成 /.io/xxx.jpg](<a href="https://github.com/xcodebuild/hexo-asset-image/issues/47#" target="_blank" rel="noopener">https://github.com/xcodebuild/hexo-asset-image/issues/47#</a>)</p>
@@ -45,22 +45,22 @@
 </blockquote>
 <p><a href="[https://www.namesilo.com](https://www.namesilo.com/)">NameSilo</a></p>
 <p>按照流程注册一个用户，然后去Domain那边查找自己想要的域名</p>
-<p><img src="/2019/12/29/Hexo-blog%E5%BC%80%E5%90%AF%E8%87%AA%E5%AE%9A%E4%B9%89%E5%9F%9F%E5%90%8D/image-20191229210617942.png" alt="image-20191229210617942"></p>
-<p><img src="/2019/12/29/Hexo-blog%E5%BC%80%E5%90%AF%E8%87%AA%E5%AE%9A%E4%B9%89%E5%9F%9F%E5%90%8D/image-20191229210640856.png" alt="image-20191229210640856"></p>
+<p><img src="/.io//image-20191229210617942.png" alt="image-20191229210617942"></p>
+<p><img src="/.io//image-20191229210640856.png" alt="image-20191229210640856"></p>
 <p>填好玩必要的注册信息后，点击注册即可。</p>
-<h3 id="域名选择"><a href="#域名选择" class="headerlink" title="域名选择"></a>域名选择</h3><p><img src="/2019/12/29/Hexo-blog%E5%BC%80%E5%90%AF%E8%87%AA%E5%AE%9A%E4%B9%89%E5%9F%9F%E5%90%8D/image-20191229210843982.png" alt="image-20191229210843982"></p>
+<h3 id="域名选择"><a href="#域名选择" class="headerlink" title="域名选择"></a>域名选择</h3><p><img src="/.io//image-20191229210843982.png" alt="image-20191229210843982"></p>
 <p>点击搜索，选择好域名</p>
-<p><img src="/2019/12/29/Hexo-blog%E5%BC%80%E5%90%AF%E8%87%AA%E5%AE%9A%E4%B9%89%E5%9F%9F%E5%90%8D/image-20191229211000279.png" alt="image-20191229211000279"></p>
+<p><img src="/.io//image-20191229211000279.png" alt="image-20191229211000279"></p>
 <h3 id="购买域名"><a href="#购买域名" class="headerlink" title="购买域名"></a>购买域名</h3><p>跳转至购买页面后，可以设置购买时间等，在Promotion Code输入优惠码(网上搜一下)，点击submit可以优惠1美元，设置完成后点击continue</p>
-<p><img src="/2019/12/29/Hexo-blog%E5%BC%80%E5%90%AF%E8%87%AA%E5%AE%9A%E4%B9%89%E5%9F%9F%E5%90%8D/image-20191229211203919.png" alt="image-20191229211203919"></p>
+<p><img src="/.io//image-20191229211203919.png" alt="image-20191229211203919"></p>
 <p>点击下面的continue 按钮，跳转到支付页面。</p>
-<p><img src="/2019/12/29/Hexo-blog%E5%BC%80%E5%90%AF%E8%87%AA%E5%AE%9A%E4%B9%89%E5%9F%9F%E5%90%8D/image-20191229211333933.png" alt="image-20191229211333933"></p>
+<p><img src="/.io//image-20191229211333933.png" alt="image-20191229211333933"></p>
 <p>输入自己的支付宝邮箱账号，点击go 付款即可。</p>
-<h3 id="设置DNS解析"><a href="#设置DNS解析" class="headerlink" title="设置DNS解析"></a>设置DNS解析</h3><p><img src="/2019/12/29/Hexo-blog%E5%BC%80%E5%90%AF%E8%87%AA%E5%AE%9A%E4%B9%89%E5%9F%9F%E5%90%8D/image-20191229211457920.png" alt="image-20191229211457920"></p>
+<h3 id="设置DNS解析"><a href="#设置DNS解析" class="headerlink" title="设置DNS解析"></a>设置DNS解析</h3><p><img src="/.io//image-20191229211457920.png" alt="image-20191229211457920"></p>
 <p>点击小圆球，进入DNS设置界面。添加一个github 模版</p>
-<p><img src="/2019/12/29/Hexo-blog%E5%BC%80%E5%90%AF%E8%87%AA%E5%AE%9A%E4%B9%89%E5%9F%9F%E5%90%8D/image-20191229211709741.png" alt="image-20191229211709741"></p>
+<p><img src="/.io//image-20191229211709741.png" alt="image-20191229211709741"></p>
 <p>这个设置会自动帮你设置github的相关ip解析，你需要做的就是修改CNAME记录，为自己的github pages地址</p>
-<p><img src="/2019/12/29/Hexo-blog%E5%BC%80%E5%90%AF%E8%87%AA%E5%AE%9A%E4%B9%89%E5%9F%9F%E5%90%8D/image-20191229211914264.png" alt="image-20191229211914264"></p>
+<p><img src="/.io//image-20191229211914264.png" alt="image-20191229211914264"></p>
 <p>修改后提交即可，我们在namesilo的设置就算结束了。</p>
 <h3 id="github-io-设置"><a href="#github-io-设置" class="headerlink" title="github.io 设置"></a>github.io 设置</h3><p>进入到我们博客的根目录，在source 文件夹下面创建一个CNAME 文件，内容就是我们申请的域名</p>
 <figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="built_in">cd</span> my-blog-site</span><br><span class="line"><span class="built_in">cd</span>  <span class="built_in">source</span></span><br><span class="line">touch CNAME</span><br><span class="line"><span class="comment"># 将一下内容加入</span></span><br><span class="line">fireinrain.com</span><br><span class="line"></span><br><span class="line">hexo clean</span><br><span class="line">hexo g &amp; hexo d</span><br></pre></td></tr></table></figure>
@@ -68,7 +68,7 @@
 <p>重写部署我们的网站。</p>
 <p>DNS解析到记录可能需要一定的时间，有时候很快，有时候要等上几个小时，所以一开始就访问我们的自定义域名没反应不要慌。</p>
 <p>去github进入我们的博客代码仓库，点击setting选项，查看自定义域名的情况和CNAME的情况，我们自定义的域名其实也是可以加上小绿锁的(https)</p>
-<p><img src="/2019/12/29/Hexo-blog%E5%BC%80%E5%90%AF%E8%87%AA%E5%AE%9A%E4%B9%89%E5%9F%9F%E5%90%8D/image-20191229212646350.png" alt="image-20191229212646350"></p>
+<p><img src="/.io//image-20191229212646350.png" alt="image-20191229212646350"></p>
 <p>如果小绿锁没有开启，按照官方提示，进行如下操作：</p>
 <p>把 Custom domain 中的值清空，并点击 Save 进行保存；<br>在 Custom domain 中的填入之前清空的值，我这里是 fireinrain.com ，填入后点击保存；<br>尝试在浏览器里主动访问 <a href="https://fireinrain.com" target="_blank" rel="noopener">https://fireinrain.com</a> ，地址要根据自己的情况，注意协议类型是 https，正确情况下是能正常访问的；<br>刷新项目设置页，如果 enforce HTTPS 可勾选，勾选即可；<br>如果 enforce HTTPS 不可勾选，并且提示 Not yet available for your site because the certificate has not finished being issued” ，说明证书尚未申请完成，等待一天即可。</p>
 <h3 id="后记"><a href="#后记" class="headerlink" title="后记"></a>后记</h3><p>也没啥后记的，努力写博客吧！</p>
@@ -121,11 +121,11 @@
 
 <h4 id="选择Next主题风格"><a href="#选择Next主题风格" class="headerlink" title="选择Next主题风格"></a>选择Next主题风格</h4><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="comment"># Schemes</span></span><br><span class="line"><span class="comment"># scheme: Muse</span></span><br><span class="line">scheme: Mist</span><br><span class="line"><span class="comment"># scheme: Pisces</span></span><br><span class="line"><span class="comment"># scheme: Gemini</span></span><br></pre></td></tr></table></figure>
 
-<p><img src="/2019/12/29/Hexo-Next%E4%B8%BB%E9%A2%98%E6%8A%98%E8%85%BE/image-20191229123128574.png" alt="image-20191229123128574"></p>
+<p><img src="/.io//image-20191229123128574.png" alt="image-20191229123128574"></p>
 <h4 id="为菜单加上默认页面"><a href="#为菜单加上默认页面" class="headerlink" title="为菜单加上默认页面"></a>为菜单加上默认页面</h4><p>目前我们的分类 标签 关于都是默认404 页面 我们需要给一个默认页面，在根目录分别执行：</p>
 <figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">hexo new page <span class="string">"categories"</span></span><br><span class="line">hexo new page <span class="string">"tags"</span></span><br><span class="line">hexo new page <span class="string">"about"</span></span><br><span class="line"><span class="comment"># 分别编辑</span></span><br></pre></td></tr></table></figure>
 
-<p><img src="/2019/12/29/Hexo-Next%E4%B8%BB%E9%A2%98%E6%8A%98%E8%85%BE/image-20191229124219603.png" alt="image-20191229124219603"></p>
+<p><img src="/.io//image-20191229124219603.png" alt="image-20191229124219603"></p>
 <p>为对应的类型。这样我们的栏目就有默认页面了。</p>
 <h4 id="网站图标设置"><a href="#网站图标设置" class="headerlink" title="网站图标设置"></a>网站图标设置</h4><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">图标素材网站：iconfont；easyicon</span><br><span class="line">下载16x16以及32x32大小的PNG格式图标，置于/themes/next/<span class="built_in">source</span>/images/下</span><br><span class="line">打开**themes/next/下的_config.yml**，查找favicon</span><br><span class="line"></span><br><span class="line">favicon:</span><br><span class="line">  small: /images/favicon-16x16-next.png</span><br><span class="line">  medium: /images/favicon-32x32-next.png</span><br><span class="line">  apple_touch_icon: /images/apple-touch-icon-next.png</span><br><span class="line">  safari_pinned_tab: /images/logo.svg</span><br><span class="line">  <span class="comment">#android_manifest: /images/manifest.json</span></span><br><span class="line">  <span class="comment">#ms_browserconfig: /images/browserconfig.xml</span></span><br></pre></td></tr></table></figure>
 
@@ -177,7 +177,7 @@
 <figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="comment"># Post wordcount display settings</span></span><br><span class="line"><span class="comment"># Dependencies: https://github.com/theme-next/hexo-symbols-count-time</span></span><br><span class="line">symbols_count_time:</span><br><span class="line">  separated_meta: <span class="literal">true</span></span><br><span class="line">  item_text_post: <span class="literal">true</span></span><br><span class="line">  item_text_total: <span class="literal">true</span></span><br><span class="line">  awl: 4</span><br><span class="line">  wpm: 275</span><br></pre></td></tr></table></figure>
 
 <h4 id="和typora-整合加入图片"><a href="#和typora-整合加入图片" class="headerlink" title="和typora 整合加入图片"></a>和typora 整合加入图片</h4><p>在source 目录新建一个images 文件夹，修改typora 系统设置如图：</p>
-<p><img src="/2019/12/29/Hexo-Next%E4%B8%BB%E9%A2%98%E6%8A%98%E8%85%BE/image-20191229182620384.png" alt="image-20191229182620384"></p>
+<p><img src="/.io//image-20191229182620384.png" alt="image-20191229182620384"></p>
 <p>这样我们我们的source 目录用typora打开，在插入图片时，图片会自动拷贝到images 相关目录下，hexo 不用做相关配置。</p>
 <h4 id="设置我们的写作模版"><a href="#设置我们的写作模版" class="headerlink" title="设置我们的写作模版"></a>设置我们的写作模版</h4><p>找到scaffolds文件夹下的post.md,修改为：</p>
 <figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">---</span><br><span class="line">title: &#123;&#123; title &#125;&#125;</span><br><span class="line">date: &#123;&#123; date &#125;&#125;</span><br><span class="line">tags:</span><br><span class="line">  - </span><br><span class="line">  - </span><br><span class="line">categories:</span><br><span class="line">  - x</span><br><span class="line">description: </span><br><span class="line">  - x</span><br><span class="line"></span><br><span class="line">---</span><br></pre></td></tr></table></figure>
@@ -191,27 +191,27 @@
 <figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 文章末尾添加“本文结束”标记</span></span><br><span class="line">passage_end_tag:</span><br><span class="line">  enabled: <span class="literal">true</span></span><br></pre></td></tr></table></figure>
 <p>至此，就完成了关于添加文章结束标语的功能，具体的效果，此刻，想必你也看到了，就在下边。</p>
 <h4 id="添加gitalk-评论"><a href="#添加gitalk-评论" class="headerlink" title="添加gitalk 评论"></a>添加gitalk 评论</h4><p>首先我们需要去我们的github上，在个人setting 进行如下操作：</p>
-<p><img src="/2019/12/29/Hexo-Next%E4%B8%BB%E9%A2%98%E6%8A%98%E8%85%BE/image-20191229165359360.png" alt="image-20191229165359360"></p>
+<p><img src="/.io//image-20191229165359360.png" alt="image-20191229165359360"></p>
 <p>点击注册application，等待后续使用</p>
-<p><img src="/2019/12/29/Hexo-Next%E4%B8%BB%E9%A2%98%E6%8A%98%E8%85%BE/image-20191229165606519.png" alt="image-20191229165606519"></p>
+<p><img src="/.io//image-20191229165606519.png" alt="image-20191229165606519"></p>
 <p>回到我门的子配置文件，找到gitalk配置，进行如下修改：</p>
 <figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="comment"># Multiple Comment System Support</span></span><br><span class="line">comments:</span><br><span class="line">  <span class="comment"># Available values: tabs | buttons</span></span><br><span class="line">  style: tabs</span><br><span class="line">  <span class="comment"># Choose a comment system to be displayed by default.</span></span><br><span class="line">  <span class="comment"># Available values: changyan | disqus | disqusjs | gitalk | livere | valine</span></span><br><span class="line">  active: gitalk</span><br><span class="line">  <span class="comment"># Setting `true` means remembering the comment system selected by the visitor.</span></span><br><span class="line">  storage: <span class="literal">true</span></span><br><span class="line">  <span class="comment"># Lazyload all comment systems.</span></span><br><span class="line">  lazyload: <span class="literal">false</span></span><br><span class="line">  <span class="comment"># Modify texts or order for any navs, here are some examples.</span></span><br><span class="line">  nav:</span><br><span class="line">    <span class="comment">#disqus:</span></span><br><span class="line">    <span class="comment">#  text: Load Disqus</span></span><br><span class="line">    <span class="comment">#  order: -1</span></span><br><span class="line">    gitalk:</span><br><span class="line">      order: -2</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment"># For more information: https://gitalk.github.io, https://github.com/gitalk/gitalk</span></span><br><span class="line">gitalk:</span><br><span class="line">  <span class="built_in">enable</span>: <span class="literal">true</span></span><br><span class="line">  github_id: * <span class="comment"># GitHub repo owner</span></span><br><span class="line">  repo: * <span class="comment"># Repository name to store issues</span></span><br><span class="line">  client_id: * <span class="comment"># GitHub Application Client ID</span></span><br><span class="line">  client_secret: * <span class="comment"># GitHub Application Client Secret</span></span><br><span class="line">  admin_user: * <span class="comment"># GitHub repo owner and collaborators, only these guys can initialize gitHub issues</span></span><br><span class="line">  distraction_free_mode: <span class="literal">true</span> <span class="comment"># Facebook-like distraction free mode</span></span><br><span class="line">  <span class="comment"># Gitalk's display language depends on user's browser or system environment</span></span><br><span class="line">  <span class="comment"># If you want everyone visiting your site to see a uniform language, you can set a force language value</span></span><br><span class="line">  <span class="comment"># Available values: en | es-ES | fr | ru | zh-CN | zh-TW</span></span><br><span class="line">  language: zh-CN</span><br><span class="line">  </span><br><span class="line"><span class="comment"># 注意* 表示自己替换相关的配置</span></span><br></pre></td></tr></table></figure>
 
 <p>hexo clean 清除本地缓存，然后hexo g &amp; hexo d 推送到github，我们访问我门的博客就可以看到效果了。 </p>
 <p>需要注意的是如果你在typora 中写了md，然后复制到你的博客目录下，然后在编译博客，可能会出现这种错误：</p>
-<p><img src="/2019/12/29/Hexo-Next%E4%B8%BB%E9%A2%98%E6%8A%98%E8%85%BE/image-20191229174817117.png" alt="image-20191229174817117"></p>
+<p><img src="/.io//image-20191229174817117.png" alt="image-20191229174817117"></p>
 <p>需要注意我们这里的md 头部有注释</p>
 <figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">---</span><br><span class="line">title: 图片测试</span><br><span class="line">tags:</span><br><span class="line">  - null</span><br><span class="line">  - null</span><br><span class="line">categories:</span><br><span class="line">  - x</span><br><span class="line">description:</span><br><span class="line">  - x</span><br><span class="line">date: 2019-12-29 16:32:39</span><br><span class="line">---</span><br></pre></td></tr></table></figure>
 <p>需要加上这个才能通过hexo的编译，出现问题不要慌，耐心解决问题就好了</p>
 <h4 id="加入文章总字数统计"><a href="#加入文章总字数统计" class="headerlink" title="加入文章总字数统计"></a>加入文章总字数统计</h4><p>效果如下：</p>
-<p><img src="/2019/12/29/Hexo-Next%E4%B8%BB%E9%A2%98%E6%8A%98%E8%85%BE/image-20191229181102967.png" alt="image-20191229181102967"></p>
+<p><img src="/.io//image-20191229181102967.png" alt="image-20191229181102967"></p>
 <p>添加依赖：</p>
 <figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">yarn add hexo-wordcount</span><br></pre></td></tr></table></figure>
 
 <p>修改主配置文件，加入一下内容：</p>
 <figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="comment"># word count setting</span></span><br><span class="line"><span class="comment"># Post wordcount display settings</span></span><br><span class="line"><span class="comment"># Dependencies: https://github.com/willin/hexo-wordcount</span></span><br><span class="line"><span class="comment"># 文章字数展示设置</span></span><br><span class="line">post_wordcount:</span><br><span class="line">  <span class="comment"># 文本显示</span></span><br><span class="line">  item_text: <span class="literal">true</span></span><br><span class="line">  <span class="comment"># 文章字数统计</span></span><br><span class="line">  wordcount: <span class="literal">true</span></span><br><span class="line">  <span class="comment"># 阅读时长</span></span><br><span class="line">  min2read: <span class="literal">true</span></span><br><span class="line">  <span class="comment"># 站点总字数统计</span></span><br><span class="line">  totalcount: <span class="literal">true</span></span><br><span class="line">  <span class="comment"># 该post_wordcount的所有设置另起一行显示</span></span><br><span class="line">  separated_meta: <span class="literal">true</span></span><br></pre></td></tr></table></figure>
 
-<h3 id="后记"><a href="#后记" class="headerlink" title="后记"></a>后记</h3><p>还是最开始那句话，折腾这些美化的东西意义不大，最重要的还是博客的内容，这才是关键。</p>
+<h4 id="添加站点地图"><a href="#添加站点地图" class="headerlink" title="添加站点地图"></a>添加站点地图</h4><h3 id="后记"><a href="#后记" class="headerlink" title="后记"></a>后记</h3><p>还是最开始那句话，折腾这些美化的东西意义不大，最重要的还是博客的内容，这才是关键。</p>
 ]]></content>
       <categories>
         <category>折腾日记</category>
