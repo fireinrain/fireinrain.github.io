@@ -117,6 +117,11 @@
 <figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="comment"># Multiple Comment System Support</span></span><br><span class="line">comments:</span><br><span class="line">  <span class="comment"># Available values: tabs | buttons</span></span><br><span class="line">  style: tabs</span><br><span class="line">  <span class="comment"># Choose a comment system to be displayed by default.</span></span><br><span class="line">  <span class="comment"># Available values: changyan | disqus | disqusjs | gitalk | livere | valine</span></span><br><span class="line">  active: gitalk</span><br><span class="line">  <span class="comment"># Setting `true` means remembering the comment system selected by the visitor.</span></span><br><span class="line">  storage: <span class="literal">true</span></span><br><span class="line">  <span class="comment"># Lazyload all comment systems.</span></span><br><span class="line">  lazyload: <span class="literal">false</span></span><br><span class="line">  <span class="comment"># Modify texts or order for any navs, here are some examples.</span></span><br><span class="line">  nav:</span><br><span class="line">    <span class="comment">#disqus:</span></span><br><span class="line">    <span class="comment">#  text: Load Disqus</span></span><br><span class="line">    <span class="comment">#  order: -1</span></span><br><span class="line">    gitalk:</span><br><span class="line">      order: -2</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment"># For more information: https://gitalk.github.io, https://github.com/gitalk/gitalk</span></span><br><span class="line">gitalk:</span><br><span class="line">  <span class="built_in">enable</span>: <span class="literal">true</span></span><br><span class="line">  github_id: * <span class="comment"># GitHub repo owner</span></span><br><span class="line">  repo: * <span class="comment"># Repository name to store issues</span></span><br><span class="line">  client_id: * <span class="comment"># GitHub Application Client ID</span></span><br><span class="line">  client_secret: * <span class="comment"># GitHub Application Client Secret</span></span><br><span class="line">  admin_user: * <span class="comment"># GitHub repo owner and collaborators, only these guys can initialize gitHub issues</span></span><br><span class="line">  distraction_free_mode: <span class="literal">true</span> <span class="comment"># Facebook-like distraction free mode</span></span><br><span class="line">  <span class="comment"># Gitalk's display language depends on user's browser or system environment</span></span><br><span class="line">  <span class="comment"># If you want everyone visiting your site to see a uniform language, you can set a force language value</span></span><br><span class="line">  <span class="comment"># Available values: en | es-ES | fr | ru | zh-CN | zh-TW</span></span><br><span class="line">  language: zh-CN</span><br><span class="line">  </span><br><span class="line"><span class="comment"># 注意* 表示自己替换相关的配置</span></span><br></pre></td></tr></table></figure>
 
 <p>hexo clean 清除本地缓存，然后hexo g &amp; hexo d 推送到github，我们访问我门的博客就可以看到效果了。 </p>
+<p>需要注意的是如果你在typora 中写了md，然后复制到你的博客目录下，然后在编译博客，可能会出现这种错误：</p>
+<p><img src="../images/Hexo-Next%E4%B8%BB%E9%A2%98%E6%8A%98%E8%85%BE/image-20191229174817117.png" alt="image-20191229174817117"></p>
+<p>需要注意我们这里的md 头部有注释</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">---</span><br><span class="line">title: 图片测试</span><br><span class="line">tags:</span><br><span class="line">  - null</span><br><span class="line">  - null</span><br><span class="line">categories:</span><br><span class="line">  - x</span><br><span class="line">description:</span><br><span class="line">  - x</span><br><span class="line">date: 2019-12-29 16:32:39</span><br><span class="line">---</span><br></pre></td></tr></table></figure>
+<p>需要加上这个才能通过hexo的编译，出现问题不要慌，耐心解决问题就好了</p>
 ]]></content>
       <categories>
         <category>折腾日记</category>
@@ -132,7 +137,10 @@
     <content><![CDATA[<h3 id="这是一个段落"><a href="#这是一个段落" class="headerlink" title="这是一个段落"></a>这是一个段落</h3><p>这是一个测试</p>
 ]]></content>
       <categories>
-        <category>x</category>
+        <category>Hexo</category>
       </categories>
+      <tags>
+        <tag>测试</tag>
+      </tags>
   </entry>
 </search>
