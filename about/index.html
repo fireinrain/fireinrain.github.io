@@ -32,7 +32,7 @@
     mediumzoom: true,
     lazyload: false,
     pangu: false,
-    comments: {"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},
+    comments: {"style":"tabs","active":"gitalk","storage":true,"lazyload":false,"nav":{"gitalk":{"order":-2}},"activeClass":"gitalk"},
     algolia: {
       appID: '',
       apiKey: '',
@@ -257,6 +257,7 @@
 
           </div>
           
+    <div class="comments" id="gitalk-container"></div>
 
 <script>
   window.addEventListener('tabs:register', () => {
@@ -516,6 +517,26 @@ window.addEventListener('pjax:success', () => {
   
 
   
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.css">
+
+<script>
+NexT.utils.loadComments(document.querySelector('#gitalk-container'), () => {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js', () => {
+    var gitalk = new Gitalk({
+      clientID: 'a6a5ec8f52a673226f87',
+      clientSecret: '7d8a42f6cd331f78c0cdd38768f026781d0b6eaa',
+      repo: 'lzhaoyang.github.io',
+      owner: 'lzhaoyang',
+      admin: ['lzhaoyang'],
+      id: '3be7aa98d992907175cbd79c194399f2',
+        language: 'zh-CN',
+      distractionFreeMode: true
+    });
+    gitalk.render('gitalk-container');
+  }, window.Gitalk);
+});
+</script>
 
     </div>
 <script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","model":{"hHeadPos":0.5,"vHeadPos":0.618,"jsonPath":"/live2dw/assets/assets/koharu.model.json"},"display":{"width":200,"height":350,"position":"right","hOffset":-10,"vOffset":-10},"mobile":{"show":true,"scale":0.2},"log":false,"tagMode":false});</script></body>
