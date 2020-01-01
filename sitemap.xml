@@ -2,6 +2,13 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
+    <loc>https://lzhaoyang.github.io/about/index.html</loc>
+    
+    <lastmod>2020-01-01T15:23:34.541Z</lastmod>
+    
+  </url>
+  
+  <url>
     <loc>https://lzhaoyang.github.io/2019/12/29/Hexo-Next%E4%B8%BB%E9%A2%98%E6%8A%98%E8%85%BE/</loc>
     
     <lastmod>2019-12-30T17:22:34.131Z</lastmod>
@@ -19,13 +26,6 @@
     <loc>https://lzhaoyang.github.io/movies/index.html</loc>
     
     <lastmod>2019-12-29T18:25:40.951Z</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>https://lzhaoyang.github.io/about/index.html</loc>
-    
-    <lastmod>2019-12-29T17:18:52.333Z</lastmod>
     
   </url>
   
