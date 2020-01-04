@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+
+<script id="hexo-configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    hostname: new URL('https://lzhaoyang.github.io').hostname,
+    root: '/',
+    scheme: 'Mist',
+    version: '7.6.0',
+    exturl: false,
+    sidebar: {"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},
+    copycode: {"enable":true,"show_result":true,"style":"mac"},
+    back2top: {"enable":true,"sidebar":false,"scrollpercent":true},
+    bookmark: {"enable":true,"color":"#222","save":"auto"},
+    fancybox: false,
+    mediumzoom: true,
+    lazyload: false,
+    pangu: false,
+    comments: {"style":"tabs","active":"gitalk","storage":true,"lazyload":false,"nav":{"gitalk":{"order":-2}},"activeClass":"gitalk"},
+    algolia: {
+      appID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":true,"preload":true},
+    path: 'search.xml',
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}
+  };
+</script>
+
+  <meta name="description" content="如何用java实现一个简单的http服务器">
+<meta property="og:type" content="article">
+<meta property="og:title" content="如何使用Java写一个简易的HTTPServer">
+<meta property="og:url" content="https://lzhaoyang.github.io/2017/09/21/%E5%A6%82%E4%BD%95%E4%BD%BF%E7%94%A8Java%E5%86%99%E4%B8%80%E4%B8%AA%E7%AE%80%E6%98%93%E7%9A%84HTTPServer/index.html">
+<meta property="og:site_name" content="Fire in the rain">
+<meta property="og:description" content="如何用java实现一个简单的http服务器">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2017-09-20T16:00:00.000Z">
+<meta property="article:modified_time" content="2020-01-04T16:54:30.664Z">
+<meta property="article:author" content="sunrise">
+<meta property="article:tag" content="Java">
+<meta property="article:tag" content="http">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="https://lzhaoyang.github.io/2017/09/21/%E5%A6%82%E4%BD%95%E4%BD%BF%E7%94%A8Java%E5%86%99%E4%B8%80%E4%B8%AA%E7%AE%80%E6%98%93%E7%9A%84HTTPServer/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true
+  };
+</script>
+
+  <title>如何使用Java写一个简易的HTTPServer | Fire in the rain</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-meta">
+
+    <div>
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Fire in the rain</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+        <p class="site-subtitle">stay hungory stay foolish</p>
+  </div>
+
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-fw fa-th"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-fw fa-user"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-books">
+
+    <a href="/books/" rel="section"><i class="fa fa-fw fa-book"></i>阅读</a>
+
+  </li>
+        <li class="menu-item menu-item-movies">
+
+    <a href="/movies/" rel="section"><i class="fa fa-fw fa-video-camera"></i>电影</a>
+
+  </li>
+        <li class="menu-item menu-item-sitemap">
+
+    <a href="/sitemap.xml" rel="section"><i class="fa fa-fw fa-sitemap"></i>站点地图</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+
+</nav>
+  <div class="site-search">
+    <div class="popup search-popup">
+    <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocorrect="off" autocapitalize="none"
+           placeholder="搜索..." spellcheck="false"
+           type="text" id="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result"></div>
+
+</div>
+<div class="search-pop-overlay"></div>
+
+  </div>
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+  <a role="button" class="book-mark-link book-mark-link-fixed"></a>
+
+  <a href="https://github.com/lzhaoyang" class="github-corner" title="Follow me on GitHub" aria-label="Follow me on GitHub" rel="noopener" target="_blank"><svg width="80" height="80" viewBox="0 0 250 250" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content">
+            
+
+  <div class="posts-expand">
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://lzhaoyang.github.io/2017/09/21/%E5%A6%82%E4%BD%95%E4%BD%BF%E7%94%A8Java%E5%86%99%E4%B8%80%E4%B8%AA%E7%AE%80%E6%98%93%E7%9A%84HTTPServer/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="sunrise">
+      <meta itemprop="description" content="A drop of rain see the whole universe">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Fire in the rain">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          如何使用Java写一个简易的HTTPServer
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2017-09-21 00:00:00" itemprop="dateCreated datePublished" datetime="2017-09-21T00:00:00+08:00">2017-09-21</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2020-01-05 00:54:30" itemprop="dateModified" datetime="2020-01-05T00:54:30+08:00">2020-01-05</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/" itemprop="url" rel="index">
+                    <span itemprop="name">Java</span>
+                  </a>
+                </span>
+            </span>
+
+          
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span><br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-file-word-o"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>5.8k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-clock-o"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>5 分钟</span>
+            </span>
+            <div class="post-description">如何用java实现一个简单的http服务器</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h3 id="HTTP是啥？"><a href="#HTTP是啥？" class="headerlink" title="HTTP是啥？"></a>HTTP是啥？</h3><p>   超文本传输协议（HTTP，HyperText Transfer Protocol)是互联网上应用最为广泛的一种网络协议。所有的WWW文件都必须遵守这个标准。设计HTTP最初的目的是为了提供一种发布和接收HTML页面的方法。1960年美国人Ted Nelson构思了一种通过计算机处理文本信息的方法，并称之为超文本（hypertext）,这成为了HTTP超文本传输协议标准架构的发展根基。Ted Nelson组织协调万维网协会（World Wide Web Consortium）和互联网工程工作小组（Internet Engineering Task Force ）共同合作研究，最终发布了一系列的RFC，其中著名的RFC 2616定义了HTTP 1.1。<br>反正就是一种传输协议，满足这样的传输协议的双方可以实现交互的功能。</p>
+<h3 id="Server是啥？"><a href="#Server是啥？" class="headerlink" title="Server是啥？"></a>Server是啥？</h3><p>Server就是我们所说的服务器，就是监听在某个端口的服务程序，这个服务程序一直等待客户端发来的请求，然后根据HTTP协议，处理客户端的请求，然后返回结果给客户端。绝大多数的服务器实现都是socket编程，有些编程语言提供了很方便的socket api来实现服务端的编程。当然我们的Java也是提供了非常好的api来帮助我们实现服务端的编程。<br>如何使用Java来实现呢？</p>
+<p>在web的最初阶段是不支持web服务器与用户的交互的.也就是说web服务器不能动态的生成用户要访问的页面,web服务器提供给用户的页面都是提前生成好的.所以也说这种页面是静态页面.<br>比如说用户请求访问<a href="http://localhost:8088/hello1.htm" target="_blank" rel="noopener">http://localhost:8088/hello1.htm</a>, 那么web服务器从自己的想要目录下获取hello1.htm(已经存在).然后通过HTTP协议返回给用户.</p>
+<p>下面我们来模拟一下这个过程.因为HTTP协议是应用层协议,基于TCP,所以我们用Java的socket来编写HTTP服务器.</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br></pre></td><td class="code"><pre><span class="line">package HTTPServer;</span><br><span class="line">import java.io.*;</span><br><span class="line">import java.net.ServerSocket;</span><br><span class="line">import java.net.Socket;</span><br><span class="line">&#x2F;**</span><br><span class="line"> * Created by Administrator on 2017&#x2F;9&#x2F;21.</span><br><span class="line"> *&#x2F;</span><br><span class="line">public class HTTPServer2 &#123;</span><br><span class="line">    &#x2F;&#x2F;端口</span><br><span class="line">    private final static int port &#x3D; 8000;</span><br><span class="line">    private ServerSocket serverSocket &#x3D; null;</span><br><span class="line">    &#x2F;&#x2F;启动一个服务端口,并监听在8000端口</span><br><span class="line">    public HTTPServer2() throws Exception&#123;</span><br><span class="line">        this.serverSocket &#x3D; new ServerSocket(port);</span><br><span class="line">        System.out.println(&quot;启动端口：&quot;+port);</span><br><span class="line">    &#125;</span><br><span class="line">    &#x2F;&#x2F;获得客户端发来的请求字符串</span><br><span class="line">    public String getRequest(Socket socket)&#123;</span><br><span class="line">        byte[] requestBuffer &#x3D; null;</span><br><span class="line">        try &#123;</span><br><span class="line">            &#x2F;&#x2F;获得客户端口的输入流</span><br><span class="line">            InputStream inputStream &#x3D; socket.getInputStream();</span><br><span class="line">            &#x2F;&#x2F;获得输入流多少个字节的数据准备就绪</span><br><span class="line">            int size &#x3D; inputStream.available();</span><br><span class="line">            &#x2F;&#x2F;将流数据存入一个字节数组</span><br><span class="line">             requestBuffer &#x3D; new byte[size];</span><br><span class="line">            inputStream.read(requestBuffer);</span><br><span class="line">        &#125; catch (IOException e) &#123;</span><br><span class="line">            e.printStackTrace();</span><br><span class="line">        &#125;</span><br><span class="line">        &#x2F;&#x2F;将字节数组转化为字符串，并返回</span><br><span class="line">        return new String(requestBuffer);</span><br><span class="line">    &#125;</span><br><span class="line">    &#x2F;&#x2F;从request字符串中处理URI</span><br><span class="line">    public String getURI(String requestString)&#123;</span><br><span class="line">        String firstLine &#x3D; requestString.substring(0,requestString.indexOf(&quot;\r\n&quot;));</span><br><span class="line">        String[] parts &#x3D; firstLine.split(&quot; &quot;);</span><br><span class="line">        System.out.println(parts);</span><br><span class="line">        return parts[1];</span><br><span class="line">    &#125;</span><br><span class="line">    &#x2F;&#x2F;获得响应的类型</span><br><span class="line">    public String getContentType(String URI)&#123;</span><br><span class="line">         &#x2F;* 决定HTTP响应正文的类型 *&#x2F;</span><br><span class="line">         String contentType;</span><br><span class="line">         if (URI.indexOf(&quot;html&quot;)!&#x3D;-1||URI.indexOf(&quot;htm&quot;)!&#x3D;-1)&#123;</span><br><span class="line">             contentType &#x3D; &quot;text&#x2F;html&quot;;</span><br><span class="line">         &#125;else if (URI.indexOf(&quot;jpg&quot;) !&#x3D; -1 || URI.indexOf(&quot;jpeg&quot;) !&#x3D; -1)&#123;</span><br><span class="line">             contentType &#x3D; &quot;image&#x2F;jpeg&quot;;</span><br><span class="line">         &#125; else if (URI.indexOf(&quot;gif&quot;) !&#x3D; -1)&#123;</span><br><span class="line">             contentType &#x3D; &quot;image&#x2F;gif&quot;;</span><br><span class="line">         &#125; else&#123;</span><br><span class="line">             contentType &#x3D; &quot;application&#x2F;octet-stream&quot;;</span><br><span class="line">         &#125;</span><br><span class="line">         return contentType;</span><br><span class="line">    &#125;</span><br><span class="line">    &#x2F;&#x2F;获得返回的文本数据流，即客户端请求的数据</span><br><span class="line">    public InputStream getResponseContent(String URI)&#123;</span><br><span class="line">        InputStream htmlInputStream &#x3D; null;</span><br><span class="line">        try &#123;</span><br><span class="line">            String fileName &#x3D; URI.split(&quot;&#x2F;&quot;)[1];</span><br><span class="line">            &#x2F;&#x2F;获得当前路径1</span><br><span class="line">            File fileDir &#x3D; new File(&quot;&quot;);</span><br><span class="line">            try &#123;</span><br><span class="line">                String abslutePath &#x3D; fileDir.getAbsolutePath();</span><br><span class="line">                System.out.println(abslutePath);</span><br><span class="line">            &#125;catch (Exception e)&#123;</span><br><span class="line">                e.printStackTrace();</span><br><span class="line">            &#125;</span><br><span class="line">            &#x2F;&#x2F;获得当前路径2</span><br><span class="line">            String path&#x3D; System.getProperty(&quot;user.dir&quot;);</span><br><span class="line">            System.out.println(path);</span><br><span class="line">            htmlInputStream &#x3D; new FileInputStream(new File(path+&quot;\\&quot;+fileName));</span><br><span class="line">        &#125; catch (FileNotFoundException e) &#123;</span><br><span class="line">            e.printStackTrace();</span><br><span class="line">        &#125;</span><br><span class="line">        return htmlInputStream;</span><br><span class="line">    &#125;</span><br><span class="line">    &#x2F;&#x2F;组装响应头</span><br><span class="line">    public String assembleResponseHeader(String URI,String contentType)&#123;</span><br><span class="line">        &#x2F;* 创建HTTP响应结果 *&#x2F;</span><br><span class="line">        &#x2F;&#x2F; HTTP响应的第一行</span><br><span class="line">        String responseFirstLine &#x3D; &quot;HTTP&#x2F;1.1 200 OK\r\n&quot;;</span><br><span class="line">        &#x2F;&#x2F;响应头</span><br><span class="line">        String responseHeader &#x3D; &quot;Content-Type:&quot;+contentType+&quot;\r\n\r\n&quot;;</span><br><span class="line">        return responseFirstLine+responseHeader;</span><br><span class="line">    &#125;</span><br><span class="line">    &#x2F;&#x2F;处理请求</span><br><span class="line">    public void service() throws InterruptedException  &#123;</span><br><span class="line">        while (true)&#123;</span><br><span class="line">            Socket socket &#x3D; null;</span><br><span class="line">            try &#123;</span><br><span class="line">                socket &#x3D; serverSocket.accept();</span><br><span class="line">                String request &#x3D; this.getRequest(socket);</span><br><span class="line">                System.out.println(&quot;HttpServer receive request:\n&quot; + request);</span><br><span class="line">                String URI &#x3D; this.getURI(request);</span><br><span class="line">                System.out.println(URI);</span><br><span class="line">                String contentType &#x3D; this.getContentType(URI);</span><br><span class="line">                System.out.println(contentType);</span><br><span class="line">                &#x2F;&#x2F;往端口返回数据</span><br><span class="line">                OutputStream outputStream &#x3D; socket.getOutputStream();</span><br><span class="line">                outputStream.write(this.assembleResponseHeader(URI,contentType).getBytes());</span><br><span class="line">                int length &#x3D; 0;</span><br><span class="line">                byte[] buffer &#x3D; new byte[128];</span><br><span class="line">                &#x2F;&#x2F;获得了文本文件的字节流</span><br><span class="line">                &#x2F;&#x2F;需要写入到客户端口</span><br><span class="line">                InputStream inputStream &#x3D; this.getResponseContent(URI);</span><br><span class="line">                while ((length &#x3D; inputStream.read(buffer))!&#x3D;-1)&#123;</span><br><span class="line">                    outputStream.write(buffer,0,length);</span><br><span class="line">                &#125;</span><br><span class="line">                &#x2F;&#x2F;模仿网络传输</span><br><span class="line">                Thread.sleep(1000);</span><br><span class="line">                socket.close();</span><br><span class="line">            &#125; catch (IOException e) &#123;</span><br><span class="line">                e.printStackTrace();</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    public static void main(String[] args) &#123;</span><br><span class="line">        try &#123;</span><br><span class="line">            HTTPServer2 httpServer2 &#x3D; new HTTPServer2();</span><br><span class="line">            httpServer2.service();</span><br><span class="line">        &#125; catch (Exception e) &#123;</span><br><span class="line">            e.printStackTrace();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>我们准备一个简单的html文本：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">&lt;html&gt;</span><br><span class="line">&lt;head&gt;</span><br><span class="line">&lt;title&gt;HelloWorld&lt;&#x2F;title&gt;</span><br><span class="line">&lt;&#x2F;head&gt;</span><br><span class="line">&lt;body &gt;</span><br><span class="line">  &lt;h1&gt;Hello&lt;&#x2F;h1&gt;</span><br><span class="line">&lt;&#x2F;body&gt;</span><br><span class="line">&lt;&#x2F;html&gt;</span><br></pre></td></tr></table></figure>
+<p>保存为Hello.html,启动HTTPServer,在浏览器访问<a href="http://localhost:8088/hello1.html,我们在输出界面看到：" target="_blank" rel="noopener">http://localhost:8088/hello1.html,我们在输出界面看到：</a></p>
+<figure class="highlight http"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">GET</span> <span class="string">/Hello.html</span> HTTP/1.1</span><br><span class="line"><span class="attribute">Host</span>: localhost:8088</span><br><span class="line"><span class="attribute">Connection</span>: keep-alive</span><br><span class="line"><span class="attribute">Cache-Control</span>: max-age=0</span><br><span class="line"><span class="attribute">Accept</span>: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8</span><br><span class="line"><span class="attribute">User-Agent</span>: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/43.0.2357.125 Safari/537.36</span><br><span class="line"><span class="attribute">Accept-Encoding</span>: gzip, deflate, sdch</span><br><span class="line"><span class="attribute">Accept-Language</span>: zh-CN,zh;q=0.8,en-US;q=0.6,en;q=0.4</span><br></pre></td></tr></table></figure>
+<p>注意：我们的html文件需要放在我们工程目录下。或者可以根据我们服务器所在的文件，获得他们的路径，在定位我们的文件位置。<br>总结一下</p>
+<p>socket编程，我们使用一个ServerSocket等待在指定端口处，知道客户端发来请求，我们知道网络中传输的都是字节，所以当我们要解析请求的字节数据，通常的方式是将字节转化为字符，然后分割得到我们HTTP请求的各部分，比如请求第一行，请求头。获得了这些之后，我们就可以进行一些处理，然后返回的我们的结果。<br>结果的返回，在程序中我们也是先使用字符来构建我们的响应，然后将字符串转化为字节数组，如果是文件，我们也可以将文件读取分批次读取到一个数组中，然后在依次写入到输出流中，即返回我们的字节数据给客户端。</p>
+
+    </div>
+
+    
+    
+    
+
+    <div>
+      
+        <div>
+    
+        <div style="text-align:center;color: #ccc;font-size:14px;">-------------本文结束<i class="fa fa-paw"></i>感谢您的阅读-------------</div>
+    
+</div>
+
+      
+    </div>
+        <div class="reward-container">
+  <div>坚持原创技术分享，您的支持将鼓励我继续创作！</div>
+  <button disable="enable" onclick="var qr = document.getElementById(&quot;qr&quot;); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+    打赏
+  </button>
+  <div id="qr" style="display: none;">
+      
+      <div style="display: inline-block;">
+        <img src="/images/wechatpay.jpg" alt="sunrise 微信支付">
+        <p>微信支付</p>
+      </div>
+      
+      <div style="display: inline-block;">
+        <img src="/images/alipay.jpg" alt="sunrise 支付宝">
+        <p>支付宝</p>
+      </div>
+
+  </div>
+</div>
+
+        
+
+<div>
+<ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者： </strong>sunrise
+  </li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="https://lzhaoyang.github.io/2017/09/21/%E5%A6%82%E4%BD%95%E4%BD%BF%E7%94%A8Java%E5%86%99%E4%B8%80%E4%B8%AA%E7%AE%80%E6%98%93%E7%9A%84HTTPServer/" title="如何使用Java写一个简易的HTTPServer">https://lzhaoyang.github.io/2017/09/21/如何使用Java写一个简易的HTTPServer/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/zh-CN" rel="noopener" target="_blank"><i class="fa fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Java/" rel="tag"># Java</a>
+              <a href="/tags/http/" rel="tag"># http</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2017/07/06/%E5%A6%82%E4%BD%95%E6%AD%A3%E7%A1%AE%E7%9A%84%E5%AD%A6%E4%B9%A0%E4%B8%80%E9%97%A8%E6%8A%80%E8%83%BD/" rel="prev" title="如何正确的学习一门技能">
+      <i class="fa fa-chevron-left"></i> 如何正确的学习一门技能
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2017/09/26/201709Java%E9%9D%A2%E8%AF%95%E9%A2%98%E7%9B%AE%E6%80%BB%E7%BB%93%20/" rel="next" title="201709Java面试题目总结">
+      201709Java面试题目总结 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+  </div>
+
+
+          </div>
+          
+    <div class="comments" id="gitalk-container"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let activeClass = CONFIG.comments.activeClass;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#HTTP是啥？"><span class="nav-number">1.</span> <span class="nav-text">HTTP是啥？</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Server是啥？"><span class="nav-number">2.</span> <span class="nav-text">Server是啥？</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="sunrise"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">sunrise</p>
+  <div class="site-description" itemprop="description">A drop of rain see the whole universe</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">20</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">6</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">26</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/lzhaoyang" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;lzhaoyang" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+  </div>
+
+
+
+      </div>
+      <iframe frameborder="no" border="0" marginwidth="0" marginheight="0" width=330 height=86 src="//music.163.com/outchain/player?type=2&id=520459951&auto=0&height=66"></iframe>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+<div class="copyright">
+  
+  &copy; 2016 – 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">sunrise</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+      <span class="post-meta-item-text">站点总字数：</span>
+    <span title="站点总字数">70k</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+      <span class="post-meta-item-text">站点阅读时长 &asymp;</span>
+    <span title="站点阅读时长">1:04</span>
+</div>
+
+        
+<div class="busuanzi-count">
+  <script pjax async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+  <!-- 网站运行时间的设置 -->
+  <span id="timeDate">载入天数...</span>
+  <span id="times">载入时分秒...</span>  | A drop of rain can see the whole universe.
+  <script>
+      var now = new Date();
+      function createtime() {
+          var grt= new Date("03/03/2016 13:14:21");//此处修改你的建站时间或者网站上线时间
+          now.setTime(now.getTime()+250);
+          days = (now - grt ) / 1000 / 60 / 60 / 24; dnum = Math.floor(days);
+          hours = (now - grt ) / 1000 / 60 / 60 - (24 * dnum); hnum = Math.floor(hours);
+          if(String(hnum).length ==1 ){hnum = "0" + hnum;} minutes = (now - grt ) / 1000 /60 - (24 * 60 * dnum) - (60 * hnum);
+          mnum = Math.floor(minutes); if(String(mnum).length ==1 ){mnum = "0" + mnum;}
+          seconds = (now - grt ) / 1000 - (24 * 60 * 60 * dnum) - (60 * 60 * hnum) - (60 * mnum);
+          snum = Math.round(seconds); if(String(snum).length ==1 ){snum = "0" + snum;}
+          document.getElementById("timeDate").innerHTML = "| 本站已安全运行 "+dnum+" 天 ";
+          document.getElementById("times").innerHTML = hnum + " 小时 " + mnum + " 分 " + snum + " 秒";
+      }
+  setInterval("createtime()",250);
+  </script>
+</div>
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script size="250" alpha="0.6" zIndex="-1" src="/lib/canvas-ribbon/canvas-ribbon.js"></script>
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/pjax/pjax.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/medium-zoom@1/dist/medium-zoom.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+<script src="/js/bookmark.js"></script>
+
+  <script>
+var pjax = new Pjax({
+  selectors: [
+    'head title',
+    '#page-configurations',
+    '.content-wrap',
+    '.post-toc-wrap',
+    '#pjax'
+  ],
+  switches: {
+    '.post-toc-wrap': Pjax.switches.innerHTML
+  },
+  analytics: false,
+  cacheBust: false,
+  scrollTo : !CONFIG.bookmark.enable
+});
+
+window.addEventListener('pjax:success', () => {
+  document.querySelectorAll('script[pjax], script#page-configurations, #pjax script').forEach(element => {
+    var code = element.text || element.textContent || element.innerHTML || '';
+    var parent = element.parentNode;
+    parent.removeChild(element);
+    var script = document.createElement('script');
+    if (element.id) {
+      script.id = element.id;
+    }
+    if (element.className) {
+      script.className = element.className;
+    }
+    if (element.type) {
+      script.type = element.type;
+    }
+    if (element.src) {
+      script.src = element.src;
+      // Force synchronous loading of peripheral JS.
+      script.async = false;
+    }
+    if (element.getAttribute('pjax') !== null) {
+      element.setAttribute('pjax', '');
+    }
+    if (code !== '') {
+      script.appendChild(document.createTextNode(code));
+    }
+    parent.appendChild(script);
+  });
+  NexT.boot.refresh();
+  // Define Motion Sequence & Bootstrap Motion.
+  if (CONFIG.motion.enable) {
+    NexT.motion.integrator
+      .init()
+      .add(NexT.motion.middleWares.postList)
+      .bootstrap();
+  }
+  NexT.utils.updateSidebarPosition();
+});
+</script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <div id="pjax">
+  
+
+  
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.css">
+
+<script>
+NexT.utils.loadComments(document.querySelector('#gitalk-container'), () => {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js', () => {
+    var gitalk = new Gitalk({
+      clientID: 'a6a5ec8f52a673226f87',
+      clientSecret: '7d8a42f6cd331f78c0cdd38768f026781d0b6eaa',
+      repo: 'lzhaoyang.github.io',
+      owner: 'lzhaoyang',
+      admin: ['lzhaoyang'],
+      id: '1e6f4a5a0573ab49aaa40962be225bca',
+        language: 'zh-CN',
+      distractionFreeMode: true
+    });
+    gitalk.render('gitalk-container');
+  }, window.Gitalk);
+});
+</script>
+
+    </div>
+
+  <!-- 页面点击小心心 -->
+  <script type="text/javascript" src="/js/love.js"></script>
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","model":{"jsonPath":"/live2dw/assets/assets/koharu.model.json"},"display":{"width":200,"height":350,"position":"right","hOffset":-10,"vOffset":-50},"mobile":{"show":true,"scale":0.35},"log":false,"tagMode":false});</script></body>
+</html>

@@ -252,4 +252,665 @@
         <tag>测试</tag>
       </tags>
   </entry>
+  <entry>
+    <title>Java8 函数式表达式中的异常处理</title>
+    <url>/2018/06/14/Java8%20%E5%87%BD%E6%95%B0%E5%BC%8F%E8%A1%A8%E8%BE%BE%E5%BC%8F%E4%B8%AD%E7%9A%84%E5%BC%82%E5%B8%B8%E5%A4%84%E7%90%86/</url>
+    <content><![CDATA[<h2 id="1-Overview-概要"><a href="#1-Overview-概要" class="headerlink" title="1. Overview(概要)"></a><strong>1. Overview</strong>(概要)</h2><p>In Java 8, Lambda Expressions started to facilitate functional programming by providing a concise way to express behavior. However, the <em>Functional Interfaces</em> provided by the JDK don’t deal with exceptions very well – and the code becomes verbose and cumbersome when it comes to handling them.</p>
+<p>In this article, we’ll explore some ways to deal with exceptions when writing lambda expressions.</p>
+<h2 id="2-Handling-Unchecked-Exceptions（处理不可检异常）"><a href="#2-Handling-Unchecked-Exceptions（处理不可检异常）" class="headerlink" title="2. Handling Unchecked Exceptions（处理不可检异常）"></a><strong>2. Handling Unchecked Exceptions</strong>（处理不可检异常）</h2><p>First, let’s understand the problem with an example.</p>
+<p>We have a List&lt;Integer&gt; and we want to divide a constant, say 50 with every element of this list and print the results:</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">List&lt;Integer&gt; integers &#x3D; Arrays.asList(3, 9, 7, 6, 10, 20);</span><br><span class="line">integers.forEach(i -&gt; System.out.println(50 &#x2F; i));</span><br></pre></td></tr></table></figure>
+<p>This expression works but there’s one problem. If any of the elements in the list is 0, then we get an ArithmeticException: / by zero. Let’s fix that by using a traditional try-catch block such that we log any such exception and continue execution for next elements:</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">List&lt;Integer&gt; integers &#x3D; Arrays.asList(3, 9, 7, 0, 10, 20);</span><br><span class="line">integers.forEach(i -&gt; &#123;</span><br><span class="line">    try &#123;</span><br><span class="line">        System.out.println(50 &#x2F; i);</span><br><span class="line">    &#125; catch (ArithmeticException e) &#123;</span><br><span class="line">        System.err.println(</span><br><span class="line">          &quot;Arithmetic Exception occured : &quot; + e.getMessage());</span><br><span class="line">    &#125;</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+<p>The use of try-catch solves the problem, but the conciseness of a Lambda Expression is lost and it’s no longer a small function as it’s supposed to be.</p>
+<p>To deal with this problem, we can write a lambda wrapper for the lambda function. Let’s look at the code to see how it works:</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">static Consumer&lt;Integer&gt; lambdaWrapper(Consumer&lt;Integer&gt; consumer) &#123;</span><br><span class="line">    return i -&gt; &#123;</span><br><span class="line">        try &#123;</span><br><span class="line">            consumer.accept(i);</span><br><span class="line">        &#125; catch (ArithmeticException e) &#123;</span><br><span class="line">            System.err.println(</span><br><span class="line">              &quot;Arithmetic Exception occured : &quot; + e.getMessage());</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">List&lt;Integer&gt; integers &#x3D; Arrays.asList(3, 9, 7, 0, 10, 20);</span><br><span class="line">integers.forEach(lambdaWrapper(i -&gt; System.out.println(50 &#x2F; i)));</span><br></pre></td></tr></table></figure>
+<p>At first, we wrote a wrapper method that will be responsible for handling the exception and then passed the lambda expression as a parameter to this method.</p>
+<p>The wrapper method works as expected but, you may argue that it’s basically removing the try-catch block from lambda expression and moving it to another method and it doesn’t reduce the actual number of lines of code being written.</p>
+<p>This is true in this case where the wrapper is specific to a particular use case but we can make use of generics to improve this method and use it for a variety of other scenarios:</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">static &lt;T, E extends Exception&gt; Consumer&lt;T&gt;</span><br><span class="line">  consumerWrapper(Consumer&lt;T&gt; consumer, Class&lt;E&gt; clazz) &#123;</span><br><span class="line">  </span><br><span class="line">    return i -&gt; &#123;</span><br><span class="line">        try &#123;</span><br><span class="line">            consumer.accept(i);</span><br><span class="line">        &#125; catch (Exception ex) &#123;</span><br><span class="line">            try &#123;</span><br><span class="line">                E exCast &#x3D; clazz.cast(ex);</span><br><span class="line">                System.err.println(</span><br><span class="line">                  &quot;Exception occured : &quot; + exCast.getMessage());</span><br><span class="line">            &#125; catch (ClassCastException ccEx) &#123;</span><br><span class="line">                throw ex;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">List&lt;Integer&gt; integers &#x3D; Arrays.asList(3, 9, 7, 0, 10, 20);</span><br><span class="line">integers.forEach(</span><br><span class="line">  consumerWrapper(</span><br><span class="line">    i -&gt; System.out.println(50 &#x2F; i), </span><br><span class="line">    ArithmeticException.class));</span><br></pre></td></tr></table></figure>
+<p>As we can see, this iteration of our wrapper method takes two arguments, the lambda expression and the type of Exception to be caught. This lambda wrapper is capable of handling all data types, not just Integers, and catch any specific type of exception and not the superclass Exception.</p>
+<p>Also, notice that we have changed the name of the method from lambdaWrapper to consumerWrapper. It’s because this method only handles lambda expressions for Functional Interface of type Consumer. We can write similar wrapper methods for other Functional Interfaces like Function, BiFunction, BiConsumer and so on.</p>
+<h2 id="3-Handling-Checked-Exceptions（处理可检异常）"><a href="#3-Handling-Checked-Exceptions（处理可检异常）" class="headerlink" title="3. Handling Checked Exceptions（处理可检异常）"></a><strong>3. Handling Checked Exceptions</strong>（处理可检异常）</h2><p>Let’s consider the example from the previous section, but instead of dividing and printing the integers to the console, we want to write them to a file. This operation of writing to a file throws IOException.</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">static void writeToFile(Integer integer) throws IOException &#123;</span><br><span class="line">    &#x2F;&#x2F; logic to write to file which throws IOException</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">List&lt;Integer&gt; integers &#x3D; Arrays.asList(3, 9, 7, 0, 10, 20);</span><br><span class="line">integers.forEach(i -&gt; writeToFile(i));</span><br></pre></td></tr></table></figure>
+<p>On compilation, we get the following error.</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">java.lang.Error: Unresolved compilation problem: Unhandled exception type IOException</span><br></pre></td></tr></table></figure>
+<p>Since IOException is a checked exception, it must be handled. Now there are two options, we may want to throw the exception and handle it somewhere else or handle it inside the method that has the lambda expression. Let’s look at each of them one by one.</p>
+<h3 id="3-1-Throwing-Checked-Exception-from-Lambda-Expressions（从函数式表达式中抛出可检异常）"><a href="#3-1-Throwing-Checked-Exception-from-Lambda-Expressions（从函数式表达式中抛出可检异常）" class="headerlink" title="3.1. Throwing Checked Exception from Lambda Expressions（从函数式表达式中抛出可检异常）"></a><strong>3.1. Throwing Checked Exception from Lambda Expressions</strong>（从函数式表达式中抛出可检异常）</h3><p>Let’s throw the exception from the method in which the lambda expression is written, in this case, the main:</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">public static void main(String[] args) throws IOException &#123;</span><br><span class="line">    List&lt;Integer&gt; integers &#x3D; Arrays.asList(3, 9, 7, 0, 10, 20);</span><br><span class="line">    integers.forEach(i -&gt; writeToFile(i));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>Still, while compiling, we get the same error of unhandled IOException. This is because lambda expressions are similar to Anonymous Inner Classes. In this case, the lambda expression is an implementation of accept(T t) method from Consumer<T> interface.</T></p>
+<p>Throwing the exception from main is does nothing and since the method in the parent interface doesn’t throw any exception, it can’t in its implementation:</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">Consumer&lt;Integer&gt; consumer &#x3D; new Consumer&lt;Integer&gt;() &#123;</span><br><span class="line">  </span><br><span class="line">    @Override</span><br><span class="line">    public void accept(Integer integer) throws Exception &#123;</span><br><span class="line">        writeToFile(integer);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>The above code doesn’t compile because the implementation of accept method can’t throw any Exception.</p>
+<p>The most straightforward way would be to use a try-catch and wrap the checked exception into an unchecked exception and rethrow:</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">List&lt;Integer&gt; integers &#x3D; Arrays.asList(3, 9, 7, 0, 10, 20);</span><br><span class="line">integers.forEach(i -&gt; &#123;</span><br><span class="line">    try &#123;</span><br><span class="line">        writeToFile(i);</span><br><span class="line">    &#125; catch (IOException e) &#123;</span><br><span class="line">        throw new RuntimeException(e);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+
+<p>This approach gets the code to compile and run but has the same problem as the example in the case of unchecked exceptions in the previous section.</p>
+<p>Since we just want to throw the exception, we need to write our own Consumer Functional Interface which can throw an exception and then a wrapper method using it. Let’s call it ThrowingConsumer:</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">@FunctionalInterface</span><br><span class="line">public interface ThrowingConsumer&lt;T, E extends Exception&gt; &#123;</span><br><span class="line">    void accept(T t) throws E;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">static &lt;T&gt; Consumer&lt;T&gt; throwingConsumerWrapper(</span><br><span class="line">  ThrowingConsumer&lt;T, Exception&gt; throwingConsumer) &#123;</span><br><span class="line">  </span><br><span class="line">    return i -&gt; &#123;</span><br><span class="line">        try &#123;</span><br><span class="line">            throwingConsumer.accept(i);</span><br><span class="line">        &#125; catch (Exception ex) &#123;</span><br><span class="line">            throw new RuntimeException(ex);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>Now we can write our lambda expression which can throw exceptions without losing the conciseness.</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">List&lt;Integer&gt; integers &#x3D; Arrays.asList(3, 9, 7, 0, 10, 20);</span><br><span class="line">integers.forEach(throwingConsumerWrapper(i -&gt; writeToFile(i)));</span><br></pre></td></tr></table></figure>
+
+<h3 id="3-2-Handling-a-Checked-Exception-in-Lambda-Expression（在函数式表达式中处理可检异常）"><a href="#3-2-Handling-a-Checked-Exception-in-Lambda-Expression（在函数式表达式中处理可检异常）" class="headerlink" title="3.2. Handling a Checked Exception in Lambda Expression（在函数式表达式中处理可检异常）"></a><strong>3.2. Handling a Checked Exception in Lambda Expression</strong>（在函数式表达式中处理可检异常）</h3><p>In this final section. we will modify the wrapper to handle checked exceptions. Since our ThrowingConsumer interface uses generics, we can handle any specific exception.</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">static &lt;T, E extends Exception&gt; Consumer&lt;T&gt; handlingConsumerWrapper(</span><br><span class="line">  ThrowingConsumer&lt;T, E&gt; throwingConsumer, Class&lt;E&gt; exceptionClass) &#123;</span><br><span class="line">  </span><br><span class="line">    return i -&gt; &#123;</span><br><span class="line">        try &#123;</span><br><span class="line">            throwingConsumer.accept(i);</span><br><span class="line">        &#125; catch (Exception ex) &#123;</span><br><span class="line">            try &#123;</span><br><span class="line">                E exCast &#x3D; exceptionClass.cast(ex);</span><br><span class="line">                System.err.println(</span><br><span class="line">                  &quot;Exception occured : &quot; + exCast.getMessage());</span><br><span class="line">            &#125; catch (ClassCastException ccEx) &#123;</span><br><span class="line">                throw new RuntimeException(ex);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>We can user this wrapper in our example to handle only the IOException and throw any other checked exception by wrapping them in an unchecked exception:</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">List&lt;Integer&gt; integers &#x3D; Arrays.asList(3, 9, 7, 0, 10, 20);</span><br><span class="line">integers.forEach(handlingConsumerWrapper(</span><br><span class="line">  i -&gt; writeToFile(i), IOException.class));</span><br></pre></td></tr></table></figure>
+<p>Similar to the case of unchecked exceptions, throwing siblings for other Functional Interfaces like ThowingFunction, ThrowingBiFunction, ThrowingBiConsumer etc. can be written along with their corresponding wrapper methods.</p>
+<h2 id="4-Conclusion（总结）"><a href="#4-Conclusion（总结）" class="headerlink" title="4. Conclusion（总结）"></a><strong>4. Conclusion</strong>（总结）</h2><p>In this article, we covered how to handle a specific exception in lambda expressions without losing the conciseness by use of wrapper methods. We also learned how to write throwing alternatives for the Functional Interfaces present in JDK to either throw a checked exception by wrapping them in an unchecked exception or to handle them.</p>
+]]></content>
+      <categories>
+        <category>翻译</category>
+      </categories>
+      <tags>
+        <tag>Java</tag>
+        <tag>lambda</tag>
+        <tag>异常</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>巧妙的使用电脑连上wifi</title>
+    <url>/2018/04/23/%E5%B7%A7%E5%A6%99%E7%9A%84%E4%BD%BF%E7%94%A8%E7%94%B5%E8%84%91%E8%BF%9E%E4%B8%8Awifi/</url>
+    <content><![CDATA[<p>粗看起来，这篇文章的标题是—-巧妙的 使用电脑连上WiFi，这有什么巧妙不巧妙的呢？<br>直接点开电脑的wifi开关，然后找到你想要连接的wifi，输入密码就可以连接了啊！为啥还要大费周章的说是巧妙？</p>
+<h3 id="事情是这样的"><a href="#事情是这样的" class="headerlink" title="事情是这样的"></a>事情是这样的</h3><p>出门在外打工，租房的时候免不了要用房东的宽带，不管是有限的还是无线，总之还是得用的。我自己的情况就是，我住的地方，只提供30块钱只能用手机登入的wifi宽带，和60的可以用电脑连接的wifi。作为穷人的我，一下子就怂了，毕竟惹不起。<br>所以就办了一个30的，那么问题就来了，我在宿舍的时候，每次都需要用手机先连接好wifi，然后通过手机中的USB共享宽带给电脑，每次去吃饭，又得拔掉，回来得继续连上。这样就很烦。</p>
+<h3 id="有没有解决的方法呢"><a href="#有没有解决的方法呢" class="headerlink" title="有没有解决的方法呢"></a>有没有解决的方法呢</h3><p>之前我是有想到过，是不是他的那个宽带服务是可以察觉到你的设备标识的，如果一旦你是电脑，就提示你不可以在这个上面登入，并且不给你连接wifi的可能。我也找了相关的教程，说该电脑的标识什么的，但是鼓捣一圈下来，并没有什么收获。而且我也怕，设置乱了，有可能以后电脑会出现什么问题。虽然我知道，没有什么是重装系统解决不了的，如果有，那就两次。</p>
+<h3 id="突发奇想（其实是我哥发现的）"><a href="#突发奇想（其实是我哥发现的）" class="headerlink" title="突发奇想（其实是我哥发现的）"></a>突发奇想（其实是我哥发现的）</h3><p>宽带是通过网页登录的，也就是说校验的通过与否，是根据这个网页的请求来的，也就是说，对面的宽带系统完全是解析我们在浏览器上发送的 请求来判断的额。联想到以前玩爬虫的时候，可以伪造浏览器的请求头，所以我们可以修改浏览器的请求头来模拟，这个浏览器是移动端的，这样他发送的额请求就是移动设备发出的。</p>
+<h3 id="实现"><a href="#实现" class="headerlink" title="实现"></a>实现</h3><p>将wifi打开，然后连接到需要登录的wifi，如果是安装平常的套路，浏览器打开登入的地址，你输入账号密码，他是会提示你不允许在这个平台登入的。然后我们打开chrome浏览器的开发者模式，把显示的窗口换成移动端，然后在输入密码和账号，点击登入，bingo。成功！ 美滋滋，为了防止一不小心刷新，我建议保持这个状态，然后最小化界面，2333！</p>
+<p>再也不用连手机啦，爽歪歪！</p>
+]]></content>
+      <categories>
+        <category>杂文随想</category>
+      </categories>
+      <tags>
+        <tag>WiFi</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>在centos7上安装serverSpeeder（锐速）加速你的梯子</title>
+    <url>/2018/04/15/install-serverSpeeder-to-centos7/</url>
+    <content><![CDATA[<h3 id="为啥要装这个东西？"><a href="#为啥要装这个东西？" class="headerlink" title="为啥要装这个东西？"></a>为啥要装这个东西？</h3><p>serverSpeeder是一个加速网络的软件，在linux和win下都是可以使用的，锐速并不能增加你的带宽，但是可以使你的网络利用率提高，从而增加网络的稳定性和降低访问的失败率。要是我们在已经搭建好的梯子的环境下安装这个锐速，那不是看个YouTube，速度有可见的提高，还不是美滋滋？</p>
+<h3 id="安装"><a href="#安装" class="headerlink" title="安装"></a>安装</h3><p>废话不多说，开始安装。</p>
+<ol>
+<li><p>首先升级一下你的rpm的软件包吧</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line">yum -y update</span><br></pre></td></tr></table></figure></li>
+<li><p>是否安装了wget</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">yum install -y wget</span><br></pre></td></tr></table></figure>
+<ol start="3">
+<li>获取一键安装脚本<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">wget -N --no-check-certificate https://raw.githubusercontent.com/wn789/serverspeeder/master/serverspeeder.sh</span><br></pre></td></tr></table></figure></li>
+<li>为脚本添加权限并运行改脚本<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">chmod +x serverspeeder.sh</span><br><span class="line">bash serverspeeder.sh</span><br></pre></td></tr></table></figure></li>
+<li>检查内核是否支持<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">  在运行4的脚本后，如果出现这样的提示，说明内核不支持，要手动的更换系统的内核</span><br><span class="line">  </span><br><span class="line">  This kernel is not supported. Trying fuzzy matching…</span><br><span class="line">Serverspeeder is not supported on this kernel! View all supported systems and kernels here: https://www.91yun.org/serverspeeder91yun</span><br></pre></td></tr></table></figure>
+如果没有，可能会出现叫你选择相近的内核版本：<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">  &gt;&gt;&gt;This kernel is not supported. Trying fuzzy matching...</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">There is no exact match <span class="keyword">for</span> this kernel, please choose the closest one below:</span><br><span class="line">The current kernel is  3.10.0-123.4.2.el7.x86_64</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">1：3.10.0-123.x86_64</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">Please enter the number of your option：</span><br><span class="line">1</span><br></pre></td></tr></table></figure>
+说明我们这是有相近的内核版本的，我们选择好就开始安装了。<br>但是在我的vps上，出现了：</li>
+</ol>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">   Installing ServerSpeeder, please <span class="built_in">wait</span> <span class="keyword">for</span> a moment...</span><br><span class="line">./serverspeeder.sh: line 141: ifconfig: <span class="built_in">command</span> not found</span><br><span class="line">./serverspeeder.sh: line 144: ifconfig: <span class="built_in">command</span> not found</span><br><span class="line">The name of network interface is not eth0, please retry after changing the name.</span><br></pre></td></tr></table></figure>
+<h3 id="上面是啥问题？"><a href="#上面是啥问题？" class="headerlink" title="上面是啥问题？"></a>上面是啥问题？</h3></li>
+</ol>
+<ul>
+<li><p>我们系统中没有ifconfig这个软件</p>
+</li>
+<li><p>我们的网卡名字不是eth0，serverspeeder这个软件在安装的时候需要网卡的名字固定为eth0</p>
+<h3 id="尝试解决"><a href="#尝试解决" class="headerlink" title="尝试解决"></a>尝试解决</h3></li>
+<li><p>在我的vps上使用yum install -y ifconfig，是没办法安装的，提示是没有在软件仓库找到ifconfig,所以google后才知道，这个软件是在net-tools这个套件里面的。  所以我们yum install -y net-tools. </p>
+</li>
+<li><p>网卡的问题，本来是可以使用ifconfig查看网卡的信息的，但是之前我们还没有解决那个问题，所以我们使用ip addr,   这个命令来查看我们的网卡信息的。</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"> [root@sunrisemenew sunrise]<span class="comment"># ip addr</span></span><br><span class="line">1: lo: &lt;LOOPBACK,UP,LOWER_UP&gt; mtu 65536 qdisc noqueue state UNKNOWN</span><br><span class="line">    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00</span><br><span class="line">    inet 127.0.0.1/8 scope host lo</span><br><span class="line">       valid_lft forever preferred_lft forever</span><br><span class="line">    inet6 ::1/128 scope host</span><br><span class="line">       valid_lft forever preferred_lft forever</span><br><span class="line">2: ens3: &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt; mtu 1500 qdisc pfifo_fast state UP qlen 1000</span><br><span class="line">    link/ether 00:16:3c:9c:89:81 brd ff:ff:ff:ff:ff:ff</span><br><span class="line">    inet 0000000 global dynamic ens3</span><br><span class="line">       valid_lft 21599073sec preferred_lft 21599073sec</span><br><span class="line">    inet6 fe80::216:3cff:fe9c:8981/64 scope link</span><br><span class="line">       valid_lft forever preferred_lft forever</span><br></pre></td></tr></table></figure>
+<p>上面的00000是我的服务器ip，这就不写出来了，怕大佬爆破。 可以看到我们的网卡默认是ens3的，这不是我们要的，修改它。</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"> <span class="built_in">cd</span> /etc/sysconfig/network-scripts/</span><br><span class="line"> </span><br><span class="line"> ifcfg-eth0   ifdown-ippp  ifdown-routes    ifup          ifup-ipv6   ifup-ppp       ifup-tunnel</span><br><span class="line">ifcfg-lo     ifdown-ipv6  ifdown-sit       ifup-aliases  ifup-isdn   ifup-routes    ifup-wireless</span><br><span class="line">ifdown       ifdown-isdn  ifdown-Team      ifup-bnep     ifup-plip   ifup-sit       init.ipv6-global</span><br><span class="line">ifdown-bnep  ifdown-post  ifdown-TeamPort  ifup-eth      ifup-plusb  ifup-Team      network-functions</span><br><span class="line">ifdown-eth   ifdown-ppp   ifdown-tunnel    ifup-ippp     ifup-post   ifup-TeamPort  network-functions-ipv6</span><br><span class="line">[root@sunrisemenew network-scripts]<span class="comment"># cat ifcfg--eth0</span></span><br><span class="line">cat: ifcfg--eth0: No such file or directory</span><br><span class="line">[root@sunrisemenew network-scripts]<span class="comment"># cat ifcfg-eth0</span></span><br><span class="line"><span class="comment"># Generated by SolusVM</span></span><br><span class="line">DEVICE=eth0</span><br><span class="line">BOOTPROTO=static</span><br><span class="line">NAME=eth0 (添加)</span><br><span class="line">HWADDR=xxxxxxxxx(添加)</span><br><span class="line">ONBOOT=yes</span><br><span class="line">IPADDR=000000</span><br><span class="line">GATEWAY=0000000</span><br><span class="line">NETMASK=255.255.255.0[root@sunrisemenew network-scripts]<span class="comment"># cat ifcfg-lo</span></span><br><span class="line">DEVICE=lo</span><br><span class="line">IPADDR=127.0.0.1</span><br><span class="line">NETMASK=255.0.0.0</span><br><span class="line">NETWORK=127.0.0.0</span><br><span class="line"><span class="comment"># If you're having problems with gated making 127.0.0.0/8 a martian,</span></span><br><span class="line"><span class="comment"># you can change this to something else (255.255.255.255, for example)</span></span><br><span class="line">BROADCAST=127.255.255.255</span><br><span class="line">ONBOOT=yes</span><br><span class="line">NAME=loopback</span><br></pre></td></tr></table></figure>
+<p>上面我们在我们的网卡脚本里面加了上面的两个项，然后重启服务器。reboot -n 就可以了。</p>
+<p>这样我们解决了前面的 两个问题，我们在重新运行安装脚本，./serverspeeder.sh<br>会出现下面的：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"> --2018-04-15 07:13:40--  http://rs.91yun.pw/CentOS/7.0/3.10.0-123.x86_64/x64/3.10.66.29/serverspeeder_3091</span><br><span class="line">Resolving rs.91yun.pw (rs.91yun.pw)... 104.18.41.84, 104.18.40.84</span><br><span class="line">Connecting to rs.91yun.pw (rs.91yun.pw)|104.18.41.84|:80... connected.</span><br><span class="line">HTTP request sent, awaiting response... 200 OK</span><br><span class="line">Length: 1508272 (1.4M) [application/octet-stream]</span><br><span class="line">Saving to: ‘acce-3.10.66.29-[CentOS_3.10.0-123.x86_64]’</span><br><span class="line"></span><br><span class="line">100%[==============================================================================&gt;] 1,508,272   --.-K/s   <span class="keyword">in</span> 0.1s</span><br><span class="line"></span><br><span class="line">2018-04-15 07:13:40 (9.99 MB/s) - ‘acce-3.10.66.29-[CentOS_3.10.0-123.x86_64]’ saved [1508272/1508272]</span><br><span class="line"></span><br><span class="line">Installation <span class="keyword">done</span>!</span><br><span class="line"></span><br><span class="line">/etc/centos-release:CentOS Linux release 7.4.1708 (Core)</span><br><span class="line">/etc/os-release:NAME=<span class="string">"CentOS Linux"</span></span><br><span class="line">/etc/os-release:PRETTY_NAME=<span class="string">"CentOS Linux 7 (Core)"</span></span><br><span class="line">/etc/os-release:CENTOS_MANTISBT_PROJECT=<span class="string">"CentOS-7"</span></span><br><span class="line">/etc/redhat-release:CentOS Linux release 7.4.1708 (Core)</span><br><span class="line">/etc/system-release:CentOS Linux release 7.4.1708 (Core)</span><br><span class="line">(license 46BFD53099AA52CC113a6b52)</span><br><span class="line"></span><br><span class="line">[Running Status]</span><br><span class="line">ServerSpeeder is running!</span><br><span class="line">version              3.10.66.29</span><br><span class="line"></span><br><span class="line">[License Information]</span><br><span class="line">License              46BFD53099AA52CC (valid on current device)</span><br><span class="line">MaxSession           unlimited</span><br><span class="line">MaxTcpAccSession     unlimited</span><br><span class="line">MaxBandwidth(kbps)   unlimited</span><br><span class="line">ExpireDate           2034-12-31</span><br><span class="line"></span><br><span class="line">[Connection Information]</span><br><span class="line">TotalFlow            1</span><br><span class="line">NumOfTcpFlows        1</span><br><span class="line">TotalAccTcpFlow      0</span><br><span class="line">TotalActiveTcpFlow   0</span><br><span class="line"></span><br><span class="line">[Running Configuration]</span><br><span class="line">accif                eth0</span><br><span class="line">acc                  1</span><br><span class="line">advacc               1</span><br><span class="line">advinacc             1</span><br><span class="line">wankbps              10000000</span><br><span class="line">waninkbps            10000000</span><br><span class="line">csvmode              0</span><br><span class="line">subnetAcc            0</span><br><span class="line">maxmode              1</span><br><span class="line">pcapEnable           0</span><br></pre></td></tr></table></figure>
+<p>安装成功。nice，我试了一下，之前vps的速度也就200k，现在可以跑到350k了，还算是可以的，毕竟是乞丐版的配置，也不能要求太多了。</p>
+<h3 id="常用的锐速命令"><a href="#常用的锐速命令" class="headerlink" title="常用的锐速命令"></a>常用的锐速命令</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">service serverSpeeder start <span class="comment">#启动</span></span><br><span class="line">service serverSpeeder stop <span class="comment">#停止</span></span><br><span class="line">service serverSpeeder reload <span class="comment">#重新加载配置</span></span><br><span class="line">service serverSpeeder restart <span class="comment">#重启</span></span><br><span class="line">service serverSpeeder status <span class="comment">#状态</span></span><br><span class="line">service serverSpeeder stats <span class="comment">#统计</span></span><br><span class="line">service serverSpeeder renewLic <span class="comment">#更新许可文件</span></span><br><span class="line">service serverSpeeder update <span class="comment">#更新</span></span><br><span class="line">chattr -i /serverspeeder/etc/apx* &amp;&amp; /serverspeeder/bin/serverSpeeder.sh uninstall -f <span class="comment">#卸载</span></span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+]]></content>
+      <categories>
+        <category>服务器</category>
+      </categories>
+      <tags>
+        <tag>shadowsocks</tag>
+        <tag>锐速</tag>
+        <tag>centos7</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>如何优雅的在win下使用gitbash</title>
+    <url>/2018/04/10/%E5%A6%82%E4%BD%95%E4%BC%98%E9%9B%85%E7%9A%84%E5%9C%A8win%E4%B8%8B%E4%BD%BF%E7%94%A8gitbash/</url>
+    <content><![CDATA[<h2 id="为何我要在win下使用git-bash（优雅的）"><a href="#为何我要在win下使用git-bash（优雅的）" class="headerlink" title="为何我要在win下使用git bash（优雅的）"></a>为何我要在win下使用git bash（优雅的）</h2><p>事情是这样滴，前段时间，xshell（破解版）在我的电脑上就莫名的是用不了，说是服务到期，但是这可是破解版呀（怪不好意思的），当然重装这个软件依然是这样，求救谷歌下载到的依然会出现那个提示，导致我进入不了用户界面。我在xshell上有三台服务器的配置，也就是打开xshell就可以连接这三台服务器了。寻求软件交流群的老铁，给我提供他电脑上安装的版本（免费破解的），我以为差不多就可以，但是这软件就是实在，还是不行。其实也有开源的额免费的ssh客户端，但是由于都不是太好看，没啥设计美学，于是就放弃了。想着，很多人mac大佬都是terminal下ssh连接服务器，我就想，要不就试着在git bash下用ssh连接服务器？</p>
+<h2 id="git-bash-ssh连接服务器"><a href="#git-bash-ssh连接服务器" class="headerlink" title="git bash ssh连接服务器"></a>git bash ssh连接服务器</h2><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">ssh username@server_ip</span><br><span class="line"></span><br><span class="line">ssh root@192.168.0.1</span><br><span class="line"></span><br><span class="line">或者是如果你有秘钥文件入xxx.pem</span><br><span class="line">那么接得使用下面的命令</span><br><span class="line"></span><br><span class="line">ssh -i xxx.pem username@server_ip</span><br></pre></td></tr></table></figure>
+<p>使用上面的方法确实可以连接到服务器，但是有一下几个缺点：</p>
+<ul>
+<li>加入你有多个服务器，你就不得不记住这些ip地址，这比较烦</li>
+<li>你在输入这些后，你还是要输入登入服务器的密码，非常不方便</li>
+<li>要是你切换服务器，你有必须重新输入 </li>
+</ul>
+<p>那我们如何减轻我们操作的负担呢？</p>
+<h2 id="优化一"><a href="#优化一" class="headerlink" title="优化一"></a>优化一</h2><p>为了不再每次ssh登入服务器的时候都要输入密码，我们可以在我们本地生成秘钥，然后在把秘钥推送到服务器上，这样每次我们ssh去连接的时候，就顺带验证了。</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">首先我们 ssh-keygen 生成我们的秘钥，注意秘钥的保存路径</span><br><span class="line">其次在使用 ssh-copy-id root@server_ip</span><br></pre></td></tr></table></figure>
+<p>这样我们ssh登录我们的服务器是不需要输入账户密码的。</p>
+<h2 id="优化二"><a href="#优化二" class="headerlink" title="优化二"></a>优化二</h2><p>我们还是得记住ip，这样不好。那有什么办法呢？<br>办法就是我们可以为每个服务器写一个bash的脚本，需要登录的时候，执行这个服务器登录脚本就可以了。</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">ssh -i xxx.pem root@server_ip</span><br><span class="line">或是ssh root@server_ip</span><br></pre></td></tr></table></figure>
+<p>我们保存为shortname_server_ip.bash,假设我们有三台服务器，我们分别保存脚本为</p>
+<ul>
+<li>shortname1.server_ip1.bash</li>
+<li>shortname2.server_ip2.bash</li>
+<li>shortname3.server_ip3.bash</li>
+</ul>
+<p>这样我们要登录那个服务器只要，打开gitbash，cd到你放登录脚本的文件夹，然后执行source shortname.server_ip.bash,就可以登录到服务器了，为啥是要这个命令呢？其实使用./shortname.server_ip.bash 也是可以的，但是因为你在win下这样写，他是没有自动补全的(在这种情况下)，那不是我们还得挨个敲，或是ls对照着挨个敲，还是觉得有点麻烦有木有？ source命令呢，就可以弥补这一小点缺陷，所以用用source吧。<br>其实我们还是觉得不够好，因为你必须切换到你防止这些登录脚本的地方，而且每次你还得cd到这个位置，重复的事情做多了就会变得索然无味，对吧。我们要解决他。</p>
+<h2 id="优化三"><a href="#优化三" class="headerlink" title="优化三"></a>优化三</h2><p>你会发现有很多bash命令他是全局的，就像ls，cat等，要是我们的脚本可以向他们一样就好了？其实我们的git bash 是有这个功能的，那怎么做呢？</p>
+<ul>
+<li>我们找到我们的git bash的安装目录，比如我的是 ：C:\Program Files\Git</li>
+<li>在这个目录下有一个mingw64的文件夹，你可以将刚才三个登录脚本，放到这个目录的bin目录下面，</li>
+<li>修改刚才脚本的后缀名，只保留文件名</li>
+<li>最后，在每个脚本的开头 添加上这样一行 #!/bin/sh 也就是linux下指定运行的该文件的程序，然后保存修改。</li>
+</ul>
+<p>有了这样的修改后我们只要打开 git bash，输入shortname 按tab键就会自动补全我们的脚本名字，我们只需要记住我们的shortname 就可以了。比如我的腾讯云服务器 文件名我就改为 tencent.server_ip 这样有什么需要关于ip的操作我也可以第一时间看到，岂不美滋滋？</p>
+<h2 id="想想还可以怎么玩"><a href="#想想还可以怎么玩" class="headerlink" title="想想还可以怎么玩"></a>想想还可以怎么玩</h2><p>大家都应该看过，某些mac或是linux大佬，使用terminal 直接打开某个程序的吧？<br>比如 我需要打开vscode，我就在gitbash中输入 code . ,意思是用vscode打开当前的目录，是不是觉得有点帅？ 这个是因为你在安装的时候vscode 有选项是可以将vscode程序的path，写入到系统环境的变量。<br>大家应该都很熟悉，要是要是一个程序在cmd中可以被识别，那么都可以在环境变量中，将程序的启动文件目录加入到系统的环境变量中去的。但是我们的软件那么多，其实没有必要都加入到系统的环境变量中去。所以按照优化三的方案，其实我们可以以类似的方式实现这样的功能。</p>
+<p>但是其实将程序的启动目录加到系统环境变量来实现在bash下启动程序，这里有一个不爽的地方(要是爽，就不会有后面的方案了)，那就是你必须在 命令的后面加上&amp; 使你需要启动的程序进入后台，而不至于被bash阻塞(bash 退出后，你的程序也会退出)。</p>
+<h2 id="实现在命令行中打开常用程序"><a href="#实现在命令行中打开常用程序" class="headerlink" title="实现在命令行中打开常用程序"></a>实现在命令行中打开常用程序</h2><ul>
+<li>在我们的git bash安装目录下，找到mingw64下的bin文件夹，加入我们想设置的程序。</li>
+<li>假设我想在bash下使用idea编辑器，在git clone 别人仓库的时候，进入到仓库，直接idea .,打开整个项目，岂不美哉？</li>
+<li>我们在bin文件夹下建立一个叫idea的文件，无后缀。</li>
+<li>在开头写上<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="meta">#!/bin/sh</span></span><br><span class="line"><span class="string">"C:\Program Files\JetBrains\IntelliJ IDEA 2018.1\bin\idea64.exe"</span> <span class="variable">$1</span> &amp;</span><br></pre></td></tr></table></figure></li>
+<li>保存(上面只是我电脑环境的，你可以按照自己的需求来写，就是填程序启动具体是哪一个启动的)</li>
+</ul>
+<p>这样你就可以在打开git bash的时候在上面敲 idea . 就会在当前目录启动你的成程序啦！</p>
+]]></content>
+      <categories>
+        <category>服务器</category>
+      </categories>
+      <tags>
+        <tag>服务器</tag>
+        <tag>git</tag>
+        <tag>gitbash</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>有return的情况下try catch finally的执行顺序</title>
+    <url>/2017/09/28/%E6%9C%89return%E7%9A%84%E6%83%85%E5%86%B5%E4%B8%8Btry%20catch%20finally%E7%9A%84%E6%89%A7%E8%A1%8C%E9%A1%BA%E5%BA%8F/</url>
+    <content><![CDATA[<p>题目：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">public int getNumber() &#123;</span><br><span class="line">       int a &#x3D; 0;</span><br><span class="line">       try &#123;</span><br><span class="line">           String s &#x3D; &quot;t&quot;; ------------------------（1）</span><br><span class="line">           a &#x3D; Integer.parseInt(s);-----------（2）</span><br><span class="line">           return a;</span><br><span class="line">       &#125; catch (NumberFormatException e) &#123;</span><br><span class="line">           a &#x3D; 1;-----------------------------------（3）</span><br><span class="line">           return a;-------------------------------（4）</span><br><span class="line">       &#125; finally &#123;</span><br><span class="line">           a &#x3D; 2;-----------------------------------（5）</span><br><span class="line">       &#125;</span><br><span class="line">   &#125;</span><br></pre></td></tr></table></figure>
+<p>结果是返回多少呢？返回值为1.<br>归为这样的执行顺序：<br>先执行try或catch里里面的代码，然后再执行finally，再执行try或catch里面的return.</p>
+<p>结论：</p>
+<pre><code>不管有木有出现异常，finally块中代码都会执行；
+当try和catch中有return时，finally仍然会执行；
+finally是在return后面的表达式运算后执行的（此时并没有返回运算后的值，而是先把要返回的值保存起来，管finally中的代码怎么样，返回的值都不会改变，任然是之前保存的值），所以函数返回值是在finally执行前确定的；
+finally中最好不要包含return，否则程序会提前退出，返回值不是try或catch中保存的返回值。</code></pre><p>举例：<br>情况1：try{} catch(){}finally{} return;<br>显然程序按顺序执行。</p>
+<p>情况2:try{ return; }catch(){} finally{} return;<br>程序执行try块中return之前（包括return语句中的表达式运算）代码；再执行finally块，最后执行try中return;finally块之后的语句return，因为程序在try中已经return所以不再执行。</p>
+<p>情况3:try{ } catch(){return;} finally{} return;<br>程序先执行try，如果遇到异常执行catch块，<br>有异常：则执行catch中return之前（包括return语句中的表达式运算）代码，再执行finally语句中全部代码，最后执行catch块中return. finally之后也就是4处的代码不再执行。无异常：执行完try再finally再return.</p>
+<p>情况4:try{ return; }catch(){} finally{return;}<br>程序执行try块中return之前（包括return语句中的表达式运算）代码；再执行finally块，因为finally块中有return所以提前退出。</p>
+<p>情况5:try{} catch(){return;}finally{return;}<br>程序执行catch块中return之前（包括return语句中的表达式运算）代码；再执行finally块，因为finally块中有return所以提前退出。</p>
+<p>情况6:try{ return;}catch(){return;} finally{return;}<br>程序执行try块中return之前（包括return语句中的表达式运算）代码；有异常：执行catch块中return之前（包括return语句中的表达式运算）代码；则再执行finally块，因为finally块中有return所以提前退出。无异常：则再执行finally块，因为finally块中有return所以提前退出。</p>
+<p>最终结论：任何执行try 或者catch中的return语句之前，都会先执行finally语句，如果finally存在的话。如果finally中有return语句，那么程序就return了，所以finally中的return是一定会被return的，编译器把finally中的return实现为一个warning。</p>
+<p>下面是个测试程序</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">public class FinallyTest  </span><br><span class="line">&#123;</span><br><span class="line">	public static void main(String[] args) &#123;</span><br><span class="line">		 </span><br><span class="line">		System.out.println(new FinallyTest().test());;</span><br><span class="line">	&#125;</span><br><span class="line">	static int test()</span><br><span class="line">	&#123;</span><br><span class="line">		int x &#x3D; 1;</span><br><span class="line">		try</span><br><span class="line">		&#123;</span><br><span class="line">			x++;</span><br><span class="line">			return x;</span><br><span class="line">		&#125;</span><br><span class="line">		finally</span><br><span class="line">		&#123;</span><br><span class="line">			++x;</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>结果是2。</p>
+<p>分析：</p>
+<p>在try语句中，在执行return语句时，要返回的结果已经准备好了，就在此时，程序转到finally执行了。<br>在转去之前，try中先把要返回的结果存放到不同于x的局部变量中去，执行完finally之后，在从中取出返回结果，<br>因此，即使finally中对变量x进行了改变，但是不会影响返回结果。它应该使用栈保存返回值。</p>
+]]></content>
+      <categories>
+        <category>Java</category>
+      </categories>
+      <tags>
+        <tag>Java</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>一道题目引发的思考</title>
+    <url>/2017/09/26/%E4%B8%80%E9%81%93%E9%A2%98%E7%9B%AE%E5%BC%95%E5%8F%91%E7%9A%84%E6%80%9D%E8%80%83/</url>
+    <content><![CDATA[<p>在看一份Java面试题集的时候遇到一个这样的问题：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">public class Test &#123;</span><br><span class="line">        public static void main(String[] args)&#123;</span><br><span class="line">            Father father &#x3D; new Father();</span><br><span class="line">            Father child &#x3D; new Child();</span><br><span class="line">            System.out.println(father.getName());</span><br><span class="line">            System.out.println(child.getName());</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    class Father&#123;</span><br><span class="line">        public static String getName()&#123;</span><br><span class="line">            return &quot;Father&quot;;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    class Child extends Father&#123;</span><br><span class="line">        public static String getName()&#123;</span><br><span class="line">            return &quot;Child&quot;;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+<p>请问输出的结果是：<br>结果是都是Father。<br>为什么呢？</p>
+<p>我们看到这里的都是子类 ， 父类的静态方法。第一个输出为Father我们不奇怪，但是第二个为啥也是Father呢？为什么不是调用子类的静态方法呢？<br>我们看到，子类对象被父类变量所引用，这里是想测验我们，父类的实例方法能否被子类重写，如果重写了，那么调用这个方法，就应该输出子类的相关信息。要是不能，那就是调用父类的静态方法了。<br>解释</p>
+<p>父类代码：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">public class Fu &#123;  </span><br><span class="line">    public static void show() &#123;  </span><br><span class="line">        System.out.println(&quot;父类的静态方法&quot;);  </span><br><span class="line">    &#125;  </span><br><span class="line">    public void method() &#123;  </span><br><span class="line">        System.out.println(&quot;父类的普通方法&quot;);  </span><br><span class="line">    &#125;  </span><br><span class="line">&#125;  </span><br><span class="line"></span><br><span class="line">子类代码：</span><br><span class="line"></span><br><span class="line">public class Zi extends Fu &#123;  </span><br><span class="line">    public static void main(String[] args) &#123;  </span><br><span class="line">        Fu fu &#x3D; new Zi();  </span><br><span class="line">        fu.show();  </span><br><span class="line">        fu.method();  </span><br><span class="line">    &#125;  </span><br><span class="line">    public static void show() &#123;  </span><br><span class="line">        System.out.println(&quot;子类的静态方法&quot;);  </span><br><span class="line">    &#125;  </span><br><span class="line">    public void method() &#123;  </span><br><span class="line">        System.out.println(&quot;子类的普通方法&quot;);  </span><br><span class="line">    &#125;  </span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>从这里我们可以看出，父类的静态方法是不能被子类重写的，其实重写只能适用于实例方法，不能用于静态方法，对于上面这种静态方法而言，我们应该称之为隐藏。<br>Java静态方法形式上可以重写，但从本质上来说不是Java的重写。因为静态方法只与类相关，不与具体实现相关。声明的是什么类，则引用相应类的静态方法(本来静态无需声明，可以直接引用)。并且static方法不是后期绑定的，它在编译期就绑定了。换句话说，这个方法不会进行多态的判断，只与声明的类有关。</p>
+]]></content>
+      <categories>
+        <category>Java</category>
+      </categories>
+      <tags>
+        <tag>Java</tag>
+        <tag>静态方法</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Java构造函数详解</title>
+    <url>/2017/09/26/Java%E6%9E%84%E9%80%A0%E5%87%BD%E6%95%B0%E8%AF%A6%E8%A7%A3/</url>
+    <content><![CDATA[<h3 id="构造函数"><a href="#构造函数" class="headerlink" title="构造函数"></a>构造函数</h3><p>当我们新实例化一个对象的时候，都想对这个对象做一些初始化的工作，比如给对象的属性初始化相关的值。这就是构造函数要做的事。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">public class People&#123;</span><br><span class="line">	public String name;</span><br><span class="line">	    public int age;</span><br><span class="line">	    public People(String name,int age) &#123;</span><br><span class="line">	        this.age &#x3D; age;</span><br><span class="line">	        this.name &#x3D; name;</span><br><span class="line">	    &#125;</span><br><span class="line">	    public People(int age,String name)&#123;</span><br><span class="line">	</span><br><span class="line">	    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="构造函数的作用"><a href="#构造函数的作用" class="headerlink" title="构造函数的作用"></a>构造函数的作用</h3><p>构造方法作用：对对象进行初始化.<br>构造函数和普通的函数（方法）有啥区别？</p>
+<p>（1）. 一般函数是用于定义对象应该具备的功能。而构造函数定义的是，对象在调用功能之前，在建立时，应该具备的一些内容。也就是对象的初始化内容。</p>
+<p>（2）. 构造函数是在对象建立时由jvm调用, 给对象初始化。一般函数是对象建立后，当对象调用该功能时才会执行。</p>
+<p>（3）. 普通函数可以使用对象多次调用，构造函数就在创建对象时调用。</p>
+<p>（4）. 构造函数的函数名要与类名一样，而普通的函数只要符合标识符的命名规则即可。</p>
+<p>（5）. 构造函数没有返回值类型。<br>构造函数使用时的细节</p>
+<p>（1）. 当类中没有定义构造函数时，系统会指定给该类加上一个空参数的构造函数。这个是类中默认的构造函数。当类中如果自定义了构造函数，这时默认的构造函数就没有了。</p>
+<p>备注：可以通过javap命令验证。</p>
+<p>（2）.在一个类中可以定义多个构造函数，以进行不同的初始化。多个构造函数存在于类中，是以重载的形式体现的。因为构造函数的名称都相同。<br>构造代码块</p>
+<p>这个构造代码块有啥作用呢？注意构造代码块和静态块不一样。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">class People&#123;</span><br><span class="line">    public String name;</span><br><span class="line">    public int age;</span><br><span class="line">    public People(String name,int age) &#123;</span><br><span class="line">        this.age &#x3D; age;</span><br><span class="line">        this.name &#x3D; name;</span><br><span class="line">    &#125;</span><br><span class="line">    public People(int age,String name)&#123;</span><br><span class="line">    &#125;</span><br><span class="line">    &#x2F;&#x2F;静态块</span><br><span class="line">    static &#123;</span><br><span class="line">        System.out.println(&quot;这是静态块&quot;);</span><br><span class="line">    &#125;</span><br><span class="line">    &#x2F;&#x2F;这是构造代码块</span><br><span class="line">    &#123;</span><br><span class="line">        System.out.println(&quot;这是构造代码块&quot;);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>构造代码块的作用是：给所有的对象进行统一的初始化。<br>如果，构造函数中有比较多相同的部分，这样我们可以将它移出来，放在构造代码块中。<br>具体作用</p>
+<p>1：给对象进行初始化。对象一建立就运行并且优先于构造函数。<br>与构造函数区别</p>
+<p>2：构造代码块和构造函数的区别，构造代码块是给所有对象进行统一初始化， 构造函数给对应的对象初始化。</p>
+<p>3：构造代码块的作用：它的作用就是将所有构造方法中公共的信息进行抽取。</p>
+<h3 id="需要注意的是："><a href="#需要注意的是：" class="headerlink" title="需要注意的是："></a>需要注意的是：</h3><p>在Java中，子类的构造过程中，必须 调用其父类的构造函数, 是因为有继承关系存在时, 子类要把父类的内容继承下来, 通过什么手段做到的？ 这样： 当你new一个子类对象的时候, 必须首先要new一个父类的对像出来, 这个父类对象位于子类对象的内部, 所以说，子类对象比父类对象大, 子类对象里面包含了一个父类的对象, 这是内存中真实的情况.</p>
+<p>构造方法是new一个对象的时候, 必须要调的方法, 这是规定, 要new父类对象出来, 那么肯定要调用其构造方法, 所以 第一个规则：子类的构造过程中，必须 调用其父类的构造方法</p>
+<p>一个类, 如果我们不写构造方法, 那么编译器会帮我们加上一个默认的构造方法, 所谓默认的构造方法, 就是没有参数的构造方法, 但是如果你自己写了构造方法, 那么编译器就不会给你添加了</p>
+<p>所以有时候当你new一个子类对象的时候，肯定调用了子类的构造方法，但是在子类构造方法中我们并没有显示的调用基类的构造方法，就是没写，如：super(); 并没有这样写，但是</p>
+]]></content>
+      <categories>
+        <category>Java</category>
+      </categories>
+      <tags>
+        <tag>Java</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Java子类与父类之间的转换</title>
+    <url>/2017/09/26/Java%E5%AD%90%E7%B1%BB%E4%B8%8E%E7%88%B6%E7%B1%BB%E4%B9%8B%E9%97%B4%E7%9A%84%E8%BD%AC%E6%8D%A2/</url>
+    <content><![CDATA[<p>在使用Java的多态机制时，常常使用的一个特性便是子类和父类之间的对象转换。从子类向父类的转换称为向上转换（upcasting），通过向上转换，我们能够在编写程序时采用通用程序设计的思想，在需要使用子类对象的时候，通过把变量定义为父类型，我们可以通过一个变量，使用该父类型的所有子类型实例；从父类型向子类型的转换称为向下转换（downcasting），通过向下转换，我们能在必要的时候，将父类型变量转换成子类型变量，使用一些通过子类型才能够使用的方法。以下是我对于对象转换的一些个人理解，如有不对，欢迎指正，虚心向大神们请教。</p>
+<p>首先是从子类向父类的向上转换。向上转换比较直观，总是能够将一个子类的实例转换为一个父类的对象，从继承链的角度，这个特性很容易理解：继承是一种“是一种”的关系，从父类派生出的子类，我们都能理解为，子类总是父类的一个实例。比如说，Fruit类派生出了Orange类，Apple类，Orange和Apple都是Fruit；Animal类派生出了Tiger类和Lion类，Tiger和Lion都是Animal。因此，从子类向父类的转换不需要什么限制，只需直接将子类实例赋值给父类变量即可，这也是Java中的多态的实现机制。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">&#x2F;&#x2F;Test.java</span><br><span class="line">public class Test &#123;</span><br><span class="line">    public static void main(String args[]) &#123;</span><br><span class="line">        Animal tiger &#x3D; new Tiger();</span><br><span class="line">        Animal lion &#x3D; new Lion();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line">class Animal &#123;</span><br><span class="line">    String name;</span><br><span class="line">    Animal() &#123;</span><br><span class="line">        name &#x3D; &quot;animal&quot;;</span><br><span class="line">    &#125;</span><br><span class="line">    Animal(String name) &#123;</span><br><span class="line">        this.name &#x3D; name;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line">class Tiger extends Animal &#123;</span><br><span class="line">    Tiger() &#123;</span><br><span class="line">        super(&quot;tiger&quot;);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line">class Lion extends Animal &#123;</span><br><span class="line">    Lion() &#123;</span><br><span class="line">        super(&quot;lion&quot;);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>然而从父类向子类的向下转换就稍微复杂一些了。在讲述向下转换之前，也许有些刚学java的朋友会有点不解为什么要使用向下转换，使用多态和动态绑定机制通过父类型变量使用子变量不就可以了么（比如我就曾对此感到疑惑）。这就要考虑到，在继承关系中，有一些方法是不适合由父类定义并由子类继承并重写的，有些方法是子类特有的，不应该通过继承得到，且子类可能也会有自己特有的成员变量，那么在使用多态机制的时候，若我们要通过父类型变量使用到这些子类特有的方法和属性的话，就需要将服类型变量转换成对应的子类型变量。一个典型例子便是标准库中的数据类型包装类：Integer类，Double类，Long类等，它们都继承自Number类，且它们都有一个方法叫做compareTo用于比较两个同样的类型。然而这个方法是这些子类通过实现Comparable接口来实现的，在Number类中并没有该方法的实现，因此若要通过Number类型变量来使用compareTo方法，就要先将Number类转换成子类的对象。</p>
+<p>从父类向子类的转换就有限制了。首先，父类变量向子类转换必须通过显式强制类型转换,采取和向上转换相同的直接赋值方式是不行的，；并且，当把一个父类型变量实例转换为子类型变量时，必须确保该父类变量是子类的一个实例，从继承链的角度来理解这些原因：子类一定是父类的一个实例，然而父类却不一定是子类的实例；比如说，Fruit未必是Orange，它可能是Apple；Animal也不一定是Tiger，它可能是Lion。用代码来解释一下：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">Animal tiger &#x3D; new Tiger();</span><br><span class="line">Animal lion &#x3D; new Lion();</span><br></pre></td></tr></table></figure>
+<p>在前面向上转换的代码示例当中，main方法中的这两行代码，意思就是父类型变量tiger是子类Tiger的一个实例，lion是Lion的一个实例。<br>也就是说，如果要把tiger转换为Tiger类型，必须保证tiger本身是Tiger的一个实例，在上例中，如果要把tiger转换成Lion类型，或是把Lion类型转换为Tiger类型，都是行不通的，在运行时，这会抛出一个运行异常ClassCastException，表示类转换异常。因此，在进行父类向子类的转换时，一个好的习惯是通过instanceof运算符来判断父类变量是否是该子类的一个实例：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">Tiger t &#x3D; null;</span><br><span class="line">if(tiger instanceof Tiger)</span><br><span class="line">    t &#x3D; (Tiger)tiger;</span><br></pre></td></tr></table></figure>
+<p>如果要通过父类调用子类变量的方法，那么要注意要将父类型变量和强制转换用括号括起来：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">Number i &#x3D; new Integer(3)；</span><br><span class="line">System.out.println(</span><br><span class="line">    ((Integer)i).compareTo(new Integer(4))</span><br><span class="line">                  ）；</span><br></pre></td></tr></table></figure>
+<p>因为成员访问运算符.的优先级大于类型转换，所以要用括号括起来保证类型转换先于成员访问进行运算。<br>前面说到用instanceof判断父类是否是子类的一个实例是一个好习惯，如果不养成这个习惯的话很容易出问题，请看下面这段代码：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">Animal animal &#x3D; new Tiger();</span><br><span class="line">Lion lion &#x3D; (Lion)animal;</span><br></pre></td></tr></table></figure>
+<p>前面说到，这段代码会在运行时抛出ClassCastException异常，然而，这段代码却是能够编译成功的。原因是因为，Java编译器并没有聪明到能够在编译阶段就知道父类型变量是哪一个子类的实例，所以，将animal转换为Lion类型的代码：(Lion)animal是能够编译通过的，即使事实上我们能看到animal是Tiger的一个实例，因为Animal类型确实能转换成Lion类型，所以这条语句是合法的。所以，如果没有使用instanceof防止不同子类型之间的对象转换，而又不能指望编译器检查出这种转换逻辑错误的话，就很容易犯错了。<br>总结</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">public class ConvertPro extends Father &#123;</span><br><span class="line">    public static void main(String[] args) &#123;</span><br><span class="line">        Father father &#x3D; new Father();</span><br><span class="line">        Father father1 &#x3D; new ConvertPro();</span><br><span class="line">        ConvertPro son &#x3D; new ConvertPro();</span><br><span class="line">        &#x2F;&#x2F; ConvertPro son1 &#x3D; (ConvertPro) new Father();</span><br><span class="line">        &#x2F;&#x2F; son &#x3D; (ConvertPro)father;</span><br><span class="line">        son &#x3D; (ConvertPro) father1;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line">&#x2F;**</span><br><span class="line"> * 父类</span><br><span class="line"> * </span><br><span class="line"> * @author icer</span><br><span class="line"> * </span><br><span class="line"> *&#x2F;</span><br><span class="line">class Father &#123;</span><br><span class="line">    private String name;</span><br><span class="line">    public String getName() &#123;</span><br><span class="line">        return name;</span><br><span class="line">    &#125;</span><br><span class="line">    public void setName(String name) &#123;</span><br><span class="line">        this.name &#x3D; name;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>上面代码注释掉的两行是会运行错误的. 根据代码显示, 只有我们的父类对象本身就是用子类new出来的时候, 才可以在将来被强制转换为子类对象.</p>
+<p>子类继承父类的所有(包括属性以及方法), 也就是说子类包含的内容应该是比父类要大的. 如果正常环境下, 把一个父类转换成子类一定会损失精度. 但是如果父类对象本身就是用子类去new出来的, 就类似于一个本来就是儿子角色的人, 去装了一会儿父亲, 这个角色是可以在未来转换回去的, 但是一个父亲, 永远不可能去装儿子的.</p>
+]]></content>
+      <categories>
+        <category>Java</category>
+      </categories>
+      <tags>
+        <tag>Java</tag>
+        <tag>多态</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>201709Java面试题目总结</title>
+    <url>/2017/09/26/201709Java%E9%9D%A2%E8%AF%95%E9%A2%98%E7%9B%AE%E6%80%BB%E7%BB%93%20/</url>
+    <content><![CDATA[<p>碰到的Java笔试题</p>
+<ol>
+<li>下面正确的是（B）<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line"> public class A &#123;  </span><br><span class="line"> public void start() &#123;  </span><br><span class="line">  System.out.println(&quot;TestA&quot;); </span><br><span class="line"> &#125; </span><br><span class="line">&#125;  </span><br><span class="line">public class B extends A &#123; </span><br><span class="line"> public void start() &#123;  </span><br><span class="line">  System.out.println(&quot;TestB&quot;); </span><br><span class="line"> &#125;  </span><br><span class="line"> public static void main(String[] args) &#123; </span><br><span class="line">  ( (A) new B( ) ).start(); </span><br><span class="line"> &#125; </span><br><span class="line">&#125;  </span><br><span class="line"> A.输出：TestA </span><br><span class="line"> B.输出：TestB </span><br><span class="line"> C.输出：TestA  TestB </span><br><span class="line"> D.编译错误</span><br></pre></td></tr></table></figure></li>
+<li>下面正确的是(D)<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line"> interface DeclareStuff &#123;</span><br><span class="line"> public static final int EASY &#x3D; 3;</span><br><span class="line"> void doStuff(int t); &#125;. public class TestDeclare implements DeclareStuff &#123;</span><br><span class="line"> public static void main(String [] args) &#123;</span><br><span class="line"> int x &#x3D; 5;</span><br><span class="line"> new TestDeclare().doStuff(++x);</span><br><span class="line"> &#125;</span><br><span class="line"> void doStuff(int s) &#123;</span><br><span class="line">s +&#x3D; EASY + ++s;</span><br><span class="line"> System.out.println(&quot;s &quot; + s);</span><br><span class="line"> &#125;</span><br><span class="line"> &#125;</span><br><span class="line"></span><br><span class="line">结果为何?</span><br><span class="line">A. s 14</span><br><span class="line">B. s 16</span><br><span class="line">C. s 10</span><br><span class="line">D. 编译失败。</span><br><span class="line">E. 执行阶段丢出异常。</span><br><span class="line">Answer: D</span><br><span class="line">解析：被实现的接口必须声明为public，否则编译错误。</span><br></pre></td></tr></table></figure></li>
+<li>说出String，StringBuffer和StringBuilder的区别和相同之处。</li>
+</ol>
+<p>答：1.可变与不可变<br>　　String类中使用字符数组保存字符串，如下就是，因为有“final”修饰符，所以可以知道string对象是不可变的。<br>　　　　private final char value[];<br>　　StringBuilder与StringBuffer都继承自AbstractStringBuilder类，在AbstractStringBuilder中也是使用字符数组保存字符串，如下就是，可知这两种对象都是可变的。<br>　　　　char[] value;<br>2.是否多线程安全<br>　　String中的对象是不可变的，也就可以理解为常量，显然线程安全。<br>　　AbstractStringBuilder是StringBuilder与StringBuffer的公共父类，定义了一些字符串的基本操作，如expandCapacity、append、insert、indexOf等公共方法。<br>　　StringBuffer对方法加了同步锁或者对调用的方法加了同步锁，所以是线程安全的。看如下源码： 　　</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">public synchronized StringBuffer reverse() &#123;</span><br><span class="line">     super.reverse();</span><br><span class="line">     return this;</span><br><span class="line"> &#125;</span><br><span class="line"> public int indexOf(String str) &#123;</span><br><span class="line">     return indexOf(str, 0);        &#x2F;&#x2F;存在 public synchronized int indexOf(String str, int fromIndex) 方法</span><br><span class="line"> &#125;</span><br></pre></td></tr></table></figure>
+<p>　　StringBuilder并没有对方法进行加同步锁，所以是非线程安全的。<br>3.StringBuilder与StringBuffer共同点<br>　　StringBuilder与StringBuffer有公共父类AbstractStringBuilder(抽象类)。<br>　　抽象类与接口的其中一个区别是：抽象类中可以定义一些子类的公共方法，子类只需要增加新的功能，不需要重复写已经存在的方法；而接口中只是对方法的申明和常量的定义。<br>　　StringBuilder、StringBuffer的方法都会调用AbstractStringBuilder中的公共方法，如super.append(…)。只是StringBuffer会在方法上加synchronized关键字，进行同步。<br>　　最后，如果程序不是多线程的，那么使用StringBuilder效率高于StringBuffer。<br>4. HashMap和HashTable区别，初始化大小和相同</p>
+<p>答：1. 存储方式相同，利用一个内部类，实现的是Map.Entity接口，但内部实现不同，但是都是以节点的方式进行存储。是一种单向链表，链表是基于数组的。都是通过hashcode找到数组中的某一元素，然后通过key的equals方法在链表中找到key对应的value。</p>
+<ol start="2">
+<li>HashMap可以允许key为null，value为null。但HashTable都不允许为null。（为什么HashMap中的key可以为null呢？</li>
+</ol>
+<p>　　这是因为HashMap和HashTable它们计算一个对象的hashCode时的方法不一样。HashMap不是直接用对象自己的hashCode，而是自己重新计算一下hashCode，而HashTable直接用对象本上的hashCode，</p>
+<p>并没有再进行计算。这个地方HashMap会稍慢一点HashTable。）<br>3.继承的类不一样：</p>
+<p> 继承的类不一样<br>public class Hashtable&lt;K,V&gt; extends Dictionary&lt;K,V&gt; implements Map&lt;K,V&gt;, Cloneable, java.io.Serializable<br>public class HashMap&lt;K,V&gt; extends AbstractMap&lt;K,V&gt; implements Map&lt;K,V&gt;, Cloneable, Serializable</p>
+<p>Hashtable继承的是Dictionary，而HashMap继承的是AbstractMap。<br>4.同步机制不一样</p>
+<p>　　HashMap没有提供同步机制，是线程不安全的，需要自己在外面写同步代码，HashTable 部分方法上有自己的 synchronize 同步，是线程安全的。由于HashMap是线程不安全的，所以效率可能会高一点，而且在类外面控制线程安全更灵活。<br>5.HashMap中没有contains（）方法。</p>
+<p>6.它们的数组初始化大小和扩容方式不一样，HashTable中hash数组默认大小是11，增加的方式是 old*2+1。HashMap中hash数组的默认大小是16，而且一定是2的指数。<br>5. ArrayList和LinkedList的区别，初始化大小，相同之处</p>
+<p>相同之处：都实现了java.lang.List接口，都是非线程安全的。<br>区别：</p>
+<pre><code>ArrayList是实现了基于动态数组的数据结构，LinkedList基于链表的数据结构。
+对于随机访问get和set，ArrayList觉得优于LinkedList，因为LinkedList要移动指针。
+对于新增和删除操作add和remove，LinedList比较占优势，因为ArrayList要移动数据。
+每一个ArrayList都有一个初始容量（10），该容量代表了数组的大小。随着容器中的元素不断增加，容器的大小也会随着增加。在每次向容器中增加元素的同时都会进行容量检查，当快溢出时，就会进行扩容操作。所以如果我们明确所插入元素的多少，最好指定一个初始容量值，避免过多的进行扩容操作而浪费时间、效率。
+6. 描述线程的生命周期以及线程每个状态的解释和作用？
+线程的生命周期:
+线程是一个动态执行的过程，它也有一个从产生到死亡的过程。</code></pre><p>(1)生命周期的五种状态</p>
+<p>新建（new Thread）<br>当创建Thread类的一个实例（对象）时，此线程进入新建状态（未被启动）。<br>例如：Thread t1=new Thread();</p>
+<p>就绪（runnable）<br>线程已经被启动，正在等待被分配给CPU时间片，也就是说此时线程正在就绪队列中排队等候得到CPU资源。例如：t1.start();</p>
+<p>运行（running）<br>线程获得CPU资源正在执行任务（run()方法），此时除非此线程自动放弃CPU资源或者有优先级更高的线程进入，线程将一直运行到结束。</p>
+<p>死亡（dead）<br>当线程执行完毕或被其它线程杀死，线程就进入死亡状态，这时线程不可能再进入就绪状态等待执行。</p>
+<p>自然终止：正常运行run()方法后终止</p>
+<p>异常终止：调用stop()方法让一个线程终止运行</p>
+<p>堵塞（blocked）<br>由于某种原因导致正在运行的线程让出CPU并暂停自己的执行，即进入堵塞状态。</p>
+<p>正在睡眠：用sleep(long t) 方法可使线程进入睡眠方式。一个睡眠着的线程在指定的时间过去可进入就绪状态。</p>
+<p>正在等待：调用wait()方法。（调用motify()方法回到就绪状态）</p>
+<p>被另一个线程所阻塞：调用suspend()方法。（调用resume()方法恢复）</p>
+<p>下图是它所对应的5种基本状态：</p>
+<p>一个线程应该在创建状态完成之后，进入就绪状态，代表着它已经准备好了，只需要等待CPU的资源，但是等待的时间是不确定的，这个时间段有可能会进入阻塞状态，线程会在阻塞状态与运行状态直接进行切换，最后直到run方法执行完毕，整个线程也就结束了；阻塞状态有几种情形，一种是线程</p>
+<p>正在睡眠：用sleep(long t) 方法可使线程进入睡眠方式。一个睡眠着的线程在指定的时间过去可进入就绪状态。</p>
+<p>正在等待：调用wait()方法。（调用motify()方法回到就绪状态）</p>
+<p>被另一个线程所阻塞：调用suspend()方法。（调用resume()方法恢复）</p>
+<p>前面两种阻塞状态都是可以控制的，而最后一种阻塞状态就有点危险了，万一遇到死锁就很糟糕了。我们可以更改一下线程的优先级，线程有三种优先级</p>
+<p>static int MAX_PRIORITY<br>线程可以具有的最高优先级。<br>static int MIN_PRIORITY<br>线程可以具有的最低优先级。<br>static int NORM_PRIORITY<br>分配给线程的默认优先级。</p>
+<p>或者使用Thread.yield()方法作用是：暂停当前正在执行的线程对象，并执行其他线程。也可以使用join,join()的作用是：“等待该线程终止”，这里需要理解的就是该线程是指的主线程等待子线程的终止。也就是在子线程调用了join()方法后面的代码，只有等到子线程结束了才能执行。</p>
+<p>流程分析：</p>
+<p>首先是通过new Thread（）方法实例化一个新线程，然后改线程的对象调用start()方法，此时线程转入到就绪状态并且等待cpu的调度，可能不是马上就调度到此线程的，这和cpu的轮询策略有关，例如时间片轮询策略。<br>    线程运行，执行run方法，如果中途没被其他操作线程的方法操作的话，那么run方法运行完毕，线程死亡。<br>     如果在线程run的过程中，执行了别的操作线程的方法，如果有调用sleep方法的线程，改线程会暂停一段时间，而且不会释放资源锁，，也就是说如果有synchronized同步块，其它线程仍然是不能访问共享数据的。而且sleep方法给其它的线程运行的机会，而且是不考虑其它线程的优先级的。当前线程转入睡眠状态，直到睡眠结束。如果当前线程调用的是其它线程的join方法，当前的进程状态将转入到挂起状态，知道另外一线程运行结束，该线程才继续运行。当当前线程是等待IO输入，则当前线程进入等待状态，知道输入流结束。<br>     如果当前线程执行了yeild方法，当前线程进入到就绪状态，并让出cpu的控制权，cpu执行别的线程。<br>     如果在run方法中，当前线程执行了wait（）方法，使当前线程暂停，当前线程进入等待状态，在其他线程调用此对象的 notify() 方法或者 notifyAll()方法，该线程进入阻塞状态，因为是在同步块中进行的，所以要等待当前资源释放资源，然后进入解锁，到就绪状态。<br>    如果是线程加了同步锁的话，该线程对资源独享，其它线程想操作此数据，将进入到阻塞状态，知道同步锁的线程操作完资源，进行解锁，从而转入到就绪状态。</p>
+<p>7.画出springMVC的流程图</p>
+<p>1.先用文字描述</p>
+<pre><code>用户向服务器发送请求，请求被Spring 前端控制Servelt DispatcherServlet捕获；
+DispatcherServlet对请求URL进行解析，得到请求资源标识符（URI）。然后根据该URI，调用HandlerMapping获得该Handler配置的所有相关的对象（包括Handler对象以及Handler对象对应的拦截器），最后以HandlerExecutionChain对象的形式返回；
+DispatcherServlet 根据获得的Handler，选择一个合适的HandlerAdapter。（附注：如果成功获得HandlerAdapter后，此时将开始执行拦截器的preHandler(…)方法）
+提取Request中的模型数据，填充Handler入参，开始执行Handler（Controller)。 在填充Handler的入参过程中，根据你的配置，Spring将帮你做一些额外的工作：
+HttpMessageConveter： 将请求消息（如Json、xml等数据）转换成一个对象，将对象转换为指定的响应信息
+数据转换：对请求消息进行数据转换。如String转换成Integer、Double等
+数据根式化：对请求消息进行数据格式化。 如将字符串转换成格式化数字或格式化日期等
+数据验证： 验证数据的有效性（长度、格式等），验证结果存储到BindingResult或Error中
+Handler执行完成后，向DispatcherServlet 返回一个ModelAndView对象；
+根据返回的ModelAndView，选择一个适合的ViewResolver（必须是已经注册到Spring容器中的ViewResolver)返回给DispatcherServlet ；
+ViewResolver 结合Model和View，来渲染视图
+将渲染结果返回给客户端。
+流程图：![enter description here][1]</code></pre><p>8.请求的转发与重定向的区别</p>
+<p>深入（分析理解）</p>
+<p>转发过程<br>客户首先发送一个请求到服务器端，服务器端发现匹配的servlet，并指定它去执行，当这个servlet执行完之后，它要调用getRequestDispacther()方法，把请求转发给指定的student_list.jsp,整个流程都是在服务器端完成的，而且是在同一个请求里面完成的，因此servlet和jsp共享的是同一个request，在servlet里面放的所有东西，在student_list中都能取出来，因此，student_list能把结果getAttribute()出来，getAttribute()出来后执行完把结果返回给客户端。整个过程是一个请求，一个响应。</p>
+<p>重定向过程<br>客户发送一个请求到服务器，服务器匹配servlet，这都和请求转发一样，servlet处理完之后调用了sendRedirect()这个方法，这个方法是response的方法，所以，当这个servlet处理完之后，看到response.senRedirect()方法，立即向客户端返回这个响应，响应行告诉客户端你必须要再发送一个请求，去访问student_list.jsp，紧接着客户端受到这个请求后，立刻发出一个新的请求，去请求student_list.jsp,这里两个请求互不干扰，相互独立，在前面request里面setAttribute()的任何东西，在后面的request里面都获得不了。可见，在sendRedirect()里面是两个请求，两个响应。</p>
+<p>浅出（表象）<br>转发<br>当用RequestDispatcher请求转发后，地址栏为<a href="http://localhost:8080/test/TestServlet" target="_blank" rel="noopener">http://localhost:8080/test/TestServlet</a><br>这真好应正了上面的分析，我们起初请求的就一个servlet，至于你服务器端怎么转，流程怎么样的，我客户端根本就不知道，我发了请求后我就等着响应，那你服务器那边愿意怎么转就怎么转，我客户端不关心也没法知道，所以当服务器端转发到jsp后，它把结果返回给客户端，客户端根本就不知道你这个结果是我真正访问的servlet产生的，还是由servlet转发后下一个组件产生的。</p>
+<p>重定向<br>当用sendRedirect重定向后，地址栏为<a href="http://localhost:8080/test/student_list.jsp" target="_blank" rel="noopener">http://localhost:8080/test/student_list.jsp</a><br>因为这个时候，客户端已经知道了他第二次请求的是student_list.jsp，服务器已经告诉客户端要去访问student_list.jsp了，所以地址栏里会显示想要访问的结果。</p>
+<p>总结<br>转发在服务器端完成的；重定向是在客户端完成的<br>转发的速度快；重定向速度慢<br>转发的是同一次请求；重定向是两次不同请求<br>转发不会执行转发后的代码；重定向会执行重定向之后的代码<br>转发地址栏没有变化；重定向地址栏有变化<br>转发必须是在同一台服务器下完成；重定向可以在不同的服务器下完成</p>
+<p>Forward是在服务器端的跳转，就是客户端一个请求发给服务器，服务器直接将请求相关的参数的信息原封不动的传递到该服务器的其他jsp或servlet去处理，而sendredirect是在客户端的跳转，服务器会返回给客户端一个响应报头和新的URL地址，原来的参数什么的信息如果服务器端没有特别处理就不存在了，浏览器会访问新的URL所指向的servlet或jsp，这可能不是原先服务器上的webservce了。<br>9.JSP页面一共有多少个隐含对象,分别对应java的哪些类</p>
+<p>1、out 来源于java.io.Writer类，它用于发送输出流到客户端。<br>2、request 来源于javax.servlet.http.HttpServletRequest接口。它被关联到每一个HTTP请求。<br>3、response 来源于javax.servlet.http.HttpServletResponse。response对象用于把取得的数据返回到客户端。<br>4、pageContext 提供访问JSP页面的命名空间。它也提供用来访问其他的JSP隐含对象。<br>5、session 来源于javax.servlet.http.HttpSession。它用于存储客户端请求的信息，因此它是有状态交互式的。<br>6、application 来源于javax.servlet.ServletContext。<br>7、config 来源于ServletConfig，它包含了当前JSP/Servlet所在的WEB应用的配置信息。<br>8、page 来源于当前被访问JSP页面的实例化。它实际使用的是JSP转换成的Servlet。<br>9、exception 用于捕获JSP抛出的异常。它只有在JSP页面属性isErrorPage=true时才可用。<br>10.怎样解决表单重复提交问题</p>
+<p>1.js方法解决:关于js方法解决就是说通过js动态控制提交按钮不能多次点击，或者多次点击不起作用。<br>2.设置HTTP报头，控制表单缓存，使得所控制的表单不缓存信息，这样用户就无法通过重复点击按钮去重复提交表单。<br>3.通过PRG设计模式(用来防止F5刷新重复提交表单)<br>4.如果是注册或存入数据库的操作，可以通过在数据库中字段设立唯一标识来解决，这样在进行数据库插入操作时，因为每次插入的数据都相同，数据库会拒绝写入。这样也避免了向数据库中写入垃圾数据的情况，同时也解决了表单重复提交问题。<br>5.session方法:<br>在struts框架中防止表单重复提交的方法是生成Token存入session，以此判断表单是否是第一次提交<br>11.Java Web如何解决中文乱码问题 ：</p>
+<p>方法一：<br>tomcat的自带编码是ISO-8859-1的格式，是不兼容中文的编码的。所以我们从后台接收的时候要注意。<br>采用相同的格式去接收（ISO-8859-1)，然后用能解析的编码(utf-8)去转换。这样我们就能得到能兼容中文的格式了。这样处理之后发往前台。注意：发往前台的时候也需要设置一下<br>resp.setContentType(“text/html;charset=utf-8”);//设置页面的字符编码，解决界面显示中文乱码的问题</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">protected void service(HttpServletRequest req, HttpServletResponse resp)</span><br><span class="line">throws ServletException, IOException &#123;</span><br><span class="line">&#x2F;&#x2F;因为tomcat自带编码是ISO-8859-1格式</span><br><span class="line"></span><br><span class="line">&#x2F;&#x2F;解决乱码方法之一</span><br><span class="line">  String name&#x3D;req.getParameter(“username”);</span><br><span class="line">  String pwd&#x3D;req.getParameter(“pwd”);</span><br><span class="line">  byte[] b&#x3D;name.getBytes(“ISO-8859-1”);&#x2F;&#x2F;用tomcat的格式（iso-8859-1）方式去读。</span><br><span class="line">  String str&#x3D;new String(b,”utf-8”);&#x2F;&#x2F;采用utf-8去接string</span><br><span class="line">  resp.setContentType(“text&#x2F;html;charset&#x3D;utf-8”);&#x2F;&#x2F;设置页面的字符编码 </span><br><span class="line"></span><br><span class="line">  PrintWriter pw &#x3D;resp.getWriter();</span><br><span class="line">  String str1&#x3D;”username:”+name+”pwd:”+pwd+”“;</span><br><span class="line">  pw.print(str1);</span><br><span class="line">PrintWriter pw &#x3D;resp.getWriter();</span><br><span class="line">String str1&#x3D;”username:”+name+”pwd:”+pwd+”“;</span><br><span class="line">pw.print(str1);</span><br></pre></td></tr></table></figure>
+<p>方法二：<br>由于方法一比较繁琐，采用用了简单的设置。只需要简单的一句就可以搞定<br>req.setCharacterEncoding(“utf-8”);//必须写在第一位，因为采用这种方式去读取数据，否则数据会出错。<br>这样就不用像之前的那样繁琐的设置了</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">protected void service(HttpServletRequest req, HttpServletResponse resp)</span><br><span class="line">throws ServletException, IOException &#123;</span><br><span class="line">&#x2F;&#x2F;因为tomcat自带编码是ISO-8859-1格式</span><br><span class="line"></span><br><span class="line">&#x2F;&#x2F;解决乱码二《法一比较繁琐》</span><br><span class="line">req.setCharacterEncoding(“utf-8”);&#x2F;&#x2F;必须写在第一位，因为采用这种方式去读取数据，否</span><br><span class="line"></span><br><span class="line">则数据会出错。</span><br><span class="line">&#x2F;&#x2F;设置这样方式去读。这样中文就能够读取出来了，但是需要注意。表单的发送方式必须是 method&#x3D;’post’</span><br><span class="line">resp.setContentType(“text&#x2F;html;charset&#x3D;utf-8”);&#x2F;&#x2F;设置传过去的页面显示的编码</span><br><span class="line">String name&#x3D;req.getParameter(“username”);</span><br><span class="line">String pwd&#x3D;req.getParameter(“pwd”);</span><br><span class="line">PrintWriter pw &#x3D;resp.getWriter();</span><br><span class="line">String str1&#x3D;”username:”+name+”pwd:”+pwd+”“;</span><br><span class="line">pw.print(str1);</span><br></pre></td></tr></table></figure>
+<p>方法三：</p>
+<p>这是在法二的基础上修改的。虽然我们能修改编码格式去读，但是考虑到用户肯定不会修改，所以我们需要采用比较通用的办法，让用户修改配置文件。也就是web.xml文件<br>需要修改web.xml里面的内容，就是说，字符编码从xml接收过来。需要在xml文件中配置参数。<br>代码如下：</p>
+<p>Encodeing<br>cn.hncu.com.encode.Encodeing</p>
+<p>charset<br>utf-8//这里面的内容可供用户自己填写（必须是编码格式）</p>
+<p>我们知道前台和后台进行交换必须经过web.xml配置<br>我们需要获取web.xml的设置的参数</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">public void init(ServletConfig config) throws ServletException &#123;</span><br><span class="line">charset&#x3D;config.getInitParameter(“charset”);&#x2F;&#x2F;获得初始化参数。当然charset需要设置为全局变量。后面的service函数需要设置req.setCharacterEncoding(charset);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">req.setCharacterEncoding(charset);</span><br><span class="line">resp.setContentType(“text&#x2F;html;charset&#x3D;utf-8”);</span><br><span class="line">String name&#x3D;req.getParameter(“username”);</span><br><span class="line">String pwd&#x3D;req.getParameter(“pwd”);</span><br><span class="line"></span><br><span class="line">PrintWriter pw &#x3D;resp.getWriter();</span><br><span class="line">String str1&#x3D;”username:”+name+”pwd:”+pwd+”“;</span><br><span class="line">pw.print(str1);</span><br></pre></td></tr></table></figure>
+<p>解决的效果图：</p>
+<p>解决之前：</p>
+<p>解决之后：</p>
+<p>前台代码：</p>
+<body> 
+ <form action="login" method="post">//login在web.xml中配置，就能实现到后台去读取数据 
+ 用户名：<input type="text" name="username"><br> 
+ 密码：<input type="password" name="pwd"><br> 
+ <input type="submit" value="登录"> 
+ </form> 
+ <script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","model":{"jsonPath":"/live2dw/assets/assets/koharu.model.json"},"display":{"width":200,"height":350,"position":"right","hOffset":-10,"vOffset":-50},"mobile":{"show":true,"scale":0.35},"log":false,"tagMode":false});</script></body>
+
+<p>12.HashMap数据结构及实现原理，其链表是用来解决什么问题的？</p>
+<p>暂时比较难回答。</p>
+<p>###13.冒泡排序算法<br>14.阐述你对get post的理解，写出它们的一般使用场景</p>
+<p>GET和POST两种方法都是将数据送到服务器。HTTP标准包含这两种方法是为了达到不同的目的。</p>
+<p>POST用于创建资源，资源的内容会被编入HTTP请示的内容中。例如，处理订货表单、在数据库中加入新数据行等。<br>当请求无副作用时（如进行搜索），便可使用GET方法；当请求有副作用时（如添加数据行），则用POST方法。一个比较实际的问题是：GET方法可能会产生很长的URL，或许会超过某些浏览器与服务器对URL长度的限制。</p>
+<p>若符合下列任一情况，则用POST方法：</p>
+<pre><code>请求的结果有持续性的副作用，例如，数据库内添加新的数据行。
+若使用GET方法，则表单上收集的数据可能让URL过长。
+要传送的数据不是采用7位的ASCII编码。</code></pre><p>若符合下列任一情况，则用GET方法：</p>
+<pre><code>请求是为了查找资源，HTML表单数据仅用来帮助搜索。
+
+请求结果无持续性的副作用。
+
+收集的数据及HTML表单内的输入字段名称的总长不超过1024个字符。</code></pre><p>HTTP 定义了与服务器交互的不同方法，最常用的有4种，Get、Post、Put、Delete,如果我换一下顺序就好记了，Put（增）,Delete（删），Post（改）,Get（查），即增删改查，下面简单叙述一下：</p>
+<p>1）Get， 它用于获取信息，注意，他只是获取、查询数据，也就是说它不会修改服务器上的数据，从这点来讲，它是数据安全的，而稍后会提到的Post它是可以修改数据的，所以这也是两者差别之一了。</p>
+<p>2） Post，它是可以向服务器发送修改请求，从而修改服务器的，比方说，我们要在论坛上回贴、在博客上评论，这就要用到Post了，当然它也是可以仅仅获取数据的。</p>
+<p>3）Delete 删除数据。可以通过Get/Post来实现。用的不多，暂不多写，以后扩充。</p>
+<p>4）Put，增加、放置数据，可以通过Get/Post来实现。用的不多，暂不多写，以后扩充。</p>
+<p>下面简述一下Get和Post区别：</p>
+<p>1） GET请求的数据是放在HTTP包头中的，也就是URL之后，通常是像下面这样定义格式的，（而Post是把提交的数据放在HTTP正文中的）。</p>
+<p>login.action?name=hyddd&amp;password=idontknow&amp;verify=%E4%BD%E5%A5%BD</p>
+<p>a，以 ？ 来分隔URL和数据；<br>b，以&amp; 来分隔参数；<br>c，如果数据是英文或数字，原样发送；<br>d，如果数据是中文或其它字符，则进行BASE64编码。<br>2）GET提交的数据比较少，最多1024B，因为GET数据是附在URL之后的，而URL则会受到不同环境的限制的，比如说IE对其限制为2K+35，而POST可以传送更多的数据（理论上是没有限制的，但一般也会受不同的环境，如浏览器、操作系统、服务器处理能力等限制，IIS4可支持80KB，IIS5可支持100KB）。<br>3）Post的安全性要比Get高，因为Get时，参数数据是明文传输的，而且使用GET的话，还可能造成Cross-site request forgery攻击。而POST数据则可以加密的，但GET的速度可能会快些。<br>所以综上几点，总结成下表：<br>操作方式 数据位置 明文密文 数据安全 长度限制 应用场景</p>
+<p>GET HTTP包头 明文 不安全 长度较小 查询数据</p>
+<p>POST HTTP正文 可明可密 安全 支持较大数据传输 修改数据<br>总的来说，get是用来查询数据，post是用来修改数据。比方说，我们要在论坛上回贴、在博客上评论，这就要用到Post了，当然它也是可以仅仅获取数据的。<br>15.简述tcp建立连接的三次握手，断开连接的四次握手的具体过程</p>
+<p>TCP的三次握手和四次断开<br>TCP是一个面向连接的服务,面向连接的服务是电话系统服务模式的抽象,每一次完整的数据传输都必须经过建<br>立连接,数据传输和终止连接3个过程,TCP建立连接的过程称为三次握手,下面看一下三次握手的具本过程<br>TCP三次握手过程<br>1 主机A通过向主机B 发送一个含有同步序列号的标志位的数据段给主机B ,向主机B 请求建立连接,通过这个数据段,<br>主机A告诉主机B 两件事:我想要和你通信;你可以用哪个序列号作为起始数据段来回应我.<br>2 主机B 收到主机A的请求后,用一个带有确认应答(ACK)和同步序列号(SYN)标志位的数据段响应主机A,也告诉主机A两件事:<br>我已经收到你的请求了,你可以传输数据了;你要用哪个序列号作为起始数据段来回应我<br>3 主机A收到这个数据段后,再发送一个确认应答,确认已收到主机B 的数据段:”我已收到回复,我现在要开始传输实际数据了</p>
+<p>这样3次握手就完成了,主机A和主机B 就可以传输数据了.<br>3次握手的特点<br>没有应用层的数据<br>SYN这个标志位只有在TCP建产连接时才会被置1<br>握手完成后SYN标志位被置0<br>4次断开<br>1 当主机A完成数据传输后,将控制位FIN置1,提出停止TCP连接的请求<br>2 主机B收到FIN后对其作出响应,确认这一方向上的TCP连接将关闭,将ACK置1<br>3 由B 端再提出反方向的关闭请求,将FIN置1<br>4 主机A对主机B的请求进行确认,将ACK置1,双方向的关闭结束.<br>由TCP的三次握手和四次断开可以看出,TCP使用面向连接的通信方式,大大提高了数据通信的可靠性,使发送数据端<br>和接收端在数据正式传输前就有了交互,为数据正式传输打下了可靠的基础<br>名词解释<br>ACK TCP报头的控制位之一,对数据进行确认.确认由目的端发出,用它来告诉发送端这个序列号之前的数据段<br>都收到了.比如,确认号为X,则表示前X-1个数据段都收到了,只有当ACK=1时,确认号才有效,当ACK=0时,确认号无效,这时会要求重传数据,保证数据的完整性.<br>SYN 同步序列号,TCP建立连接时将这个位置1<br>FIN 发送端完成发送任务位,当TCP完成数据传输需要断开时,提出断开连接的一方将这位置1</p>
+<p>解释原因：</p>
+<p>TCP建立连接要进行3次握手,而断开连接要进行4次,这是由于TCP的半关闭造成的,因为TCP连接是全双工的(<br>即数据可在两个方向上同时传递)所以进行关闭时每个方向上都要单独进行关闭,这个单方向的关闭就叫半关闭.<br>关闭的方法是一方完成它的数据传输后,就发送一个FIN来向另一方通告将要终止这个方向的连接.当一端收到一个FIN,它必须<br>通知应用层TCP连接已终止了这个方向的数据传送,发送FIN通常是应用层进行关闭的结果.</p>
+<p>另一种解释：</p>
+<p>这是因为服务端的LISTEN状态下的SOCKET当收到SYN报文的建连请求后，它可以把ACK和SYN（ACK起应答作用，而SYN起同步作用）放在一个报文里来发送。但关闭连接时，当收到对方的FIN报文通知时，它仅仅表示对方没有数据发送给你了；但未必你所有的数据都全部发送给对方了，所以你可以未必会马上会关闭SOCKET,也即你可能还需要发送一些数据给对方之后，再发送FIN报文给对方来表示你同意现在可以关闭连接了，所以它这里的ACK报文和FIN报文多数情况下都是分开发送的。</p>
+<p>为什么不能两次握手能进行连接？</p>
+<p>我们知道，3次握手完成两个重要的功能，既要双方做好发送数据的准备工作(双方都知道彼此已准备好)，也要允许双方就初始序列号进行协商，这个序列号在握手过程中被发送和确认。<br>现在把三次握手改成仅需要两次握手，死锁是可能发生的。作为例子，考虑计算机S和C之间的通信，假定C给S发送一个连接请求分组，S收到了这个分组，并发送了确认应答分组。按照两次握手的协定，S认为连接已经成功地建立了，可以开始发送数据分组。可是，C在S的应答分组在传输中被丢失的情况下，将不知道S是否已准备好，不知道S建立什么样的序列号，C甚至怀疑S是否收到自己的连接请求分组。在这种情况下，C认为连接还未建立成功，将忽略S发来的任何数据分组，只等待连接确认应答分组。而S在发出的分组超时后，重复发送同样的分组。这样就形成了死锁。<br>16.操作系统中的堆和栈的区别。数据结构中堆与栈的区别</p>
+<p>操作系统中：<br>堆和栈的主要区别：</p>
+<p>（1）管理方式不同。<br>栈编译器自动管理，无需程序员手工控制；而堆空间的申请释放工作由程序员控制，容易产生内存泄漏。</p>
+<p>（2）空间大小不同。<br>栈是向低地址扩展的数据结构，是一块连续的内存区域。这句话的意思是栈顶的地址和栈的最大容量是系统预先规定好的，当申请的空间超过栈的剩余空间时，将提示溢出。因此，用户能从栈获得的空间较小。</p>
+<p>堆是向高地址扩展的数据结构，是不连续的内存区域。因为系统是用链表来存储空闲内存地址的，且链表的遍历方向是由低地址向高地址。由此可见，堆获得的空间较灵活，也较大。栈中元素都是一一对应的，不会存在一个内存块从栈中间弹出的情况。</p>
+<p>（3）是否产生碎片。<br>对于堆来讲，频繁的malloc/free（new/delete）势必会造成内存空间的不连续，从而造成大量的碎片，使程序效率降低（虽然程序在退出后操作系统会对内存进行回收管理）。对于栈来讲，则不会存在这个问题。</p>
+<p>（4）增长方向不同。<br>堆的增长方向是向上的，即向着内存地址增加的方向；栈的增长方向是向下的，即向着内存地址减小的方向。</p>
+<p>（5）分配方式不同。<br>堆都是程序中由malloc()函数动态申请分配并由free()函数释放的；栈的分配和释放是由编译器完成的，栈的动态分配由alloca()函数完成，但是栈的动态分配和堆是不同的，他的动态分配是由编译器进行申请和释放的，无需手工实现。</p>
+<p>（6）分配效率不同。<br>栈是机器系统提供的数据结构，计算机会在底层对栈提供支持：分配专门的寄存器存放栈的地址，压栈出栈都有专门的指令执行。堆则是C函数库提供的，它的机制很复杂，例如为了分配一块内存，库函数会按照一定的算法（具体的算法可以参考数据结构/操作系统）在堆内存中搜索可用的足够大的空间，如果没有足够大的空间（可能是由于内存碎片太多），就有需要操作系统来重新整理内存空间，这样就有机会分到足够大小的内存，然后返回。显然，堆的效率比栈要低得多。</p>
+<p>数据结构中：<br>堆和栈在数据结构中是两种不同的数据结构。 两者都是数据项按序排列的数据结构。</p>
+<p>栈：像是装数据的桶或者箱子</p>
+<p>栈是大家比较熟悉的一种数据结构，它是一种具有后进先出的数据结构，也就是说后存放的先取，先存放的后取，这就类似于我们要在取放在箱子底部的东西（放进去比较早的物体），我们首先要移开压在它上面的物体（放入比较晚的物体）。</p>
+<p>堆：像是一颗倒立的大树</p>
+<p>堆是一种经过排序的树形数据结构，每个节点都有一个值。通常我们所说的</p>
+]]></content>
+      <categories>
+        <category>Java</category>
+      </categories>
+      <tags>
+        <tag>Java</tag>
+        <tag>面试题</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>如何使用Java写一个简易的HTTPServer</title>
+    <url>/2017/09/21/%E5%A6%82%E4%BD%95%E4%BD%BF%E7%94%A8Java%E5%86%99%E4%B8%80%E4%B8%AA%E7%AE%80%E6%98%93%E7%9A%84HTTPServer/</url>
+    <content><![CDATA[<h3 id="HTTP是啥？"><a href="#HTTP是啥？" class="headerlink" title="HTTP是啥？"></a>HTTP是啥？</h3><p>   超文本传输协议（HTTP，HyperText Transfer Protocol)是互联网上应用最为广泛的一种网络协议。所有的WWW文件都必须遵守这个标准。设计HTTP最初的目的是为了提供一种发布和接收HTML页面的方法。1960年美国人Ted Nelson构思了一种通过计算机处理文本信息的方法，并称之为超文本（hypertext）,这成为了HTTP超文本传输协议标准架构的发展根基。Ted Nelson组织协调万维网协会（World Wide Web Consortium）和互联网工程工作小组（Internet Engineering Task Force ）共同合作研究，最终发布了一系列的RFC，其中著名的RFC 2616定义了HTTP 1.1。<br>反正就是一种传输协议，满足这样的传输协议的双方可以实现交互的功能。</p>
+<h3 id="Server是啥？"><a href="#Server是啥？" class="headerlink" title="Server是啥？"></a>Server是啥？</h3><p>Server就是我们所说的服务器，就是监听在某个端口的服务程序，这个服务程序一直等待客户端发来的请求，然后根据HTTP协议，处理客户端的请求，然后返回结果给客户端。绝大多数的服务器实现都是socket编程，有些编程语言提供了很方便的socket api来实现服务端的编程。当然我们的Java也是提供了非常好的api来帮助我们实现服务端的编程。<br>如何使用Java来实现呢？</p>
+<p>在web的最初阶段是不支持web服务器与用户的交互的.也就是说web服务器不能动态的生成用户要访问的页面,web服务器提供给用户的页面都是提前生成好的.所以也说这种页面是静态页面.<br>比如说用户请求访问<a href="http://localhost:8088/hello1.htm" target="_blank" rel="noopener">http://localhost:8088/hello1.htm</a>, 那么web服务器从自己的想要目录下获取hello1.htm(已经存在).然后通过HTTP协议返回给用户.</p>
+<p>下面我们来模拟一下这个过程.因为HTTP协议是应用层协议,基于TCP,所以我们用Java的socket来编写HTTP服务器.</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">package HTTPServer;</span><br><span class="line">import java.io.*;</span><br><span class="line">import java.net.ServerSocket;</span><br><span class="line">import java.net.Socket;</span><br><span class="line">&#x2F;**</span><br><span class="line"> * Created by Administrator on 2017&#x2F;9&#x2F;21.</span><br><span class="line"> *&#x2F;</span><br><span class="line">public class HTTPServer2 &#123;</span><br><span class="line">    &#x2F;&#x2F;端口</span><br><span class="line">    private final static int port &#x3D; 8000;</span><br><span class="line">    private ServerSocket serverSocket &#x3D; null;</span><br><span class="line">    &#x2F;&#x2F;启动一个服务端口,并监听在8000端口</span><br><span class="line">    public HTTPServer2() throws Exception&#123;</span><br><span class="line">        this.serverSocket &#x3D; new ServerSocket(port);</span><br><span class="line">        System.out.println(&quot;启动端口：&quot;+port);</span><br><span class="line">    &#125;</span><br><span class="line">    &#x2F;&#x2F;获得客户端发来的请求字符串</span><br><span class="line">    public String getRequest(Socket socket)&#123;</span><br><span class="line">        byte[] requestBuffer &#x3D; null;</span><br><span class="line">        try &#123;</span><br><span class="line">            &#x2F;&#x2F;获得客户端口的输入流</span><br><span class="line">            InputStream inputStream &#x3D; socket.getInputStream();</span><br><span class="line">            &#x2F;&#x2F;获得输入流多少个字节的数据准备就绪</span><br><span class="line">            int size &#x3D; inputStream.available();</span><br><span class="line">            &#x2F;&#x2F;将流数据存入一个字节数组</span><br><span class="line">             requestBuffer &#x3D; new byte[size];</span><br><span class="line">            inputStream.read(requestBuffer);</span><br><span class="line">        &#125; catch (IOException e) &#123;</span><br><span class="line">            e.printStackTrace();</span><br><span class="line">        &#125;</span><br><span class="line">        &#x2F;&#x2F;将字节数组转化为字符串，并返回</span><br><span class="line">        return new String(requestBuffer);</span><br><span class="line">    &#125;</span><br><span class="line">    &#x2F;&#x2F;从request字符串中处理URI</span><br><span class="line">    public String getURI(String requestString)&#123;</span><br><span class="line">        String firstLine &#x3D; requestString.substring(0,requestString.indexOf(&quot;\r\n&quot;));</span><br><span class="line">        String[] parts &#x3D; firstLine.split(&quot; &quot;);</span><br><span class="line">        System.out.println(parts);</span><br><span class="line">        return parts[1];</span><br><span class="line">    &#125;</span><br><span class="line">    &#x2F;&#x2F;获得响应的类型</span><br><span class="line">    public String getContentType(String URI)&#123;</span><br><span class="line">         &#x2F;* 决定HTTP响应正文的类型 *&#x2F;</span><br><span class="line">         String contentType;</span><br><span class="line">         if (URI.indexOf(&quot;html&quot;)!&#x3D;-1||URI.indexOf(&quot;htm&quot;)!&#x3D;-1)&#123;</span><br><span class="line">             contentType &#x3D; &quot;text&#x2F;html&quot;;</span><br><span class="line">         &#125;else if (URI.indexOf(&quot;jpg&quot;) !&#x3D; -1 || URI.indexOf(&quot;jpeg&quot;) !&#x3D; -1)&#123;</span><br><span class="line">             contentType &#x3D; &quot;image&#x2F;jpeg&quot;;</span><br><span class="line">         &#125; else if (URI.indexOf(&quot;gif&quot;) !&#x3D; -1)&#123;</span><br><span class="line">             contentType &#x3D; &quot;image&#x2F;gif&quot;;</span><br><span class="line">         &#125; else&#123;</span><br><span class="line">             contentType &#x3D; &quot;application&#x2F;octet-stream&quot;;</span><br><span class="line">         &#125;</span><br><span class="line">         return contentType;</span><br><span class="line">    &#125;</span><br><span class="line">    &#x2F;&#x2F;获得返回的文本数据流，即客户端请求的数据</span><br><span class="line">    public InputStream getResponseContent(String URI)&#123;</span><br><span class="line">        InputStream htmlInputStream &#x3D; null;</span><br><span class="line">        try &#123;</span><br><span class="line">            String fileName &#x3D; URI.split(&quot;&#x2F;&quot;)[1];</span><br><span class="line">            &#x2F;&#x2F;获得当前路径1</span><br><span class="line">            File fileDir &#x3D; new File(&quot;&quot;);</span><br><span class="line">            try &#123;</span><br><span class="line">                String abslutePath &#x3D; fileDir.getAbsolutePath();</span><br><span class="line">                System.out.println(abslutePath);</span><br><span class="line">            &#125;catch (Exception e)&#123;</span><br><span class="line">                e.printStackTrace();</span><br><span class="line">            &#125;</span><br><span class="line">            &#x2F;&#x2F;获得当前路径2</span><br><span class="line">            String path&#x3D; System.getProperty(&quot;user.dir&quot;);</span><br><span class="line">            System.out.println(path);</span><br><span class="line">            htmlInputStream &#x3D; new FileInputStream(new File(path+&quot;\\&quot;+fileName));</span><br><span class="line">        &#125; catch (FileNotFoundException e) &#123;</span><br><span class="line">            e.printStackTrace();</span><br><span class="line">        &#125;</span><br><span class="line">        return htmlInputStream;</span><br><span class="line">    &#125;</span><br><span class="line">    &#x2F;&#x2F;组装响应头</span><br><span class="line">    public String assembleResponseHeader(String URI,String contentType)&#123;</span><br><span class="line">        &#x2F;* 创建HTTP响应结果 *&#x2F;</span><br><span class="line">        &#x2F;&#x2F; HTTP响应的第一行</span><br><span class="line">        String responseFirstLine &#x3D; &quot;HTTP&#x2F;1.1 200 OK\r\n&quot;;</span><br><span class="line">        &#x2F;&#x2F;响应头</span><br><span class="line">        String responseHeader &#x3D; &quot;Content-Type:&quot;+contentType+&quot;\r\n\r\n&quot;;</span><br><span class="line">        return responseFirstLine+responseHeader;</span><br><span class="line">    &#125;</span><br><span class="line">    &#x2F;&#x2F;处理请求</span><br><span class="line">    public void service() throws InterruptedException  &#123;</span><br><span class="line">        while (true)&#123;</span><br><span class="line">            Socket socket &#x3D; null;</span><br><span class="line">            try &#123;</span><br><span class="line">                socket &#x3D; serverSocket.accept();</span><br><span class="line">                String request &#x3D; this.getRequest(socket);</span><br><span class="line">                System.out.println(&quot;HttpServer receive request:\n&quot; + request);</span><br><span class="line">                String URI &#x3D; this.getURI(request);</span><br><span class="line">                System.out.println(URI);</span><br><span class="line">                String contentType &#x3D; this.getContentType(URI);</span><br><span class="line">                System.out.println(contentType);</span><br><span class="line">                &#x2F;&#x2F;往端口返回数据</span><br><span class="line">                OutputStream outputStream &#x3D; socket.getOutputStream();</span><br><span class="line">                outputStream.write(this.assembleResponseHeader(URI,contentType).getBytes());</span><br><span class="line">                int length &#x3D; 0;</span><br><span class="line">                byte[] buffer &#x3D; new byte[128];</span><br><span class="line">                &#x2F;&#x2F;获得了文本文件的字节流</span><br><span class="line">                &#x2F;&#x2F;需要写入到客户端口</span><br><span class="line">                InputStream inputStream &#x3D; this.getResponseContent(URI);</span><br><span class="line">                while ((length &#x3D; inputStream.read(buffer))!&#x3D;-1)&#123;</span><br><span class="line">                    outputStream.write(buffer,0,length);</span><br><span class="line">                &#125;</span><br><span class="line">                &#x2F;&#x2F;模仿网络传输</span><br><span class="line">                Thread.sleep(1000);</span><br><span class="line">                socket.close();</span><br><span class="line">            &#125; catch (IOException e) &#123;</span><br><span class="line">                e.printStackTrace();</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    public static void main(String[] args) &#123;</span><br><span class="line">        try &#123;</span><br><span class="line">            HTTPServer2 httpServer2 &#x3D; new HTTPServer2();</span><br><span class="line">            httpServer2.service();</span><br><span class="line">        &#125; catch (Exception e) &#123;</span><br><span class="line">            e.printStackTrace();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>我们准备一个简单的html文本：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">&lt;html&gt;</span><br><span class="line">&lt;head&gt;</span><br><span class="line">&lt;title&gt;HelloWorld&lt;&#x2F;title&gt;</span><br><span class="line">&lt;&#x2F;head&gt;</span><br><span class="line">&lt;body &gt;</span><br><span class="line">  &lt;h1&gt;Hello&lt;&#x2F;h1&gt;</span><br><span class="line">&lt;&#x2F;body&gt;</span><br><span class="line">&lt;&#x2F;html&gt;</span><br></pre></td></tr></table></figure>
+<p>保存为Hello.html,启动HTTPServer,在浏览器访问<a href="http://localhost:8088/hello1.html,我们在输出界面看到：" target="_blank" rel="noopener">http://localhost:8088/hello1.html,我们在输出界面看到：</a></p>
+<figure class="highlight http"><table><tr><td class="code"><pre><span class="line"><span class="keyword">GET</span> <span class="string">/Hello.html</span> HTTP/1.1</span><br><span class="line"><span class="attribute">Host</span>: localhost:8088</span><br><span class="line"><span class="attribute">Connection</span>: keep-alive</span><br><span class="line"><span class="attribute">Cache-Control</span>: max-age=0</span><br><span class="line"><span class="attribute">Accept</span>: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8</span><br><span class="line"><span class="attribute">User-Agent</span>: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/43.0.2357.125 Safari/537.36</span><br><span class="line"><span class="attribute">Accept-Encoding</span>: gzip, deflate, sdch</span><br><span class="line"><span class="attribute">Accept-Language</span>: zh-CN,zh;q=0.8,en-US;q=0.6,en;q=0.4</span><br></pre></td></tr></table></figure>
+<p>注意：我们的html文件需要放在我们工程目录下。或者可以根据我们服务器所在的文件，获得他们的路径，在定位我们的文件位置。<br>总结一下</p>
+<p>socket编程，我们使用一个ServerSocket等待在指定端口处，知道客户端发来请求，我们知道网络中传输的都是字节，所以当我们要解析请求的字节数据，通常的方式是将字节转化为字符，然后分割得到我们HTTP请求的各部分，比如请求第一行，请求头。获得了这些之后，我们就可以进行一些处理，然后返回的我们的结果。<br>结果的返回，在程序中我们也是先使用字符来构建我们的响应，然后将字符串转化为字节数组，如果是文件，我们也可以将文件读取分批次读取到一个数组中，然后在依次写入到输出流中，即返回我们的字节数据给客户端。</p>
+]]></content>
+      <categories>
+        <category>Java</category>
+      </categories>
+      <tags>
+        <tag>Java</tag>
+        <tag>http</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>如何正确的学习一门技能</title>
+    <url>/2017/07/06/%E5%A6%82%E4%BD%95%E6%AD%A3%E7%A1%AE%E7%9A%84%E5%AD%A6%E4%B9%A0%E4%B8%80%E9%97%A8%E6%8A%80%E8%83%BD/</url>
+    <content><![CDATA[<h3 id="左右脑模式"><a href="#左右脑模式" class="headerlink" title="左右脑模式"></a>左右脑模式</h3><p>在这里，我不知道有多少人听过笑来老师讲过学东西，其实有两种模式，一种叫苍蝇模式，一种叫蜜蜂模式。其实我现在讲的东西有异曲同工之妙。左右脑模式、 更精确地说，一般人其实没有意识到，进行一项学习，其实调用的 是两种模式。、 一种叫左脑模式，利用逻辑分析学习、 一种叫右脑学习模式，利用感知学习。为什么在学编程前，我要教各位元学习呢?元学习这个字，意思其实就是学习如何学习再学习。我希望教会各位不只一样技能的学习方式。在这里我要教会你另外一个 技能，这个技能叫做画画。新手如何学画画、 一般来说，画画甚至比编程更难学习。但我在这里要介绍一个在80 年代被发明的学画学习方式，这堂课只要5天，就能够让新手五天学会绘画。我是在一本书上看到的，这本书也推荐大家去买:《像艺术家一样思考》。 这本书的作者叫做 Betty Edwards，他是一位认知学家+画家。 在80年代时，她发明了一个让新手五天学会绘画的方法。这个方法很简单:当中的原理是这样的：就是让新手在刚开始学素描时，倒着画自己的自画像，他发现当学生正着画自己的自画像时，通常会画的七歪扭八。学生因为熟悉自己的样貌，所以作画时会纠结细节，一直想要去修改自己所呈现的容貌。问题是新手又没有足够的绘画技巧，于是就会画得一团糟。但是如果让学生将自己的照片反过来，临墓作画时，这时候突然间他们就会画了。正因为自己都不知道自己在画什么，所以纠结比较的那一个部分会被关掉。反而会把重点放在观察全局与细节。因此倒过来的作品远比正着画的作品水准高上太多。Betty发现的这个现象，正是因为人类的左右脑具有不同的运作模 式。前者注重逻辑分析与细节，后者注重全局观。正着画图，让我们不由自主的在针对自己应该熟悉的部分开启左脑分析模式。但是我们又不具备绘画的功力，导致一直绊倒自己。 他发现用这个方法，就可以让没有受过学习训练的人，直接强制关掉左脑的分析模式，专注在全局。其实学习英语以及编程，也是同样的道理。正因为语言或者是编程内使用的英语单词是我们熟悉的语言，在学习时，学习者会不自主地开启分析模式。去试图找到与过往经验匹配的模式，但是若匹配不到或匹配错误，学习者就会自己绊倒自己。</p>
+<p>人人都该用英语、 所以为什么很多网上的学习英语的有效技巧，都要求学习者不要试图去记单词，能够的话，就是大量的去听别人说什么，大量的去模仿说句子、 这其实就是让学习者大量的使用右脑的直觉以及其他身体感觉， 去快速抓到全局感，拼出基础框架。而学英语最有效的方式:甚至是、直接到说英语的地区去居住、 在这样的情境下，学习者可以大量的模仿、大量的使用累积出的简单框架、 在当地生活购物，累积更强的语感与成就感、 大脑无法用未知解释未知、 同样的，编程也是相同的道理。一开始学习编程，初学者甚至不应该尝试着去搞懂里面的用法，因为人类的大脑无法用未知解释未知，就算看了一整天，你也无法用逻辑分析出所以然。学习编程最有效的方式就是冲进度。你只需要知道输入什么能够得出什么就可以了。看着一本小书，用模仿复制代码的方式，快速搭建出一个小项目，建立一个大致全局感。然后，将项目发布，让朋友称赞你，取得有效的成就感，这样就可以激励自己继续学习编程。用这样的方式，你就可以抢在自己放弃之前，建立起正循环了。<br>为什么要采纳这样的学习方法呢?<br>一般人学习之所以低效，是因为不了解自己的大脑怎么运作。一旦你开始了解自己的大脑是怎么运作的，很快的，你就会发现学习是有套路的，而且你可以利用这套方法，大幅拉升自己的学习初速度。在这里我先告诉各位五个结论:</p>
+<pre><code>大脑并不擅长思考，而且大脑的思考是很缓慢的、
+多数的思考，并不是真的思考，而是调用过去记忆所组成的结果
+人是利用已知的事务理解新的事物，但理解其实是记忆
+没有重复的练习，不可能精通任何脑力活
+题海战术以及填鸭教育，有时是必须的</code></pre><h3 id="大脑并不善于思考、"><a href="#大脑并不善于思考、" class="headerlink" title="大脑并不善于思考、"></a>大脑并不善于思考、</h3><p>在这社会上我们最常嘲讽的一个现象：大多数人是不用脑子思考的。其实这真是事实，你仔细想想，其实大脑真是用来思考的吗?如果你叫大脑随便做一则演算，其实大脑的演算，往往是比我们现在所发明的计算机来说，效率是极其低的。做个7X8的数学还行，但要是改个177X288的快速演算。就瞬间就短路。在这里，我举一个大脑其实不善于思考的例子。<br>一个空屋子里有一支蜡烛，一些火柴，和一盒图钉。目标是让点燃的蜡烛离地五英尺高，你已经尝试把蜡烛底部沾上蜡液，但还是沾不到墙上，怎样才不用手扶，让点燃的蜡烛离地五英尺高?这一个题目，正常一般人在看到题目后，很少能在2分钟内给出解决答案。但是如果你把这个题目具象化，也就是真的生出这些设备，放在眼前。你就会发现这道题目的答案其实并不难。你只要把图钉倒出来，把盒子用图钉钉在墙壁上，再把蜡烛豁在盒子里，就完成了这个任务。</p>
+<h3 id="大脑的，思考特性、"><a href="#大脑的，思考特性、" class="headerlink" title="大脑的，思考特性、"></a>大脑的，思考特性、</h3><p>这个例子解释了思考的几个特性。首先，大脑的思考是很缓慢的。接看，思考是很费力的。大脑很难凭空想像出这个场景并运算出解答。甚至可能完全答不出来。但是如果把大脑接上视觉系统与触觉系统。因为视觉系统与触觉系统进行了可靠的回传，大脑实质上是调用了其他地区可用的资源做运算。就能迅速得出答案。那么，既然思考那么费力。我们平时是怎么样不费工夫的做出日常生活中的各样决策?习惯！答案是：习惯。习惯就是我们做过某件事的记忆回路，大脑调用过去的记忆，让身体自动做出判断。所以，在这里，我们要引出今天要介绍的第二条认知学事实：大部分人做的决策，其实真不是基于大脑所做的思考，他们是记忆组成的结果、多数的思考，并不是真的思考，而是调用过去记忆所组成的结果、大脑的运作原理是这样的：接收到环境刺激然后把决策放到工作记忆上。熟练之后烧到长期记忆中(事实性知识、过程性知识)。工作记忆就是我们当前正在意识、思考的工作区域。以计算机比喻，就是电脑的内存。容量小，资料存在时间短， 重开机就不见了。长期记忆就是我们长久以来储存的事实性知识、经验。(以计算机比喻，就是电脑的硬盘。容量大，资料存在时间长， 可以长期复用。而长期以来，我们日常遇到的大量决策，事实上是调用了长期记忆 (经验以及不变的科学事实)，自动完成。而所谓的解题与思考，是复用了短期记忆以及长期记忆而成。比如说以197X288这个例子、7X8是长期记忆，是我们小时候背的九九乘法。接下来我们要算170 “ 280。你知道这有多难、 人类几乎很难凭空展开这个算式。 这是因为人类的大脑工作记忆中只能暂时存放结果(对人类无意义的结果)。人类事实上很少在思考，更多的是调用记忆在做决策。 人是利用已知的事务理解新的事物，但理解其实是记忆、 理解其实不是一个调用大脑思考的过程，而是一个匹配记忆的过程。很多行业为什么不喜欢招小白，事实上就是因为小白经验过少，缺乏太多相关记忆，可以直接匹配学习。又或者是为什么一般人难以上手编程，而且对于学习编程，感受到痛苦。这事实上就是因为编程里面的知识，跟过往几乎所有的生活环境运作原理几乎是不匹配的，所以造成无法理解，而大量调用</p>
+<p>Ps: 本文转载于某个论坛网站，觉得挺有道理的，顾摘录共勉。</p>
+]]></content>
+      <categories>
+        <category>杂文随想</category>
+      </categories>
+      <tags>
+        <tag>学习</tag>
+        <tag>技能</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Java中的final关键字</title>
+    <url>/2017/06/09/Java%E4%B8%AD%E7%9A%84final%E5%85%B3%E9%94%AE%E5%AD%97/</url>
+    <content><![CDATA[<p>Java中的final关键字非常重要，它可以应用于类、方法以及变量。这篇文章中我将带你看看什么是final关键字？将变量，方法和类声明为final代表了什么？使用final的好处是什么？最后也有一些使用final关键字的实例。final经常和static一起使用来声明常量，你也会看到final是如何改善应用性能的。</p>
+<h3 id="final关键字的含义"><a href="#final关键字的含义" class="headerlink" title="final关键字的含义?"></a>final关键字的含义?</h3><p>final在Java中是一个保留的关键字，可以声明成员变量、方法、类以及本地变量。一旦你将引用声明作final，你将不能改变这个引用了，编译器会检查代码，如果你试图将变量再次初始化的话，编译器会报编译错误。</p>
+<h3 id="什么是final变量？"><a href="#什么是final变量？" class="headerlink" title="什么是final变量？"></a>什么是final变量？</h3><p>凡是对成员变量或者本地变量(在方法中的或者代码块中的变量称为本地变量)声明为final的都叫作final变量。final变量经常和static关键字一起使用，作为常量。下面是final变量的例子：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">public static final String LOAN &#x3D; &quot;loan&quot;;</span><br><span class="line">LOAN &#x3D; new String(&quot;loan&quot;) &#x2F;&#x2F;invalid compilation error</span><br></pre></td></tr></table></figure>
+<p>可以看出final变量是只读的。</p>
+<h3 id="什么是final方法"><a href="#什么是final方法" class="headerlink" title="什么是final方法?"></a>什么是final方法?</h3><p>final也可以声明方法。方法前面加上final关键字，代表这个方法不可以被子类的方法重写。如果你认为一个方法的功能已经足够完整了，子类中不需要改变的话，你可以声明此方法为final。final方法比非final方法要快，因为在编译的时候已经静态绑定了，不需要在运行时再动态绑定。下面是final方法的例子：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line">	</span><br><span class="line"></span><br><span class="line">class PersonalLoan&#123;</span><br><span class="line">    public final String getName()&#123;</span><br><span class="line">        return &quot;personal loan&quot;;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"> </span><br><span class="line">class CheapPersonalLoan extends PersonalLoan&#123;</span><br><span class="line">    @Override</span><br><span class="line">    public final String getName()&#123;</span><br><span class="line">        return &quot;cheap personal loan&quot;; &#x2F;&#x2F;compilation error: overridden method is final</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="什么是final类？"><a href="#什么是final类？" class="headerlink" title="什么是final类？"></a>什么是final类？</h3><p>使用final来修饰的类叫作final类。final类通常功能是完整的，它们不能被继承。Java中有许多类是final的，譬如String, Interger以及其他包装类。下面是final类的实例：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">final class PersonalLoan&#123;</span><br><span class="line"> </span><br><span class="line">    &#125;</span><br><span class="line"> </span><br><span class="line">    class CheapPersonalLoan extends PersonalLoan&#123;  &#x2F;&#x2F;compilation error: cannot inherit from final class</span><br><span class="line"> </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="final关键字的好处"><a href="#final关键字的好处" class="headerlink" title="final关键字的好处"></a>final关键字的好处</h3><p>下面总结了一些使用final关键字的好处<br>final关键字提高了性能。JVM和Java应用都会缓存final变量。<br>final变量可以安全的在多线程环境下进行共享，而不需要额外的同步开销。<br>使用final关键字，JVM会对方法、变量及类进行优化。</p>
+<p>不可变类</p>
+<p>创建不可变类要使用final关键字。不可变类是指它的对象一旦被创建了就不能被更改了。String是不可变类的代表。不可变类有很多好处，譬如它们的对象是只读的，可以在多线程环境下安全的共享，不用额外的同步开销等等。<br>为什么String是不可变的以及如何写一个不可变类。</p>
+<p>因为String类是被final修饰了，写一个不可变类就是用final去修饰它。</p>
+<h3 id="关于final的重要知识点"><a href="#关于final的重要知识点" class="headerlink" title="关于final的重要知识点"></a>关于final的重要知识点</h3><ul>
+<li>final关键字可以用于成员变量、本地变量、方法以及类。</li>
+<li>final成员变量必须在声明的时候初始化或者在构造器中初始化，否则就会报编译错误。</li>
+<li>你不能够对final变量再次赋值。</li>
+<li>本地变量必须在声明时赋值。</li>
+<li>在匿名类中所有变量都必须是final变量。</li>
+<li>final方法不能被重写。</li>
+<li>final类不能被继承。</li>
+<li>final关键字不同于finally关键字，后者用于异常处理。</li>
+<li>final关键字容易与finalize()方法搞混，后者是在Object类中定义的方法，是在垃圾回收之前被JVM调用的方法。</li>
+<li>接口中声明的所有变量本身是final的。</li>
+<li>final和abstract这两个关键字是反相关的，final类就不可能是abstract的。</li>
+<li>final方法在编译阶段绑定，称为静态绑定(static binding)。</li>
+<li>没有在声明时初始化final变量的称为空白final变量(blank final variable)，它们必须在构造器中初始化，或者调用this()初始化。不这么做的话，编译器会报错“final变量(变量名)需要进行初始化”。</li>
+<li>将类、方法、变量声明为final能够提高性能，这样JVM就有机会进行估计，然后优化。</li>
+</ul>
+<p>   按照Java代码惯例，final变量就是常量，而且通常常量名要大写：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">private final int COUNT &#x3D; 10;</span><br></pre></td></tr></table></figure>
+<pre><code>对于集合对象声明为final指的是引用不能被更改，但是你可以向其中增加，删除或者改变内容。譬如：</code></pre><figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">private final List Loans &#x3D; new ArrayList();</span><br><span class="line">list.add(“home loan”);  &#x2F;&#x2F;valid</span><br><span class="line">list.add(&quot;personal loan&quot;); &#x2F;&#x2F;valid</span><br><span class="line">loans &#x3D; new Vector();  &#x2F;&#x2F;not valid</span><br></pre></td></tr></table></figure>]]></content>
+      <categories>
+        <category>Java</category>
+      </categories>
+      <tags>
+        <tag>Java</tag>
+        <tag>关键字</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>java中有package包，运行时”错误：找不到或无法加载主类</title>
+    <url>/2017/06/03/%E8%BF%90%E8%A1%8C%E6%97%B6%E2%80%9D%E9%94%99%E8%AF%AF%EF%BC%9A%E6%89%BE%E4%B8%8D%E5%88%B0%E6%88%96%E6%97%A0%E6%B3%95%E5%8A%A0%E8%BD%BD%E4%B8%BB%E7%B1%BB/</url>
+    <content><![CDATA[<p>java中的打包机制是为了防止程序多个地方出现相同的名字而将局部程序限定在一块的机制。打个比方，在湖北和湖南两个地方，都有一个叫张三的人，那么当我们寻找这个人的时候，就会出现错误：到底是湖北的张三，还是湖南的张三？为了解决这个问题，我们把湖北，湖南这两个地方的所有程序分别打包。调用张三的时候分别带上湖北.张三或者是湖南.张三。这样就不会出错了。打包其实就是新建了一个文件夹，然后把需要打包的程序放在这个文件夹下面。<br>要注意：</p>
+<p>1，package必须是程序中可执行的第一行代码；</p>
+<p>2，package语句只能有一句；</p>
+<p>3，package命名要求包含的所有字符均为小写，同时不能有特殊字符；</p>
+<p>4，package可以有多层，每一层有.隔开，例如：package china.hubei.wuhan;（China是一个文件夹，hubei是china下的一个文件夹，wuhan是hubei文件夹下的一个文件夹）</p>
+<p>5，package语句后面的分号不要掉。​<br>package运用场合：</p>
+<p>1.多个程序员负责同样的一个项目时，不能确保每一个程序员定义的函数名或变量名完全不一样，这个时候每个程序员可以分别将自己负责的部分打包；</p>
+<p>2，一个程序员负责一个规模较大的项目，往往不能保证每一处的函数名或变量名完全不同，这时，可以将每一小块区域的部分打包。</p>
+<p>总而言之，当遇到以后或者他处可能与之前重复的时候，最好打包处理之。</p>
+<p>“错误：找不到或无法加载主类​”的原因往往有：1.环境变量处理不当；2，程序名称和入口函数不一样；3，程序中有package。我们主要说的是第三点。</p>
+<p>例如，函数的第一行为：package msg;（函数名为test）</p>
+<p>在编译的时候，我们应该是javac -d . ​test.java</p>
+<p>（-d：表示生成目录，设置编译生成的class文件保存路径，路径与定义的包名和层次相关。</p>
+<p>. ：表示在当前目录中生成。）</p>
+<p>运行的时候，带上包名，即java msg.test</p>
+]]></content>
+      <categories>
+        <category>Java</category>
+      </categories>
+      <tags>
+        <tag>Java</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Java在方法调用时为啥不支持默认参数</title>
+    <url>/2017/03/28/Java%E5%9C%A8%E6%96%B9%E6%B3%95%E8%B0%83%E7%94%A8%E6%97%B6%E4%B8%BA%E5%95%A5%E4%B8%8D%E6%94%AF%E6%8C%81%E9%BB%98%E8%AE%A4%E5%8F%82%E6%95%B0/</url>
+    <content><![CDATA[<h3 id="java不支持像其他语言如python，php，js，c-在方法中使用默认参数。"><a href="#java不支持像其他语言如python，php，js，c-在方法中使用默认参数。" class="headerlink" title="java不支持像其他语言如python，php，js，c++在方法中使用默认参数。"></a>java不支持像其他语言如python，php，js，c++在方法中使用默认参数。</h3><p>在学习java的时候，有个问题在编辑器里老是会提示语法不对，就是在我调用成员方法是尝试传入默认参数是。我之前的经验，比如python时，是支持传入默认参数，但是奇怪的是作为高级语言的java并不支持这一优秀的特性，于是我尝试寻找答案。<br>我们知道java中，方法重载是非常重要的面向对象的特性。</p>
+<p>java的方法重载里面有这样的定义，在类中定义相同的方法名，但是只要参数数量不同，或是种类，或是顺序不同都会引发，在调用方法是，根据参数的样式，调用相同方法的不同实现。那么问题来了，如果java支持传入默认参数，就会和这个重载特性发生冲突。</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="comment">//假设java有这样的写法</span></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Test</span></span>&#123;</span><br><span class="line">	<span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">print</span><span class="params">(<span class="keyword">int</span> a,<span class="keyword">int</span> b=<span class="number">10</span>)</span></span>&#123;</span><br><span class="line">		System.out.print(a+b);</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">print</span><span class="params">(<span class="keyword">int</span> a)</span></span>&#123;</span><br><span class="line">		System.out.print(a);</span><br><span class="line">	&#125;</span><br><span class="line">	</span><br><span class="line">	<span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span></span>&#123;</span><br><span class="line">		Test t = <span class="keyword">new</span> Test();</span><br><span class="line">		t.print(<span class="number">1</span>);</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这里有个问题就是，它到底调用哪一个呢？按照分析，这个参数是符合上面的两个方法，这样就出现了歧义。</p>
+<h3 id="所以为了不破坏java重载的特性，默认参数就没有加入到java里面，但是如果我们想要使用默认参数呢？怎么办？"><a href="#所以为了不破坏java重载的特性，默认参数就没有加入到java里面，但是如果我们想要使用默认参数呢？怎么办？" class="headerlink" title="所以为了不破坏java重载的特性，默认参数就没有加入到java里面，但是如果我们想要使用默认参数呢？怎么办？"></a>所以为了不破坏java重载的特性，默认参数就没有加入到java里面，但是如果我们想要使用默认参数呢？怎么办？</h3><p>俗话说，解铃还需寄铃人。同样你可以使用重载的特性来实现调用默认参数。</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Test</span></span>&#123;</span><br><span class="line">	<span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">print</span><span class="params">(<span class="keyword">int</span> a,<span class="keyword">int</span> b)</span></span>&#123;</span><br><span class="line">		System.out.print(a+b);</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">print</span><span class="params">(<span class="keyword">int</span> a)</span></span>&#123;</span><br><span class="line">		<span class="keyword">int</span> b = <span class="number">10</span>;</span><br><span class="line">		<span class="keyword">return</span> print(a,b);</span><br><span class="line">	&#125;</span><br><span class="line">	</span><br><span class="line">	<span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span></span>&#123;</span><br><span class="line">		</span><br><span class="line">		Test.print(<span class="number">1</span>);</span><br><span class="line">		Test.print(<span class="number">1</span>,<span class="number">10</span>);</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>以上实现了在传入一个参数是可以附带默认参数，但是要比较呆板的重载已有的方法，这是比较累人的，java虽然是一门非常优秀的编译型语言，但是它比较呆板，希望它会发展的越来越好，毕竟现在java有函数式相关的额内容了，以前是没有的。</p>
+]]></content>
+      <categories>
+        <category>Java</category>
+      </categories>
+      <tags>
+        <tag>Java</tag>
+        <tag>方法调用</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>部署手撕包菜磁力网站</title>
+    <url>/2017/03/23/%E9%83%A8%E7%BD%B2%E6%89%8B%E6%92%95%E5%8C%85%E8%8F%9C%E7%A3%81%E5%8A%9B%E7%BD%91%E7%AB%99/</url>
+    <content><![CDATA[<h3 id="最近有个群里的好友，希望我帮他解决一个问题：在win环境本地下，运行起来一个django项目（带有后端爬虫）"><a href="#最近有个群里的好友，希望我帮他解决一个问题：在win环境本地下，运行起来一个django项目（带有后端爬虫）" class="headerlink" title="最近有个群里的好友，希望我帮他解决一个问题：在win环境本地下，运行起来一个django项目（带有后端爬虫）"></a>最近有个群里的好友，希望我帮他解决一个问题：在win环境本地下，运行起来一个django项目（带有后端爬虫）</h3><p>因为是项目，所以在pycharm里调试时出现：<br>enter description here<br>因为是要安装oursql驱动mysql，但是一直安装不上，以为它依赖cython。所以我尝试下载<br>Oursql的源码包，准备在python目录下安装：<br>enter description here</p>
+<p>但是出现：<br>enter description here</p>
+<p>并没有用。<br>我就尝试安装cython，pip install cython 结果是：<br>还是不可以。。。。<br>enter description here<br>enter description here</p>
+<p>我开始怀疑，是不是在win下本身就非常那运行，也就是说，这个网站项目，从开始就是在<br>Linux下运行的。因为项目中带有master，我就推断，应该是github上的项目。于是尝试了一下搜索。<br>enter description here</p>
+<p>结果显而易见了。</p>
+<h3 id="后来，好友就买了一台centos的服务器，按照教程，安装相关的库"><a href="#后来，好友就买了一台centos的服务器，按照教程，安装相关的库" class="headerlink" title="后来，好友就买了一台centos的服务器，按照教程，安装相关的库"></a>后来，好友就买了一台centos的服务器，按照教程，安装相关的库</h3><p>步骤如下：</p>
+<ol>
+<li>获取ssbc源代码<ul>
+<li>环境检测（Ssbc当前版本是基于django1.8.1开发，所需python环境为python2.7.5以上。）<br>[root@localhost ~]# python -V<br>Python 2.7.5<br>执行python -V即可获取当前版本。<ul>
+<li>获取ssbc安装包<br>[root@localhost <del>]# wget <a href="https://github.com/78/ssbc/archive/master.zip" target="_blank" rel="noopener">https://github.com/78/ssbc/archive/master.zip</a><br>[root@localhost</del>]# unzip master.zip<br>解压后你会发现在root根目录先有个文件夹ssbc-master.</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>安装MariaDB<ul>
+<li>安装数据库及所需环境<br>[root@localhost ~]# yum install gcc<br>[root@localhost ~]# yum install gcc-c++<br>[root@localhost ~]# yum install python-devel<br>[root@localhost ~]# yum install mariadb<br>[root@localhost ~]# yum install mariadb-devel<br>[root@localhost ~]# yum install mariadb-server<br>[root@localhost]# wget <a href="https://raw.github.com/pypa/pip/master/contrib/get-pip.py" target="_blank" rel="noopener">https://raw.github.com/pypa/pip/master/contrib/get-pip.py</a><br>[root@localhost]# python get-pip.py<br>[root@localhost]# cd ssbc-master<br>[root@localhost ssbc-master]# pip install -r requirements.txt</li>
+<li>创建ssbc数据库<br>[root@localhost ~]# service mariadb start //启动数据库<br>[root@localhost ~]# mysql -uroot -p<br>Enter password: (回车即可)<br>MariaDB [(none)]&gt; create database ssbc default character set utf8;<br>MariaDB [(none)]&gt; quit; //创建成功后退出</li>
+</ul>
+</li>
+<li>Web设置<br>[root@localhost ssbc-master]#<br>[root@localhost ssbc-master]# python manage.py makemigrations<br>[root@localhost ssbc-master]# python manage.py migrate<br>[root@localhost ssbc-master]# python manage.py runserver 0.0.0.0:80 //启动ssbc<br>浏览器输入你的ip（如：54.43.43.43) 看网站是否能正常访问，正常则CTRL+C停止<br>[root@localhost ssbc-master]# python manage.py createsuperuser //输入用户名邮箱密码确认密码（创建管理账号）<br>[root@localhost ssbc-master]# nohup python manage.py runserver 0.0.0.0:80 &gt; /dev/zero &amp; //将网站服务放在后台运行</li>
+<li>安装Sphinx<br>[root@localhost ssbc-master]# wget <a href="http://sphinxsearch.com/files/sphinx-2.2.9-1.rhel7.x86_64.rpm" target="_blank" rel="noopener">http://sphinxsearch.com/files/sphinx-2.2.9-1.rhel7.x86_64.rpm</a><br>[root@localhost ssbc-master]# yum install unixODBC unixODBC-devel postgresql-libs<br>[root@localhost ssbc-master]# rpm -ivh sphinx-2.2.9-1.rhel7.x86_64.rpm</li>
+</ol>
+<p>然后在服务器根目录创建文件夹： data 和 tem （两个文件夹）<br>然后在 data 目录创建文件夹： bt<br>然后在 bt 目录创建文件夹： index<br>然后在 index 目录创建文件夹： db 和 binlog （两个文件夹）<br>然后在 tem 目录创建文件夹： downloads</p>
+<p>最后 给 data 以及 tem 文件夹赋予 755 或者 777 权限 （需要继承到子文件夹）</p>
+<p>[root@localhost ssbc-master]# indexer -c sphinx.conf –all （all 前面是空格减号减号）<br>[root@localhost ssbc-master]# searchd –-config ./sphinx.conf (config前空格减号减号)</p>
+<ol start="5">
+<li>开启爬虫(workers目录下)</li>
+<li>爬虫：执行：python simdht_worker.py （等2两分钟出现数据之后可以CTRL+C停止）</li>
+<li>1 执行命令：nohup python simdht_worker.py &gt;/dev/zero &amp; （让爬虫在后台运行）</li>
+<li>入库：执行：python index_worker.py （等待10分钟没有出现数据之后可以CTRL+C停止）</li>
+<li>1 后台执行命令：nohup python index_worker.py &gt;/dev/zero &amp; （让爬虫在后台运行）</li>
+</ol>
+<h3 id="如果出现系统报错：EnvironmentError-mysql-config-not-found，很明显是没有mysql-config这个文件的，解决办法："><a href="#如果出现系统报错：EnvironmentError-mysql-config-not-found，很明显是没有mysql-config这个文件的，解决办法：" class="headerlink" title="如果出现系统报错：EnvironmentError: mysql_config not found，很明显是没有mysql_config这个文件的，解决办法："></a>如果出现系统报错：EnvironmentError: mysql_config not found，很明显是没有mysql_config这个文件的，解决办法：</h3><p>（1）ubuntu下</p>
+<p>执行sudo apt-get install libmysqld-dev</p>
+<p>（2）fedora下</p>
+<p>执行 sudo yum install python-devel</p>
+<p>若出现：my_config.h:没有那个文件或目录，就执行：sudo yum install mysql-devel</p>
+<p>注意：yum也是python写的，默认是调用/usr/bin/python的，这是系统本身自带的python，自己安装的一般在/usr/local/bin/python，所以最好别把系统自带的python给卸载掉了，自己下载的python没有yum模块。</p>
+<p>此时执行 find / -name mysql_config 在/usr/bin/下发现了这个文件</p>
+<p>然后修改MySQL-python-1.2.3目录下的site.cfg文件</p>
+<p>去掉mysql_config=XXX这行的注释，并改成mysql_config=/usr/bin/mysql_config（以mysql_config文件所在机器上的目录为准）</p>
+<h4 id="Ps："><a href="#Ps：" class="headerlink" title="Ps："></a>Ps：</h4><ol>
+<li>如果出现在安装gcc是提示失败或者奔溃，可以yum remove 重复的库<br>（Found 3 pre-existing rpmdb problem(s), ‘yum check’ output follows）</li>
+<li>或者是更换yum源，比如国内的阿里</li>
+<li>数据库修改密码<br>enter description here<br>enter description here</li>
+</ol>
+<p>当我在ssh中运行，结果成功了。感动。</p>
+<p>Bingo<br>结束折腾的两天，谢谢自己！谢谢google。</p>
+]]></content>
+      <categories>
+        <category>服务器</category>
+      </categories>
+      <tags>
+        <tag>网站部署</tag>
+        <tag>磁力</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>关于pymysql的使用</title>
+    <url>/2017/03/23/%E5%85%B3%E4%BA%8Epymysql%E7%9A%84%E4%BD%BF%E7%94%A8/</url>
+    <content><![CDATA[<h3 id="什么是pymysql"><a href="#什么是pymysql" class="headerlink" title="什么是pymysql"></a>什么是pymysql</h3><pre><code>pymysql是一个python连接mysql数据库的驱动，用来实现通过python可以向mysql数据库中，进行数据库的操作。</code></pre><h3 id="为什么要用pymysql"><a href="#为什么要用pymysql" class="headerlink" title="为什么要用pymysql"></a>为什么要用pymysql</h3><pre><code>pymysql是纯python实现的，在跨平台的时候，基本上没有其他的副作用。
+虽说是纯python实现的，但是它的效率还是不错的，虽然没有比C的实现那么有效率，但是pymysql还是可以的。
+mysql的python官方驱动目前只支持到python3.4，更新不积极，而pymysql支持Python3.5。</code></pre><h3 id="怎样使用pymysql呢"><a href="#怎样使用pymysql呢" class="headerlink" title="怎样使用pymysql呢"></a>怎样使用pymysql呢</h3><pre><code>首先安装pymysql，pip install pymysql</code></pre><p>使用示例,数据库连接</p>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="keyword">import</span> pymysql</span><br><span class="line"><span class="comment">#建立一个连接</span></span><br><span class="line">con = pymysql.connect(</span><br><span class="line">        host=<span class="string">'127.0.0.1'</span>,</span><br><span class="line">        user=<span class="string">'root'</span>,</span><br><span class="line">        passwd=<span class="string">'root'</span>,</span><br><span class="line">        db=<span class="string">'somedb'</span>,</span><br><span class="line">        charset=<span class="string">'utf8'</span>,</span><br><span class="line">    )</span><br></pre></td></tr></table></figure>
+<p>更好的方法是建立一个字典来管理这些数据库连接的参数：</p>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="keyword">import</span> pymysql</span><br><span class="line">config = &#123;</span><br><span class="line">        <span class="string">'host'</span>:<span class="string">'127.0.0.1'</span>,</span><br><span class="line">        <span class="string">'user'</span>:<span class="string">'root'</span>,</span><br><span class="line">        <span class="string">'passwd'</span>:<span class="string">'root'</span>,</span><br><span class="line">        <span class="string">'db'</span>=<span class="string">'somedb'</span>,</span><br><span class="line">        <span class="string">'charset'</span>=<span class="string">'utf8'</span>,</span><br><span class="line">    &#125;</span><br><span class="line"><span class="comment">#连接数据库</span></span><br><span class="line">conn = pymysql.connect(**config)</span><br></pre></td></tr></table></figure>
+<p>插入数据：</p>
+<p>执行sql语句之前要获取光标cursor，因为默认配置是自动提交的，所以在执行sql语句需要主动的commit，在最后要主动关闭连接。</p>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="keyword">import</span> pymysql</span><br><span class="line">config = &#123;</span><br><span class="line">        <span class="string">'host'</span>:<span class="string">'127.0.0.1'</span>,</span><br><span class="line">        <span class="string">'user'</span>:<span class="string">'root'</span>,</span><br><span class="line">        <span class="string">'passwd'</span>:<span class="string">'root'</span>,</span><br><span class="line">        <span class="string">'db'</span>=<span class="string">'somedb'</span>,</span><br><span class="line">        <span class="string">'charset'</span>=<span class="string">'utf8'</span>,</span><br><span class="line">    &#125;</span><br><span class="line"><span class="comment">#连接数据库</span></span><br><span class="line">conn = pymysql.connect(**config)</span><br><span class="line">cur = conc.cursor()</span><br><span class="line"><span class="comment">#执行</span></span><br><span class="line"><span class="keyword">try</span>:</span><br><span class="line">    <span class="keyword">with</span> cur <span class="keyword">as</span> cursor:</span><br><span class="line">        sql = <span class="string">"insert into sometable (somefield,somefield...) values (%s...)</span></span><br><span class="line"><span class="string">        cursor.excute(sql,(values...))</span></span><br><span class="line"><span class="string">    cursor.connection.commit()</span></span><br><span class="line"><span class="string">    </span></span><br><span class="line"><span class="string">finally:</span></span><br><span class="line"><span class="string">    cur.close()</span></span><br><span class="line"><span class="string">    conn.close()</span></span><br></pre></td></tr></table></figure>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line">执行查询：</span><br><span class="line"><span class="keyword">import</span> datetime</span><br><span class="line"><span class="keyword">import</span> pymysql.cursors</span><br><span class="line"> </span><br><span class="line"><span class="comment">#连接配置信息</span></span><br><span class="line">config = &#123;</span><br><span class="line">          <span class="string">'host'</span>:<span class="string">'127.0.0.1'</span>,</span><br><span class="line">          <span class="string">'port'</span>:<span class="number">3306</span>,</span><br><span class="line">          <span class="string">'user'</span>:<span class="string">'root'</span>,</span><br><span class="line">          <span class="string">'password'</span>:<span class="string">'zhyea.com'</span>,</span><br><span class="line">          <span class="string">'db'</span>:<span class="string">'employees'</span>,</span><br><span class="line">          <span class="string">'charset'</span>:<span class="string">'utf8mb4'</span>,</span><br><span class="line">          <span class="string">'cursorclass'</span>:pymysql.cursors.DictCursor,</span><br><span class="line">          &#125;</span><br><span class="line"><span class="comment"># 创建连接</span></span><br><span class="line">connection = pymysql.connect(**config)</span><br><span class="line"> </span><br><span class="line"><span class="comment"># 获取雇佣日期</span></span><br><span class="line">hire_start = datetime.date(<span class="number">1999</span>, <span class="number">1</span>, <span class="number">1</span>)</span><br><span class="line">hire_end = datetime.date(<span class="number">2016</span>, <span class="number">12</span>, <span class="number">31</span>)</span><br><span class="line"> </span><br><span class="line"><span class="comment"># 执行sql语句</span></span><br><span class="line"><span class="keyword">try</span>:</span><br><span class="line">    <span class="keyword">with</span> connection.cursor() <span class="keyword">as</span> cursor:</span><br><span class="line">        <span class="comment"># 执行sql语句，进行查询</span></span><br><span class="line">        sql = <span class="string">'SELECT first_name, last_name, hire_date FROM employees WHERE hire_date BETWEEN %s AND %s'</span></span><br><span class="line">        cursor.execute(sql, (hire_start, hire_end))</span><br><span class="line">        <span class="comment"># 获取查询结果</span></span><br><span class="line">        result = cursor.fetchone()</span><br><span class="line">        print(result)</span><br><span class="line">    <span class="comment"># 没有设置默认自动提交，需要主动提交，以保存所执行的语句</span></span><br><span class="line">    connection.commit()</span><br><span class="line"> </span><br><span class="line"><span class="keyword">finally</span>:</span><br><span class="line">    connection.close();</span><br></pre></td></tr></table></figure>
+<p>这里是查询获取一条结果，查询的结果是以字典（dict）的形式返回的。<br>从结果集中获取指定数目的结果，可以使用fetchmany方法。</p>
+<p>result = cursor.fetachmany(2)<br>获取两条结果<br>不过不建议这样使用，最好在sql语句中设置查询的记录总数。(sql查询的速度肯定要快于Python的查询速度)</p>
+<p>获取全部结果集可以使用fetchall方法：</p>
+<p>result = cursor.fetchall()</p>
+<p>在django中使用pymysql</p>
+<p>在django1.8中，用python3.x开发，在django的配置文件中配置数据库驱动</p>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line">DATABASES = &#123;</span><br><span class="line">   <span class="string">'default'</span>: &#123;</span><br><span class="line">        <span class="string">'ENGINE'</span>: <span class="string">'django.db.backends.mysql'</span>,</span><br><span class="line">        <span class="string">'NAME'</span>: <span class="string">'mytest'</span>,</span><br><span class="line">        <span class="string">'USER'</span>: <span class="string">'root'</span>,</span><br><span class="line">        <span class="string">'PASSWORD'</span>: <span class="string">'zhyea.com'</span>,</span><br><span class="line">        <span class="string">'HOST'</span>: <span class="string">'127.0.0.1'</span>,</span><br><span class="line">        <span class="string">'PORT'</span>: <span class="string">'3306'</span>,</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<pre><code>注意在站点的初始化文件init.py的文件中保存以下内容：</code></pre><figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="keyword">import</span> pymysql</span><br><span class="line">pymysql.install_as_MySQLdb()</span><br></pre></td></tr></table></figure>
+<pre><code>日常注意：
+
+在设置数据库时，为了兼容性，和防止以后出现数据的编码问题，在建立数据库，建立表，建立表的字段时，都要设置好统一的编码格式，推荐utf8mb4_unicode_ci
+在使用pymysql连接数据库是，配置的连接参数charset要设置和mysql数据库的一致，这样在获取数据是就可以避免出现编码的问题。
+在完成对数据库的操作的时候，一定要手动关闭连接和光标。</code></pre>]]></content>
+      <categories>
+        <category>Python</category>
+      </categories>
+      <tags>
+        <tag>python</tag>
+        <tag>pymysql</tag>
+      </tags>
+  </entry>
 </search>
