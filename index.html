@@ -955,7 +955,7 @@
                   <i class="fa fa-calendar-check-o"></i>
                 </span>
                 <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2020-01-05 00:54:54" itemprop="dateModified" datetime="2020-01-05T00:54:54+08:00">2020-01-05</time>
+                <time title="修改时间：2020-01-06 22:05:48" itemprop="dateModified" datetime="2020-01-06T22:05:48+08:00">2020-01-06</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -994,46 +994,15 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <h2 id="为何我要在win下使用git-bash（优雅的）"><a href="#为何我要在win下使用git-bash（优雅的）" class="headerlink" title="为何我要在win下使用git bash（优雅的）"></a>为何我要在win下使用git bash（优雅的）</h2><p>事情是这样滴，前段时间，xshell（破解版）在我的电脑上就莫名的是用不了，说是服务到期，但是这可是破解版呀（怪不好意思的），当然重装这个软件依然是这样，求救谷歌下载到的依然会出现那个提示，导致我进入不了用户界面。我在xshell上有三台服务器的配置，也就是打开xshell就可以连接这三台服务器了。寻求软件交流群的老铁，给我提供他电脑上安装的版本（免费破解的），我以为差不多就可以，但是这软件就是实在，还是不行。其实也有开源的额免费的ssh客户端，但是由于都不是太好看，没啥设计美学，于是就放弃了。想着，很多人mac大佬都是terminal下ssh连接服务器，我就想，要不就试着在git bash下用ssh连接服务器？</p>
-<h2 id="git-bash-ssh连接服务器"><a href="#git-bash-ssh连接服务器" class="headerlink" title="git bash ssh连接服务器"></a>git bash ssh连接服务器</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">ssh username@server_ip</span><br><span class="line"></span><br><span class="line">ssh root@192.168.0.1</span><br><span class="line"></span><br><span class="line">或者是如果你有秘钥文件入xxx.pem</span><br><span class="line">那么接得使用下面的命令</span><br><span class="line"></span><br><span class="line">ssh -i xxx.pem username@server_ip</span><br></pre></td></tr></table></figure>
-<p>使用上面的方法确实可以连接到服务器，但是有一下几个缺点：</p>
-<ul>
-<li>加入你有多个服务器，你就不得不记住这些ip地址，这比较烦</li>
-<li>你在输入这些后，你还是要输入登入服务器的密码，非常不方便</li>
-<li>要是你切换服务器，你有必须重新输入 </li>
-</ul>
-<p>那我们如何减轻我们操作的负担呢？</p>
-<h2 id="优化一"><a href="#优化一" class="headerlink" title="优化一"></a>优化一</h2><p>为了不再每次ssh登入服务器的时候都要输入密码，我们可以在我们本地生成秘钥，然后在把秘钥推送到服务器上，这样每次我们ssh去连接的时候，就顺带验证了。</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">首先我们 ssh-keygen 生成我们的秘钥，注意秘钥的保存路径</span><br><span class="line">其次在使用 ssh-copy-id root@server_ip</span><br></pre></td></tr></table></figure>
-<p>这样我们ssh登录我们的服务器是不需要输入账户密码的。</p>
-<h2 id="优化二"><a href="#优化二" class="headerlink" title="优化二"></a>优化二</h2><p>我们还是得记住ip，这样不好。那有什么办法呢？<br>办法就是我们可以为每个服务器写一个bash的脚本，需要登录的时候，执行这个服务器登录脚本就可以了。</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">ssh -i xxx.pem root@server_ip</span><br><span class="line">或是ssh root@server_ip</span><br></pre></td></tr></table></figure>
-<p>我们保存为shortname_server_ip.bash,假设我们有三台服务器，我们分别保存脚本为</p>
-<ul>
-<li>shortname1.server_ip1.bash</li>
-<li>shortname2.server_ip2.bash</li>
-<li>shortname3.server_ip3.bash</li>
-</ul>
-<p>这样我们要登录那个服务器只要，打开gitbash，cd到你放登录脚本的文件夹，然后执行source shortname.server_ip.bash,就可以登录到服务器了，为啥是要这个命令呢？其实使用./shortname.server_ip.bash 也是可以的，但是因为你在win下这样写，他是没有自动补全的(在这种情况下)，那不是我们还得挨个敲，或是ls对照着挨个敲，还是觉得有点麻烦有木有？ source命令呢，就可以弥补这一小点缺陷，所以用用source吧。<br>其实我们还是觉得不够好，因为你必须切换到你防止这些登录脚本的地方，而且每次你还得cd到这个位置，重复的事情做多了就会变得索然无味，对吧。我们要解决他。</p>
-<h2 id="优化三"><a href="#优化三" class="headerlink" title="优化三"></a>优化三</h2><p>你会发现有很多bash命令他是全局的，就像ls，cat等，要是我们的脚本可以向他们一样就好了？其实我们的git bash 是有这个功能的，那怎么做呢？</p>
-<ul>
-<li>我们找到我们的git bash的安装目录，比如我的是 ：C:\Program Files\Git</li>
-<li>在这个目录下有一个mingw64的文件夹，你可以将刚才三个登录脚本，放到这个目录的bin目录下面，</li>
-<li>修改刚才脚本的后缀名，只保留文件名</li>
-<li>最后，在每个脚本的开头 添加上这样一行 #!/bin/sh 也就是linux下指定运行的该文件的程序，然后保存修改。</li>
-</ul>
-<p>有了这样的修改后我们只要打开 git bash，输入shortname 按tab键就会自动补全我们的脚本名字，我们只需要记住我们的shortname 就可以了。比如我的腾讯云服务器 文件名我就改为 tencent.server_ip 这样有什么需要关于ip的操作我也可以第一时间看到，岂不美滋滋？</p>
-<h2 id="想想还可以怎么玩"><a href="#想想还可以怎么玩" class="headerlink" title="想想还可以怎么玩"></a>想想还可以怎么玩</h2><p>大家都应该看过，某些mac或是linux大佬，使用terminal 直接打开某个程序的吧？<br>比如 我需要打开vscode，我就在gitbash中输入 code . ,意思是用vscode打开当前的目录，是不是觉得有点帅？ 这个是因为你在安装的时候vscode 有选项是可以将vscode程序的path，写入到系统环境的变量。<br>大家应该都很熟悉，要是要是一个程序在cmd中可以被识别，那么都可以在环境变量中，将程序的启动文件目录加入到系统的环境变量中去的。但是我们的软件那么多，其实没有必要都加入到系统的环境变量中去。所以按照优化三的方案，其实我们可以以类似的方式实现这样的功能。</p>
-<p>但是其实将程序的启动目录加到系统环境变量来实现在bash下启动程序，这里有一个不爽的地方(要是爽，就不会有后面的方案了)，那就是你必须在 命令的后面加上&amp; 使你需要启动的程序进入后台，而不至于被bash阻塞(bash 退出后，你的程序也会退出)。</p>
-<h2 id="实现在命令行中打开常用程序"><a href="#实现在命令行中打开常用程序" class="headerlink" title="实现在命令行中打开常用程序"></a>实现在命令行中打开常用程序</h2><ul>
-<li>在我们的git bash安装目录下，找到mingw64下的bin文件夹，加入我们想设置的程序。</li>
-<li>假设我想在bash下使用idea编辑器，在git clone 别人仓库的时候，进入到仓库，直接idea .,打开整个项目，岂不美哉？</li>
-<li>我们在bin文件夹下建立一个叫idea的文件，无后缀。</li>
-<li>在开头写上<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#!/bin/sh</span></span><br><span class="line"><span class="string">"C:\Program Files\JetBrains\IntelliJ IDEA 2018.1\bin\idea64.exe"</span> <span class="variable">$1</span> &amp;</span><br></pre></td></tr></table></figure></li>
-<li>保存(上面只是我电脑环境的，你可以按照自己的需求来写，就是填程序启动具体是哪一个启动的)</li>
-</ul>
-<p>这样你就可以在打开git bash的时候在上面敲 idea . 就会在当前目录启动你的成程序啦！</p>
-
+          windows 也要使用bash
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2018/04/10/%E5%A6%82%E4%BD%95%E4%BC%98%E9%9B%85%E7%9A%84%E5%9C%A8win%E4%B8%8B%E4%BD%BF%E7%94%A8gitbash/">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
       
     </div>
 
@@ -1157,7 +1126,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block home" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://lzhaoyang.github.io/2017/09/26/%E4%B8%80%E9%81%93%E9%A2%98%E7%9B%AE%E5%BC%95%E5%8F%91%E7%9A%84%E6%80%9D%E8%80%83/">
+    <link itemprop="mainEntityOfPage" href="https://lzhaoyang.github.io/2017/09/26/Java%E6%9E%84%E9%80%A0%E5%87%BD%E6%95%B0%E8%AF%A6%E8%A7%A3/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.jpg">
@@ -1171,7 +1140,7 @@
       <header class="post-header">
         <h1 class="post-title" itemprop="name headline">
           
-            <a href="/2017/09/26/%E4%B8%80%E9%81%93%E9%A2%98%E7%9B%AE%E5%BC%95%E5%8F%91%E7%9A%84%E6%80%9D%E8%80%83/" class="post-title-link" itemprop="url">一道题目引发的思考</a>
+            <a href="/2017/09/26/Java%E6%9E%84%E9%80%A0%E5%87%BD%E6%95%B0%E8%AF%A6%E8%A7%A3/" class="post-title-link" itemprop="url">Java构造函数详解</a>
         </h1>
 
         <div class="post-meta">
@@ -1188,7 +1157,7 @@
                   <i class="fa fa-calendar-check-o"></i>
                 </span>
                 <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2020-01-05 00:55:55" itemprop="dateModified" datetime="2020-01-05T00:55:55+08:00">2020-01-05</time>
+                <time title="修改时间：2020-01-05 00:59:08" itemprop="dateModified" datetime="2020-01-05T00:59:08+08:00">2020-01-05</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1208,14 +1177,14 @@
                 <i class="fa fa-file-word-o"></i>
               </span>
                 <span class="post-meta-item-text">本文字数：</span>
-              <span>1.3k</span>
+              <span>1.7k</span>
             </span>
             <span class="post-meta-item" title="阅读时长">
               <span class="post-meta-item-icon">
                 <i class="fa fa-clock-o"></i>
               </span>
                 <span class="post-meta-item-text">阅读时长 &asymp;</span>
-              <span>1 分钟</span>
+              <span>2 分钟</span>
             </span>
 
         </div>
@@ -1227,10 +1196,10 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          这是我的瞎想
+          细节让人头疼系列
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2017/09/26/%E4%B8%80%E9%81%93%E9%A2%98%E7%9B%AE%E5%BC%95%E5%8F%91%E7%9A%84%E6%80%9D%E8%80%83/">
+              <a class="btn" href="/2017/09/26/Java%E6%9E%84%E9%80%A0%E5%87%BD%E6%95%B0%E8%AF%A6%E8%A7%A3/">
                 阅读全文 &raquo;
               </a>
             </div>

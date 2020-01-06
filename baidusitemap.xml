@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
+    <loc>https://lzhaoyang.github.io/2018/04/10/%E5%A6%82%E4%BD%95%E4%BC%98%E9%9B%85%E7%9A%84%E5%9C%A8win%E4%B8%8B%E4%BD%BF%E7%94%A8gitbash/</loc>
+    <lastmod>2020-01-06</lastmod>
+  </url>  <url>
     <loc>https://lzhaoyang.github.io/2018/06/14/Java8%20%E5%87%BD%E6%95%B0%E5%BC%8F%E8%A1%A8%E8%BE%BE%E5%BC%8F%E4%B8%AD%E7%9A%84%E5%BC%82%E5%B8%B8%E5%A4%84%E7%90%86/</loc>
     <lastmod>2020-01-04</lastmod>
   </url>  <url>
@@ -32,9 +35,6 @@
     <lastmod>2020-01-04</lastmod>
   </url>  <url>
     <loc>https://lzhaoyang.github.io/2017/07/06/%E5%A6%82%E4%BD%95%E6%AD%A3%E7%A1%AE%E7%9A%84%E5%AD%A6%E4%B9%A0%E4%B8%80%E9%97%A8%E6%8A%80%E8%83%BD/</loc>
-    <lastmod>2020-01-04</lastmod>
-  </url>  <url>
-    <loc>https://lzhaoyang.github.io/2018/04/10/%E5%A6%82%E4%BD%95%E4%BC%98%E9%9B%85%E7%9A%84%E5%9C%A8win%E4%B8%8B%E4%BD%BF%E7%94%A8gitbash/</loc>
     <lastmod>2020-01-04</lastmod>
   </url>  <url>
     <loc>https://lzhaoyang.github.io/2017/09/21/%E5%A6%82%E4%BD%95%E4%BD%BF%E7%94%A8Java%E5%86%99%E4%B8%80%E4%B8%AA%E7%AE%80%E6%98%93%E7%9A%84HTTPServer/</loc>
