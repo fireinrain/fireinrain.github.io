@@ -259,6 +259,12 @@
 </ul>
 <p>执行命令后，插件会根据用户提供的 ID 爬取豆瓣中的数据信息并在 <code>public</code> 目录下生成对应的页面，当服务器启动或部署后会将页面显示在对应的菜单路由下。</p>
 <p>通常大家都喜欢用 hexo d 来作为 hexo deploy 命令的简化，但是当安装了 hexo douban 之后， hexo d 就会有歧义而无法执行，因为 hexo douban 跟 hexo deploy 的 Alias 都是 hexo d。</p>
+<h3 id="增加炫酷首页"><a href="#增加炫酷首页" class="headerlink" title="增加炫酷首页"></a>增加炫酷首页</h3><p>目前想给hexo博客添加一个首页没有比较好的方法，基本都是需要在public目录中生成一个index页面，然后将hexo g 自身生产的各种资源增加一层目录。</p>
+<p>因为考虑到对博客整体的影响比较大，不利于后面的升级维护，所以就没考虑折腾。这里给出两种方式的连接：</p>
+<ol>
+<li><a href="https://hexo.52bess.com/diy.html#more" target="_blank" rel="noopener">炫酷的主页</a></li>
+<li><a href="https://foradawn.github.io/blog/2018/01/01/Hexo自定义首页/" target="_blank" rel="noopener">Hexo自定义首页</a></li>
+</ol>
 <h3 id="后记"><a href="#后记" class="headerlink" title="后记"></a>后记</h3><p>还是最开始那句话，折腾这些美化的东西意义不大，最重要的还是博客的内容，这才是关键。</p>
 ]]></content>
       <categories>
