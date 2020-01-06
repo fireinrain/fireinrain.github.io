@@ -230,6 +230,35 @@
 <p>这里选择放在侧边栏，所以对应的修改<code>layout\_macro\sidebar.swig</code> 文件</p>
 <p><img src="/2019/12/29/Hexo-Next%E4%B8%BB%E9%A2%98%E6%8A%98%E8%85%BE/image-20191230025521725.png" alt="image-20191230025521725"></p>
 <p>将代码插入到这个位置，我们就能在side bar上看见我们的音乐播放器了。</p>
+<h3 id="添加豆瓣相关页面"><a href="#添加豆瓣相关页面" class="headerlink" title="添加豆瓣相关页面"></a>添加豆瓣相关页面</h3><p>添加依赖： yarn add hexo-douban</p>
+<p>配置主_config.yml 文件，添加一下内容</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">douban:</span><br><span class="line">  user:  <span class="comment"># 个人豆瓣ID</span></span><br><span class="line">  <span class="built_in">builtin</span>: <span class="literal">false</span></span><br><span class="line">  book:</span><br><span class="line">    title: <span class="string">'This is my book title'</span></span><br><span class="line">    quote: <span class="string">'This is my book quote'</span></span><br><span class="line">  movie:</span><br><span class="line">    title: <span class="string">'This is my movie title'</span></span><br><span class="line">    quote: <span class="string">'This is my movie quote'</span></span><br><span class="line">  game:</span><br><span class="line">    title: <span class="string">'This is my game title'</span></span><br><span class="line">    quote: <span class="string">'This is my game quote'</span></span><br><span class="line">  timeout: 10000</span><br></pre></td></tr></table></figure>
+
+<p>user: 填写豆瓣 ID。登陆豆瓣后点击个人主页，此时 url 中最后一段即是用户 ID，一般情况下会是一段数字，如果设置了个人域名的话，则个人域名即为 ID。</p>
+<ul>
+<li><p>builtin: 是否将生成页面的功能嵌入 <code>hexo s</code> 和 <code>hexo g</code> 中。</p>
+</li>
+<li><p>timeout: 爬取数据的超时时间。</p>
+<p>如果只想生成某一个页面（比如只生成读书页面），把其他的配置项注释掉即可。</p>
+</li>
+</ul>
+<p>在主题配置文件中新增菜单入口：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">文件位置:themes\next\_config.yml</span><br><span class="line">menu:</span><br><span class="line">  home: &#x2F; || home</span><br><span class="line">  tags: &#x2F;tags&#x2F; || tags</span><br><span class="line">  categories: &#x2F;categories&#x2F; || th</span><br><span class="line">  archives: &#x2F;archives&#x2F; || archive</span><br><span class="line">  about: &#x2F;about&#x2F; || user</span><br><span class="line">  books: &#x2F;books&#x2F; || book  </span><br><span class="line">  movies: &#x2F;movies&#x2F; || video-camera  </span><br><span class="line">  games: &#x2F;games&#x2F; || gamepad</span><br></pre></td></tr></table></figure>
+
+<p>在语言包中新增菜单中文：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">文件位置:themes\next\language\zh_CN.yml</span><br><span class="line">  menu:</span><br><span class="line">    home: 首页</span><br><span class="line">    archives: 归档</span><br><span class="line">    categories: 分类</span><br><span class="line">    tags: 标签</span><br><span class="line">+   movies: 电影</span><br><span class="line">+   books: 读书</span><br><span class="line">+   games: 游戏</span><br></pre></td></tr></table></figure>
+
+<p>然后在根目录下执行以下命令生成豆瓣阅读 / 电影 / 游戏页面：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">$ hexo douban</span><br></pre></td></tr></table></figure>
+
+<p>可选参数:</p>
+<ul>
+<li>-b | –books: 只生成豆瓣读书页面</li>
+<li>-m | –movies: 只生成豆瓣电影页面</li>
+<li>-g | –games: 只生成豆瓣游戏页面</li>
+</ul>
+<p>执行命令后，插件会根据用户提供的 ID 爬取豆瓣中的数据信息并在 <code>public</code> 目录下生成对应的页面，当服务器启动或部署后会将页面显示在对应的菜单路由下。</p>
+<p>通常大家都喜欢用 hexo d 来作为 hexo deploy 命令的简化，但是当安装了 hexo douban 之后， hexo d 就会有歧义而无法执行，因为 hexo douban 跟 hexo deploy 的 Alias 都是 hexo d。</p>
 <h3 id="后记"><a href="#后记" class="headerlink" title="后记"></a>后记</h3><p>还是最开始那句话，折腾这些美化的东西意义不大，最重要的还是博客的内容，这才是关键。</p>
 ]]></content>
       <categories>
@@ -820,6 +849,40 @@ ViewResolver 结合Model和View，来渲染视图
       </tags>
   </entry>
   <entry>
+    <title>关于pymysql的使用</title>
+    <url>/2017/03/23/%E5%85%B3%E4%BA%8Epymysql%E7%9A%84%E4%BD%BF%E7%94%A8/</url>
+    <content><![CDATA[<h3 id="什么是pymysql"><a href="#什么是pymysql" class="headerlink" title="什么是pymysql"></a>什么是pymysql</h3><pre><code>pymysql是一个python连接mysql数据库的驱动，用来实现通过python可以向mysql数据库中，进行数据库的操作。</code></pre><h3 id="为什么要用pymysql"><a href="#为什么要用pymysql" class="headerlink" title="为什么要用pymysql"></a>为什么要用pymysql</h3><pre><code>pymysql是纯python实现的，在跨平台的时候，基本上没有其他的副作用。
+虽说是纯python实现的，但是它的效率还是不错的，虽然没有比C的实现那么有效率，但是pymysql还是可以的。
+mysql的python官方驱动目前只支持到python3.4，更新不积极，而pymysql支持Python3.5。</code></pre><h3 id="怎样使用pymysql呢"><a href="#怎样使用pymysql呢" class="headerlink" title="怎样使用pymysql呢"></a>怎样使用pymysql呢</h3><pre><code>首先安装pymysql，pip install pymysql</code></pre><p>使用示例,数据库连接</p>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="keyword">import</span> pymysql</span><br><span class="line"><span class="comment">#建立一个连接</span></span><br><span class="line">con = pymysql.connect(</span><br><span class="line">        host=<span class="string">'127.0.0.1'</span>,</span><br><span class="line">        user=<span class="string">'root'</span>,</span><br><span class="line">        passwd=<span class="string">'root'</span>,</span><br><span class="line">        db=<span class="string">'somedb'</span>,</span><br><span class="line">        charset=<span class="string">'utf8'</span>,</span><br><span class="line">    )</span><br></pre></td></tr></table></figure>
+<p>更好的方法是建立一个字典来管理这些数据库连接的参数：</p>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="keyword">import</span> pymysql</span><br><span class="line">config = &#123;</span><br><span class="line">        <span class="string">'host'</span>:<span class="string">'127.0.0.1'</span>,</span><br><span class="line">        <span class="string">'user'</span>:<span class="string">'root'</span>,</span><br><span class="line">        <span class="string">'passwd'</span>:<span class="string">'root'</span>,</span><br><span class="line">        <span class="string">'db'</span>=<span class="string">'somedb'</span>,</span><br><span class="line">        <span class="string">'charset'</span>=<span class="string">'utf8'</span>,</span><br><span class="line">    &#125;</span><br><span class="line"><span class="comment">#连接数据库</span></span><br><span class="line">conn = pymysql.connect(**config)</span><br></pre></td></tr></table></figure>
+<p>插入数据：</p>
+<p>执行sql语句之前要获取光标cursor，因为默认配置是自动提交的，所以在执行sql语句需要主动的commit，在最后要主动关闭连接。</p>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="keyword">import</span> pymysql</span><br><span class="line">config = &#123;</span><br><span class="line">        <span class="string">'host'</span>:<span class="string">'127.0.0.1'</span>,</span><br><span class="line">        <span class="string">'user'</span>:<span class="string">'root'</span>,</span><br><span class="line">        <span class="string">'passwd'</span>:<span class="string">'root'</span>,</span><br><span class="line">        <span class="string">'db'</span>=<span class="string">'somedb'</span>,</span><br><span class="line">        <span class="string">'charset'</span>=<span class="string">'utf8'</span>,</span><br><span class="line">    &#125;</span><br><span class="line"><span class="comment">#连接数据库</span></span><br><span class="line">conn = pymysql.connect(**config)</span><br><span class="line">cur = conc.cursor()</span><br><span class="line"><span class="comment">#执行</span></span><br><span class="line"><span class="keyword">try</span>:</span><br><span class="line">    <span class="keyword">with</span> cur <span class="keyword">as</span> cursor:</span><br><span class="line">        sql = <span class="string">"insert into sometable (somefield,somefield...) values (%s...)</span></span><br><span class="line"><span class="string">        cursor.excute(sql,(values...))</span></span><br><span class="line"><span class="string">    cursor.connection.commit()</span></span><br><span class="line"><span class="string">    </span></span><br><span class="line"><span class="string">finally:</span></span><br><span class="line"><span class="string">    cur.close()</span></span><br><span class="line"><span class="string">    conn.close()</span></span><br></pre></td></tr></table></figure>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line">执行查询：</span><br><span class="line"><span class="keyword">import</span> datetime</span><br><span class="line"><span class="keyword">import</span> pymysql.cursors</span><br><span class="line"> </span><br><span class="line"><span class="comment">#连接配置信息</span></span><br><span class="line">config = &#123;</span><br><span class="line">          <span class="string">'host'</span>:<span class="string">'127.0.0.1'</span>,</span><br><span class="line">          <span class="string">'port'</span>:<span class="number">3306</span>,</span><br><span class="line">          <span class="string">'user'</span>:<span class="string">'root'</span>,</span><br><span class="line">          <span class="string">'password'</span>:<span class="string">'zhyea.com'</span>,</span><br><span class="line">          <span class="string">'db'</span>:<span class="string">'employees'</span>,</span><br><span class="line">          <span class="string">'charset'</span>:<span class="string">'utf8mb4'</span>,</span><br><span class="line">          <span class="string">'cursorclass'</span>:pymysql.cursors.DictCursor,</span><br><span class="line">          &#125;</span><br><span class="line"><span class="comment"># 创建连接</span></span><br><span class="line">connection = pymysql.connect(**config)</span><br><span class="line"> </span><br><span class="line"><span class="comment"># 获取雇佣日期</span></span><br><span class="line">hire_start = datetime.date(<span class="number">1999</span>, <span class="number">1</span>, <span class="number">1</span>)</span><br><span class="line">hire_end = datetime.date(<span class="number">2016</span>, <span class="number">12</span>, <span class="number">31</span>)</span><br><span class="line"> </span><br><span class="line"><span class="comment"># 执行sql语句</span></span><br><span class="line"><span class="keyword">try</span>:</span><br><span class="line">    <span class="keyword">with</span> connection.cursor() <span class="keyword">as</span> cursor:</span><br><span class="line">        <span class="comment"># 执行sql语句，进行查询</span></span><br><span class="line">        sql = <span class="string">'SELECT first_name, last_name, hire_date FROM employees WHERE hire_date BETWEEN %s AND %s'</span></span><br><span class="line">        cursor.execute(sql, (hire_start, hire_end))</span><br><span class="line">        <span class="comment"># 获取查询结果</span></span><br><span class="line">        result = cursor.fetchone()</span><br><span class="line">        print(result)</span><br><span class="line">    <span class="comment"># 没有设置默认自动提交，需要主动提交，以保存所执行的语句</span></span><br><span class="line">    connection.commit()</span><br><span class="line"> </span><br><span class="line"><span class="keyword">finally</span>:</span><br><span class="line">    connection.close();</span><br></pre></td></tr></table></figure>
+<p>这里是查询获取一条结果，查询的结果是以字典（dict）的形式返回的。<br>从结果集中获取指定数目的结果，可以使用fetchmany方法。</p>
+<p>result = cursor.fetachmany(2)<br>获取两条结果<br>不过不建议这样使用，最好在sql语句中设置查询的记录总数。(sql查询的速度肯定要快于Python的查询速度)</p>
+<p>获取全部结果集可以使用fetchall方法：</p>
+<p>result = cursor.fetchall()</p>
+<p>在django中使用pymysql</p>
+<p>在django1.8中，用python3.x开发，在django的配置文件中配置数据库驱动</p>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line">DATABASES = &#123;</span><br><span class="line">   <span class="string">'default'</span>: &#123;</span><br><span class="line">        <span class="string">'ENGINE'</span>: <span class="string">'django.db.backends.mysql'</span>,</span><br><span class="line">        <span class="string">'NAME'</span>: <span class="string">'mytest'</span>,</span><br><span class="line">        <span class="string">'USER'</span>: <span class="string">'root'</span>,</span><br><span class="line">        <span class="string">'PASSWORD'</span>: <span class="string">'zhyea.com'</span>,</span><br><span class="line">        <span class="string">'HOST'</span>: <span class="string">'127.0.0.1'</span>,</span><br><span class="line">        <span class="string">'PORT'</span>: <span class="string">'3306'</span>,</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<pre><code>注意在站点的初始化文件init.py的文件中保存以下内容：</code></pre><figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="keyword">import</span> pymysql</span><br><span class="line">pymysql.install_as_MySQLdb()</span><br></pre></td></tr></table></figure>
+<pre><code>日常注意：
+
+在设置数据库时，为了兼容性，和防止以后出现数据的编码问题，在建立数据库，建立表，建立表的字段时，都要设置好统一的编码格式，推荐utf8mb4_unicode_ci
+在使用pymysql连接数据库是，配置的连接参数charset要设置和mysql数据库的一致，这样在获取数据是就可以避免出现编码的问题。
+在完成对数据库的操作的时候，一定要手动关闭连接和光标。</code></pre>]]></content>
+      <categories>
+        <category>Python</category>
+      </categories>
+      <tags>
+        <tag>python</tag>
+        <tag>pymysql</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>部署手撕包菜磁力网站</title>
     <url>/2017/03/23/%E9%83%A8%E7%BD%B2%E6%89%8B%E6%92%95%E5%8C%85%E8%8F%9C%E7%A3%81%E5%8A%9B%E7%BD%91%E7%AB%99/</url>
     <content><![CDATA[<h3 id="最近有个群里的好友，希望我帮他解决一个问题：在win环境本地下，运行起来一个django项目（带有后端爬虫）"><a href="#最近有个群里的好友，希望我帮他解决一个问题：在win环境本地下，运行起来一个django项目（带有后端爬虫）" class="headerlink" title="最近有个群里的好友，希望我帮他解决一个问题：在win环境本地下，运行起来一个django项目（带有后端爬虫）"></a>最近有个群里的好友，希望我帮他解决一个问题：在win环境本地下，运行起来一个django项目（带有后端爬虫）</h3><p>因为是项目，所以在pycharm里调试时出现：<br>enter description here<br>因为是要安装oursql驱动mysql，但是一直安装不上，以为它依赖cython。所以我尝试下载<br>Oursql的源码包，准备在python目录下安装：<br>enter description here</p>
@@ -877,40 +940,6 @@ ViewResolver 结合Model和View，来渲染视图
       <tags>
         <tag>网站部署</tag>
         <tag>磁力</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>关于pymysql的使用</title>
-    <url>/2017/03/23/%E5%85%B3%E4%BA%8Epymysql%E7%9A%84%E4%BD%BF%E7%94%A8/</url>
-    <content><![CDATA[<h3 id="什么是pymysql"><a href="#什么是pymysql" class="headerlink" title="什么是pymysql"></a>什么是pymysql</h3><pre><code>pymysql是一个python连接mysql数据库的驱动，用来实现通过python可以向mysql数据库中，进行数据库的操作。</code></pre><h3 id="为什么要用pymysql"><a href="#为什么要用pymysql" class="headerlink" title="为什么要用pymysql"></a>为什么要用pymysql</h3><pre><code>pymysql是纯python实现的，在跨平台的时候，基本上没有其他的副作用。
-虽说是纯python实现的，但是它的效率还是不错的，虽然没有比C的实现那么有效率，但是pymysql还是可以的。
-mysql的python官方驱动目前只支持到python3.4，更新不积极，而pymysql支持Python3.5。</code></pre><h3 id="怎样使用pymysql呢"><a href="#怎样使用pymysql呢" class="headerlink" title="怎样使用pymysql呢"></a>怎样使用pymysql呢</h3><pre><code>首先安装pymysql，pip install pymysql</code></pre><p>使用示例,数据库连接</p>
-<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="keyword">import</span> pymysql</span><br><span class="line"><span class="comment">#建立一个连接</span></span><br><span class="line">con = pymysql.connect(</span><br><span class="line">        host=<span class="string">'127.0.0.1'</span>,</span><br><span class="line">        user=<span class="string">'root'</span>,</span><br><span class="line">        passwd=<span class="string">'root'</span>,</span><br><span class="line">        db=<span class="string">'somedb'</span>,</span><br><span class="line">        charset=<span class="string">'utf8'</span>,</span><br><span class="line">    )</span><br></pre></td></tr></table></figure>
-<p>更好的方法是建立一个字典来管理这些数据库连接的参数：</p>
-<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="keyword">import</span> pymysql</span><br><span class="line">config = &#123;</span><br><span class="line">        <span class="string">'host'</span>:<span class="string">'127.0.0.1'</span>,</span><br><span class="line">        <span class="string">'user'</span>:<span class="string">'root'</span>,</span><br><span class="line">        <span class="string">'passwd'</span>:<span class="string">'root'</span>,</span><br><span class="line">        <span class="string">'db'</span>=<span class="string">'somedb'</span>,</span><br><span class="line">        <span class="string">'charset'</span>=<span class="string">'utf8'</span>,</span><br><span class="line">    &#125;</span><br><span class="line"><span class="comment">#连接数据库</span></span><br><span class="line">conn = pymysql.connect(**config)</span><br></pre></td></tr></table></figure>
-<p>插入数据：</p>
-<p>执行sql语句之前要获取光标cursor，因为默认配置是自动提交的，所以在执行sql语句需要主动的commit，在最后要主动关闭连接。</p>
-<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="keyword">import</span> pymysql</span><br><span class="line">config = &#123;</span><br><span class="line">        <span class="string">'host'</span>:<span class="string">'127.0.0.1'</span>,</span><br><span class="line">        <span class="string">'user'</span>:<span class="string">'root'</span>,</span><br><span class="line">        <span class="string">'passwd'</span>:<span class="string">'root'</span>,</span><br><span class="line">        <span class="string">'db'</span>=<span class="string">'somedb'</span>,</span><br><span class="line">        <span class="string">'charset'</span>=<span class="string">'utf8'</span>,</span><br><span class="line">    &#125;</span><br><span class="line"><span class="comment">#连接数据库</span></span><br><span class="line">conn = pymysql.connect(**config)</span><br><span class="line">cur = conc.cursor()</span><br><span class="line"><span class="comment">#执行</span></span><br><span class="line"><span class="keyword">try</span>:</span><br><span class="line">    <span class="keyword">with</span> cur <span class="keyword">as</span> cursor:</span><br><span class="line">        sql = <span class="string">"insert into sometable (somefield,somefield...) values (%s...)</span></span><br><span class="line"><span class="string">        cursor.excute(sql,(values...))</span></span><br><span class="line"><span class="string">    cursor.connection.commit()</span></span><br><span class="line"><span class="string">    </span></span><br><span class="line"><span class="string">finally:</span></span><br><span class="line"><span class="string">    cur.close()</span></span><br><span class="line"><span class="string">    conn.close()</span></span><br></pre></td></tr></table></figure>
-<figure class="highlight python"><table><tr><td class="code"><pre><span class="line">执行查询：</span><br><span class="line"><span class="keyword">import</span> datetime</span><br><span class="line"><span class="keyword">import</span> pymysql.cursors</span><br><span class="line"> </span><br><span class="line"><span class="comment">#连接配置信息</span></span><br><span class="line">config = &#123;</span><br><span class="line">          <span class="string">'host'</span>:<span class="string">'127.0.0.1'</span>,</span><br><span class="line">          <span class="string">'port'</span>:<span class="number">3306</span>,</span><br><span class="line">          <span class="string">'user'</span>:<span class="string">'root'</span>,</span><br><span class="line">          <span class="string">'password'</span>:<span class="string">'zhyea.com'</span>,</span><br><span class="line">          <span class="string">'db'</span>:<span class="string">'employees'</span>,</span><br><span class="line">          <span class="string">'charset'</span>:<span class="string">'utf8mb4'</span>,</span><br><span class="line">          <span class="string">'cursorclass'</span>:pymysql.cursors.DictCursor,</span><br><span class="line">          &#125;</span><br><span class="line"><span class="comment"># 创建连接</span></span><br><span class="line">connection = pymysql.connect(**config)</span><br><span class="line"> </span><br><span class="line"><span class="comment"># 获取雇佣日期</span></span><br><span class="line">hire_start = datetime.date(<span class="number">1999</span>, <span class="number">1</span>, <span class="number">1</span>)</span><br><span class="line">hire_end = datetime.date(<span class="number">2016</span>, <span class="number">12</span>, <span class="number">31</span>)</span><br><span class="line"> </span><br><span class="line"><span class="comment"># 执行sql语句</span></span><br><span class="line"><span class="keyword">try</span>:</span><br><span class="line">    <span class="keyword">with</span> connection.cursor() <span class="keyword">as</span> cursor:</span><br><span class="line">        <span class="comment"># 执行sql语句，进行查询</span></span><br><span class="line">        sql = <span class="string">'SELECT first_name, last_name, hire_date FROM employees WHERE hire_date BETWEEN %s AND %s'</span></span><br><span class="line">        cursor.execute(sql, (hire_start, hire_end))</span><br><span class="line">        <span class="comment"># 获取查询结果</span></span><br><span class="line">        result = cursor.fetchone()</span><br><span class="line">        print(result)</span><br><span class="line">    <span class="comment"># 没有设置默认自动提交，需要主动提交，以保存所执行的语句</span></span><br><span class="line">    connection.commit()</span><br><span class="line"> </span><br><span class="line"><span class="keyword">finally</span>:</span><br><span class="line">    connection.close();</span><br></pre></td></tr></table></figure>
-<p>这里是查询获取一条结果，查询的结果是以字典（dict）的形式返回的。<br>从结果集中获取指定数目的结果，可以使用fetchmany方法。</p>
-<p>result = cursor.fetachmany(2)<br>获取两条结果<br>不过不建议这样使用，最好在sql语句中设置查询的记录总数。(sql查询的速度肯定要快于Python的查询速度)</p>
-<p>获取全部结果集可以使用fetchall方法：</p>
-<p>result = cursor.fetchall()</p>
-<p>在django中使用pymysql</p>
-<p>在django1.8中，用python3.x开发，在django的配置文件中配置数据库驱动</p>
-<figure class="highlight python"><table><tr><td class="code"><pre><span class="line">DATABASES = &#123;</span><br><span class="line">   <span class="string">'default'</span>: &#123;</span><br><span class="line">        <span class="string">'ENGINE'</span>: <span class="string">'django.db.backends.mysql'</span>,</span><br><span class="line">        <span class="string">'NAME'</span>: <span class="string">'mytest'</span>,</span><br><span class="line">        <span class="string">'USER'</span>: <span class="string">'root'</span>,</span><br><span class="line">        <span class="string">'PASSWORD'</span>: <span class="string">'zhyea.com'</span>,</span><br><span class="line">        <span class="string">'HOST'</span>: <span class="string">'127.0.0.1'</span>,</span><br><span class="line">        <span class="string">'PORT'</span>: <span class="string">'3306'</span>,</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<pre><code>注意在站点的初始化文件init.py的文件中保存以下内容：</code></pre><figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="keyword">import</span> pymysql</span><br><span class="line">pymysql.install_as_MySQLdb()</span><br></pre></td></tr></table></figure>
-<pre><code>日常注意：
-
-在设置数据库时，为了兼容性，和防止以后出现数据的编码问题，在建立数据库，建立表，建立表的字段时，都要设置好统一的编码格式，推荐utf8mb4_unicode_ci
-在使用pymysql连接数据库是，配置的连接参数charset要设置和mysql数据库的一致，这样在获取数据是就可以避免出现编码的问题。
-在完成对数据库的操作的时候，一定要手动关闭连接和光标。</code></pre>]]></content>
-      <categories>
-        <category>Python</category>
-      </categories>
-      <tags>
-        <tag>python</tag>
-        <tag>pymysql</tag>
       </tags>
   </entry>
 </search>

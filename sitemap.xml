@@ -2,6 +2,13 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
+    <loc>https://lzhaoyang.github.io/2019/12/29/Hexo-Next%E4%B8%BB%E9%A2%98%E6%8A%98%E8%85%BE/</loc>
+    
+    <lastmod>2020-01-06T16:15:14.519Z</lastmod>
+    
+  </url>
+  
+  <url>
     <loc>https://lzhaoyang.github.io/2018/04/10/%E5%A6%82%E4%BD%95%E4%BC%98%E9%9B%85%E7%9A%84%E5%9C%A8win%E4%B8%8B%E4%BD%BF%E7%94%A8gitbash/</loc>
     
     <lastmod>2020-01-06T14:05:48.256Z</lastmod>
@@ -117,13 +124,6 @@
     <loc>https://lzhaoyang.github.io/about/index.html</loc>
     
     <lastmod>2020-01-01T15:23:34.541Z</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>https://lzhaoyang.github.io/2019/12/29/Hexo-Next%E4%B8%BB%E9%A2%98%E6%8A%98%E8%85%BE/</loc>
-    
-    <lastmod>2019-12-30T17:22:34.131Z</lastmod>
     
   </url>
   
