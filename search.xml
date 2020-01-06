@@ -459,6 +459,25 @@ finally中最好不要包含return，否则程序会提前退出，返回值不�
       </tags>
   </entry>
   <entry>
+    <title>一道题目引发的思考</title>
+    <url>/2017/09/26/%E4%B8%80%E9%81%93%E9%A2%98%E7%9B%AE%E5%BC%95%E5%8F%91%E7%9A%84%E6%80%9D%E8%80%83/</url>
+    <content><![CDATA[<p>在看一份Java面试题集的时候遇到一个这样的问题：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">public class Test &#123;</span><br><span class="line">        public static void main(String[] args)&#123;</span><br><span class="line">            Father father &#x3D; new Father();</span><br><span class="line">            Father child &#x3D; new Child();</span><br><span class="line">            System.out.println(father.getName());</span><br><span class="line">            System.out.println(child.getName());</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    class Father&#123;</span><br><span class="line">        public static String getName()&#123;</span><br><span class="line">            return &quot;Father&quot;;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    class Child extends Father&#123;</span><br><span class="line">        public static String getName()&#123;</span><br><span class="line">            return &quot;Child&quot;;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+<p>请问输出的结果是：<br>结果是都是Father。<br>为什么呢？</p>
+<p>我们看到这里的都是子类 ， 父类的静态方法。第一个输出为Father我们不奇怪，但是第二个为啥也是Father呢？为什么不是调用子类的静态方法呢？<br>我们看到，子类对象被父类变量所引用，这里是想测验我们，父类的实例方法能否被子类重写，如果重写了，那么调用这个方法，就应该输出子类的相关信息。要是不能，那就是调用父类的静态方法了。<br>解释</p>
+<p>父类代码：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">public class Fu &#123;  </span><br><span class="line">    public static void show() &#123;  </span><br><span class="line">        System.out.println(&quot;父类的静态方法&quot;);  </span><br><span class="line">    &#125;  </span><br><span class="line">    public void method() &#123;  </span><br><span class="line">        System.out.println(&quot;父类的普通方法&quot;);  </span><br><span class="line">    &#125;  </span><br><span class="line">&#125;  </span><br><span class="line"></span><br><span class="line">子类代码：</span><br><span class="line"></span><br><span class="line">public class Zi extends Fu &#123;  </span><br><span class="line">    public static void main(String[] args) &#123;  </span><br><span class="line">        Fu fu &#x3D; new Zi();  </span><br><span class="line">        fu.show();  </span><br><span class="line">        fu.method();  </span><br><span class="line">    &#125;  </span><br><span class="line">    public static void show() &#123;  </span><br><span class="line">        System.out.println(&quot;子类的静态方法&quot;);  </span><br><span class="line">    &#125;  </span><br><span class="line">    public void method() &#123;  </span><br><span class="line">        System.out.println(&quot;子类的普通方法&quot;);  </span><br><span class="line">    &#125;  </span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>从这里我们可以看出，父类的静态方法是不能被子类重写的，其实重写只能适用于实例方法，不能用于静态方法，对于上面这种静态方法而言，我们应该称之为隐藏。<br>Java静态方法形式上可以重写，但从本质上来说不是Java的重写。因为静态方法只与类相关，不与具体实现相关。声明的是什么类，则引用相应类的静态方法(本来静态无需声明，可以直接引用)。并且static方法不是后期绑定的，它在编译期就绑定了。换句话说，这个方法不会进行多态的判断，只与声明的类有关。</p>
+]]></content>
+      <categories>
+        <category>Java</category>
+      </categories>
+      <tags>
+        <tag>Java</tag>
+        <tag>静态方法</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>Java构造函数详解</title>
     <url>/2017/09/26/Java%E6%9E%84%E9%80%A0%E5%87%BD%E6%95%B0%E8%AF%A6%E8%A7%A3/</url>
     <content><![CDATA[<h3 id="构造函数"><a href="#构造函数" class="headerlink" title="构造函数"></a>构造函数</h3><p>当我们新实例化一个对象的时候，都想对这个对象做一些初始化的工作，比如给对象的属性初始化相关的值。这就是构造函数要做的事。</p>
@@ -491,22 +510,31 @@ finally中最好不要包含return，否则程序会提前退出，返回值不�
       </tags>
   </entry>
   <entry>
-    <title>一道题目引发的思考</title>
-    <url>/2017/09/26/%E4%B8%80%E9%81%93%E9%A2%98%E7%9B%AE%E5%BC%95%E5%8F%91%E7%9A%84%E6%80%9D%E8%80%83/</url>
-    <content><![CDATA[<p>在看一份Java面试题集的时候遇到一个这样的问题：</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">public class Test &#123;</span><br><span class="line">        public static void main(String[] args)&#123;</span><br><span class="line">            Father father &#x3D; new Father();</span><br><span class="line">            Father child &#x3D; new Child();</span><br><span class="line">            System.out.println(father.getName());</span><br><span class="line">            System.out.println(child.getName());</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    class Father&#123;</span><br><span class="line">        public static String getName()&#123;</span><br><span class="line">            return &quot;Father&quot;;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    class Child extends Father&#123;</span><br><span class="line">        public static String getName()&#123;</span><br><span class="line">            return &quot;Child&quot;;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
-<p>请问输出的结果是：<br>结果是都是Father。<br>为什么呢？</p>
-<p>我们看到这里的都是子类 ， 父类的静态方法。第一个输出为Father我们不奇怪，但是第二个为啥也是Father呢？为什么不是调用子类的静态方法呢？<br>我们看到，子类对象被父类变量所引用，这里是想测验我们，父类的实例方法能否被子类重写，如果重写了，那么调用这个方法，就应该输出子类的相关信息。要是不能，那就是调用父类的静态方法了。<br>解释</p>
-<p>父类代码：</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">public class Fu &#123;  </span><br><span class="line">    public static void show() &#123;  </span><br><span class="line">        System.out.println(&quot;父类的静态方法&quot;);  </span><br><span class="line">    &#125;  </span><br><span class="line">    public void method() &#123;  </span><br><span class="line">        System.out.println(&quot;父类的普通方法&quot;);  </span><br><span class="line">    &#125;  </span><br><span class="line">&#125;  </span><br><span class="line"></span><br><span class="line">子类代码：</span><br><span class="line"></span><br><span class="line">public class Zi extends Fu &#123;  </span><br><span class="line">    public static void main(String[] args) &#123;  </span><br><span class="line">        Fu fu &#x3D; new Zi();  </span><br><span class="line">        fu.show();  </span><br><span class="line">        fu.method();  </span><br><span class="line">    &#125;  </span><br><span class="line">    public static void show() &#123;  </span><br><span class="line">        System.out.println(&quot;子类的静态方法&quot;);  </span><br><span class="line">    &#125;  </span><br><span class="line">    public void method() &#123;  </span><br><span class="line">        System.out.println(&quot;子类的普通方法&quot;);  </span><br><span class="line">    &#125;  </span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>从这里我们可以看出，父类的静态方法是不能被子类重写的，其实重写只能适用于实例方法，不能用于静态方法，对于上面这种静态方法而言，我们应该称之为隐藏。<br>Java静态方法形式上可以重写，但从本质上来说不是Java的重写。因为静态方法只与类相关，不与具体实现相关。声明的是什么类，则引用相应类的静态方法(本来静态无需声明，可以直接引用)。并且static方法不是后期绑定的，它在编译期就绑定了。换句话说，这个方法不会进行多态的判断，只与声明的类有关。</p>
+    <title>Java子类与父类之间的转换</title>
+    <url>/2017/09/26/Java%E5%AD%90%E7%B1%BB%E4%B8%8E%E7%88%B6%E7%B1%BB%E4%B9%8B%E9%97%B4%E7%9A%84%E8%BD%AC%E6%8D%A2/</url>
+    <content><![CDATA[<p>在使用Java的多态机制时，常常使用的一个特性便是子类和父类之间的对象转换。从子类向父类的转换称为向上转换（upcasting），通过向上转换，我们能够在编写程序时采用通用程序设计的思想，在需要使用子类对象的时候，通过把变量定义为父类型，我们可以通过一个变量，使用该父类型的所有子类型实例；从父类型向子类型的转换称为向下转换（downcasting），通过向下转换，我们能在必要的时候，将父类型变量转换成子类型变量，使用一些通过子类型才能够使用的方法。以下是我对于对象转换的一些个人理解，如有不对，欢迎指正，虚心向大神们请教。</p>
+<p>首先是从子类向父类的向上转换。向上转换比较直观，总是能够将一个子类的实例转换为一个父类的对象，从继承链的角度，这个特性很容易理解：继承是一种“是一种”的关系，从父类派生出的子类，我们都能理解为，子类总是父类的一个实例。比如说，Fruit类派生出了Orange类，Apple类，Orange和Apple都是Fruit；Animal类派生出了Tiger类和Lion类，Tiger和Lion都是Animal。因此，从子类向父类的转换不需要什么限制，只需直接将子类实例赋值给父类变量即可，这也是Java中的多态的实现机制。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">&#x2F;&#x2F;Test.java</span><br><span class="line">public class Test &#123;</span><br><span class="line">    public static void main(String args[]) &#123;</span><br><span class="line">        Animal tiger &#x3D; new Tiger();</span><br><span class="line">        Animal lion &#x3D; new Lion();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line">class Animal &#123;</span><br><span class="line">    String name;</span><br><span class="line">    Animal() &#123;</span><br><span class="line">        name &#x3D; &quot;animal&quot;;</span><br><span class="line">    &#125;</span><br><span class="line">    Animal(String name) &#123;</span><br><span class="line">        this.name &#x3D; name;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line">class Tiger extends Animal &#123;</span><br><span class="line">    Tiger() &#123;</span><br><span class="line">        super(&quot;tiger&quot;);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line">class Lion extends Animal &#123;</span><br><span class="line">    Lion() &#123;</span><br><span class="line">        super(&quot;lion&quot;);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>然而从父类向子类的向下转换就稍微复杂一些了。在讲述向下转换之前，也许有些刚学java的朋友会有点不解为什么要使用向下转换，使用多态和动态绑定机制通过父类型变量使用子变量不就可以了么（比如我就曾对此感到疑惑）。这就要考虑到，在继承关系中，有一些方法是不适合由父类定义并由子类继承并重写的，有些方法是子类特有的，不应该通过继承得到，且子类可能也会有自己特有的成员变量，那么在使用多态机制的时候，若我们要通过父类型变量使用到这些子类特有的方法和属性的话，就需要将服类型变量转换成对应的子类型变量。一个典型例子便是标准库中的数据类型包装类：Integer类，Double类，Long类等，它们都继承自Number类，且它们都有一个方法叫做compareTo用于比较两个同样的类型。然而这个方法是这些子类通过实现Comparable接口来实现的，在Number类中并没有该方法的实现，因此若要通过Number类型变量来使用compareTo方法，就要先将Number类转换成子类的对象。</p>
+<p>从父类向子类的转换就有限制了。首先，父类变量向子类转换必须通过显式强制类型转换,采取和向上转换相同的直接赋值方式是不行的，；并且，当把一个父类型变量实例转换为子类型变量时，必须确保该父类变量是子类的一个实例，从继承链的角度来理解这些原因：子类一定是父类的一个实例，然而父类却不一定是子类的实例；比如说，Fruit未必是Orange，它可能是Apple；Animal也不一定是Tiger，它可能是Lion。用代码来解释一下：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">Animal tiger &#x3D; new Tiger();</span><br><span class="line">Animal lion &#x3D; new Lion();</span><br></pre></td></tr></table></figure>
+<p>在前面向上转换的代码示例当中，main方法中的这两行代码，意思就是父类型变量tiger是子类Tiger的一个实例，lion是Lion的一个实例。<br>也就是说，如果要把tiger转换为Tiger类型，必须保证tiger本身是Tiger的一个实例，在上例中，如果要把tiger转换成Lion类型，或是把Lion类型转换为Tiger类型，都是行不通的，在运行时，这会抛出一个运行异常ClassCastException，表示类转换异常。因此，在进行父类向子类的转换时，一个好的习惯是通过instanceof运算符来判断父类变量是否是该子类的一个实例：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">Tiger t &#x3D; null;</span><br><span class="line">if(tiger instanceof Tiger)</span><br><span class="line">    t &#x3D; (Tiger)tiger;</span><br></pre></td></tr></table></figure>
+<p>如果要通过父类调用子类变量的方法，那么要注意要将父类型变量和强制转换用括号括起来：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">Number i &#x3D; new Integer(3)；</span><br><span class="line">System.out.println(</span><br><span class="line">    ((Integer)i).compareTo(new Integer(4))</span><br><span class="line">                  ）；</span><br></pre></td></tr></table></figure>
+<p>因为成员访问运算符.的优先级大于类型转换，所以要用括号括起来保证类型转换先于成员访问进行运算。<br>前面说到用instanceof判断父类是否是子类的一个实例是一个好习惯，如果不养成这个习惯的话很容易出问题，请看下面这段代码：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">Animal animal &#x3D; new Tiger();</span><br><span class="line">Lion lion &#x3D; (Lion)animal;</span><br></pre></td></tr></table></figure>
+<p>前面说到，这段代码会在运行时抛出ClassCastException异常，然而，这段代码却是能够编译成功的。原因是因为，Java编译器并没有聪明到能够在编译阶段就知道父类型变量是哪一个子类的实例，所以，将animal转换为Lion类型的代码：(Lion)animal是能够编译通过的，即使事实上我们能看到animal是Tiger的一个实例，因为Animal类型确实能转换成Lion类型，所以这条语句是合法的。所以，如果没有使用instanceof防止不同子类型之间的对象转换，而又不能指望编译器检查出这种转换逻辑错误的话，就很容易犯错了。<br>总结</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">public class ConvertPro extends Father &#123;</span><br><span class="line">    public static void main(String[] args) &#123;</span><br><span class="line">        Father father &#x3D; new Father();</span><br><span class="line">        Father father1 &#x3D; new ConvertPro();</span><br><span class="line">        ConvertPro son &#x3D; new ConvertPro();</span><br><span class="line">        &#x2F;&#x2F; ConvertPro son1 &#x3D; (ConvertPro) new Father();</span><br><span class="line">        &#x2F;&#x2F; son &#x3D; (ConvertPro)father;</span><br><span class="line">        son &#x3D; (ConvertPro) father1;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line">&#x2F;**</span><br><span class="line"> * 父类</span><br><span class="line"> * </span><br><span class="line"> * @author icer</span><br><span class="line"> * </span><br><span class="line"> *&#x2F;</span><br><span class="line">class Father &#123;</span><br><span class="line">    private String name;</span><br><span class="line">    public String getName() &#123;</span><br><span class="line">        return name;</span><br><span class="line">    &#125;</span><br><span class="line">    public void setName(String name) &#123;</span><br><span class="line">        this.name &#x3D; name;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>上面代码注释掉的两行是会运行错误的. 根据代码显示, 只有我们的父类对象本身就是用子类new出来的时候, 才可以在将来被强制转换为子类对象.</p>
+<p>子类继承父类的所有(包括属性以及方法), 也就是说子类包含的内容应该是比父类要大的. 如果正常环境下, 把一个父类转换成子类一定会损失精度. 但是如果父类对象本身就是用子类去new出来的, 就类似于一个本来就是儿子角色的人, 去装了一会儿父亲, 这个角色是可以在未来转换回去的, 但是一个父亲, 永远不可能去装儿子的.</p>
 ]]></content>
       <categories>
         <category>Java</category>
       </categories>
       <tags>
         <tag>Java</tag>
-        <tag>静态方法</tag>
+        <tag>多态</tag>
       </tags>
   </entry>
   <entry>
@@ -657,34 +685,6 @@ ViewResolver 结合Model和View，来渲染视图
       <tags>
         <tag>Java</tag>
         <tag>面试题</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>Java子类与父类之间的转换</title>
-    <url>/2017/09/26/Java%E5%AD%90%E7%B1%BB%E4%B8%8E%E7%88%B6%E7%B1%BB%E4%B9%8B%E9%97%B4%E7%9A%84%E8%BD%AC%E6%8D%A2/</url>
-    <content><![CDATA[<p>在使用Java的多态机制时，常常使用的一个特性便是子类和父类之间的对象转换。从子类向父类的转换称为向上转换（upcasting），通过向上转换，我们能够在编写程序时采用通用程序设计的思想，在需要使用子类对象的时候，通过把变量定义为父类型，我们可以通过一个变量，使用该父类型的所有子类型实例；从父类型向子类型的转换称为向下转换（downcasting），通过向下转换，我们能在必要的时候，将父类型变量转换成子类型变量，使用一些通过子类型才能够使用的方法。以下是我对于对象转换的一些个人理解，如有不对，欢迎指正，虚心向大神们请教。</p>
-<p>首先是从子类向父类的向上转换。向上转换比较直观，总是能够将一个子类的实例转换为一个父类的对象，从继承链的角度，这个特性很容易理解：继承是一种“是一种”的关系，从父类派生出的子类，我们都能理解为，子类总是父类的一个实例。比如说，Fruit类派生出了Orange类，Apple类，Orange和Apple都是Fruit；Animal类派生出了Tiger类和Lion类，Tiger和Lion都是Animal。因此，从子类向父类的转换不需要什么限制，只需直接将子类实例赋值给父类变量即可，这也是Java中的多态的实现机制。</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">&#x2F;&#x2F;Test.java</span><br><span class="line">public class Test &#123;</span><br><span class="line">    public static void main(String args[]) &#123;</span><br><span class="line">        Animal tiger &#x3D; new Tiger();</span><br><span class="line">        Animal lion &#x3D; new Lion();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line">class Animal &#123;</span><br><span class="line">    String name;</span><br><span class="line">    Animal() &#123;</span><br><span class="line">        name &#x3D; &quot;animal&quot;;</span><br><span class="line">    &#125;</span><br><span class="line">    Animal(String name) &#123;</span><br><span class="line">        this.name &#x3D; name;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line">class Tiger extends Animal &#123;</span><br><span class="line">    Tiger() &#123;</span><br><span class="line">        super(&quot;tiger&quot;);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line">class Lion extends Animal &#123;</span><br><span class="line">    Lion() &#123;</span><br><span class="line">        super(&quot;lion&quot;);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>然而从父类向子类的向下转换就稍微复杂一些了。在讲述向下转换之前，也许有些刚学java的朋友会有点不解为什么要使用向下转换，使用多态和动态绑定机制通过父类型变量使用子变量不就可以了么（比如我就曾对此感到疑惑）。这就要考虑到，在继承关系中，有一些方法是不适合由父类定义并由子类继承并重写的，有些方法是子类特有的，不应该通过继承得到，且子类可能也会有自己特有的成员变量，那么在使用多态机制的时候，若我们要通过父类型变量使用到这些子类特有的方法和属性的话，就需要将服类型变量转换成对应的子类型变量。一个典型例子便是标准库中的数据类型包装类：Integer类，Double类，Long类等，它们都继承自Number类，且它们都有一个方法叫做compareTo用于比较两个同样的类型。然而这个方法是这些子类通过实现Comparable接口来实现的，在Number类中并没有该方法的实现，因此若要通过Number类型变量来使用compareTo方法，就要先将Number类转换成子类的对象。</p>
-<p>从父类向子类的转换就有限制了。首先，父类变量向子类转换必须通过显式强制类型转换,采取和向上转换相同的直接赋值方式是不行的，；并且，当把一个父类型变量实例转换为子类型变量时，必须确保该父类变量是子类的一个实例，从继承链的角度来理解这些原因：子类一定是父类的一个实例，然而父类却不一定是子类的实例；比如说，Fruit未必是Orange，它可能是Apple；Animal也不一定是Tiger，它可能是Lion。用代码来解释一下：</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">Animal tiger &#x3D; new Tiger();</span><br><span class="line">Animal lion &#x3D; new Lion();</span><br></pre></td></tr></table></figure>
-<p>在前面向上转换的代码示例当中，main方法中的这两行代码，意思就是父类型变量tiger是子类Tiger的一个实例，lion是Lion的一个实例。<br>也就是说，如果要把tiger转换为Tiger类型，必须保证tiger本身是Tiger的一个实例，在上例中，如果要把tiger转换成Lion类型，或是把Lion类型转换为Tiger类型，都是行不通的，在运行时，这会抛出一个运行异常ClassCastException，表示类转换异常。因此，在进行父类向子类的转换时，一个好的习惯是通过instanceof运算符来判断父类变量是否是该子类的一个实例：</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">Tiger t &#x3D; null;</span><br><span class="line">if(tiger instanceof Tiger)</span><br><span class="line">    t &#x3D; (Tiger)tiger;</span><br></pre></td></tr></table></figure>
-<p>如果要通过父类调用子类变量的方法，那么要注意要将父类型变量和强制转换用括号括起来：</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">Number i &#x3D; new Integer(3)；</span><br><span class="line">System.out.println(</span><br><span class="line">    ((Integer)i).compareTo(new Integer(4))</span><br><span class="line">                  ）；</span><br></pre></td></tr></table></figure>
-<p>因为成员访问运算符.的优先级大于类型转换，所以要用括号括起来保证类型转换先于成员访问进行运算。<br>前面说到用instanceof判断父类是否是子类的一个实例是一个好习惯，如果不养成这个习惯的话很容易出问题，请看下面这段代码：</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">Animal animal &#x3D; new Tiger();</span><br><span class="line">Lion lion &#x3D; (Lion)animal;</span><br></pre></td></tr></table></figure>
-<p>前面说到，这段代码会在运行时抛出ClassCastException异常，然而，这段代码却是能够编译成功的。原因是因为，Java编译器并没有聪明到能够在编译阶段就知道父类型变量是哪一个子类的实例，所以，将animal转换为Lion类型的代码：(Lion)animal是能够编译通过的，即使事实上我们能看到animal是Tiger的一个实例，因为Animal类型确实能转换成Lion类型，所以这条语句是合法的。所以，如果没有使用instanceof防止不同子类型之间的对象转换，而又不能指望编译器检查出这种转换逻辑错误的话，就很容易犯错了。<br>总结</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">public class ConvertPro extends Father &#123;</span><br><span class="line">    public static void main(String[] args) &#123;</span><br><span class="line">        Father father &#x3D; new Father();</span><br><span class="line">        Father father1 &#x3D; new ConvertPro();</span><br><span class="line">        ConvertPro son &#x3D; new ConvertPro();</span><br><span class="line">        &#x2F;&#x2F; ConvertPro son1 &#x3D; (ConvertPro) new Father();</span><br><span class="line">        &#x2F;&#x2F; son &#x3D; (ConvertPro)father;</span><br><span class="line">        son &#x3D; (ConvertPro) father1;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line">&#x2F;**</span><br><span class="line"> * 父类</span><br><span class="line"> * </span><br><span class="line"> * @author icer</span><br><span class="line"> * </span><br><span class="line"> *&#x2F;</span><br><span class="line">class Father &#123;</span><br><span class="line">    private String name;</span><br><span class="line">    public String getName() &#123;</span><br><span class="line">        return name;</span><br><span class="line">    &#125;</span><br><span class="line">    public void setName(String name) &#123;</span><br><span class="line">        this.name &#x3D; name;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>上面代码注释掉的两行是会运行错误的. 根据代码显示, 只有我们的父类对象本身就是用子类new出来的时候, 才可以在将来被强制转换为子类对象.</p>
-<p>子类继承父类的所有(包括属性以及方法), 也就是说子类包含的内容应该是比父类要大的. 如果正常环境下, 把一个父类转换成子类一定会损失精度. 但是如果父类对象本身就是用子类去new出来的, 就类似于一个本来就是儿子角色的人, 去装了一会儿父亲, 这个角色是可以在未来转换回去的, 但是一个父亲, 永远不可能去装儿子的.</p>
-]]></content>
-      <categories>
-        <category>Java</category>
-      </categories>
-      <tags>
-        <tag>Java</tag>
-        <tag>多态</tag>
       </tags>
   </entry>
   <entry>
