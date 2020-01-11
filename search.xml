@@ -83,9 +83,7 @@
 <li>Path To GC Roots</li>
 <li>顺藤摸瓜去看代码</li>
 </ul>
-<blockquote>
 <p>参考：<a href="https://www.bilibili.com/video/av74026881?from=search&amp;seid=445533783958854877" target="_blank" rel="noopener">https://www.bilibili.com/video/av74026881?from=search&amp;seid=445533783958854877</a></p>
-</blockquote>
 <h3 id="后记"><a href="#后记" class="headerlink" title="后记"></a>后记</h3><p>删除坑人的注释，重新上线。使用jvisualvm 查看内存GC的情况。</p>
 <p><img src="/2020/01/09/%E5%88%86%E6%9E%90%E4%B8%80%E6%AC%A1%E7%BD%91%E5%85%B3OOM%E5%BC%82%E5%B8%B8/image-20200111124506503.png" alt="image-20200111124506503"></p>
 <p>可以看到我们的GC正常了，程序也不是一直是高峰内存占用状态。对于配置文件或者配置选项，我的看法是宁缺毋滥，尤其是在没有具体了解配置选项的具体含义的时候，保持最小配置原则，可以让我们对程序有更为清晰的掌控和了解。</p>
@@ -642,6 +640,38 @@ finally中最好不要包含return，否则程序会提前退出，返回值不�
       </tags>
   </entry>
   <entry>
+    <title>Java构造函数详解</title>
+    <url>/2017/09/26/Java%E6%9E%84%E9%80%A0%E5%87%BD%E6%95%B0%E8%AF%A6%E8%A7%A3/</url>
+    <content><![CDATA[<h3 id="构造函数"><a href="#构造函数" class="headerlink" title="构造函数"></a>构造函数</h3><p>当我们新实例化一个对象的时候，都想对这个对象做一些初始化的工作，比如给对象的属性初始化相关的值。这就是构造函数要做的事。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">public class People&#123;</span><br><span class="line">	public String name;</span><br><span class="line">	    public int age;</span><br><span class="line">	    public People(String name,int age) &#123;</span><br><span class="line">	        this.age &#x3D; age;</span><br><span class="line">	        this.name &#x3D; name;</span><br><span class="line">	    &#125;</span><br><span class="line">	    public People(int age,String name)&#123;</span><br><span class="line">	</span><br><span class="line">	    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="构造函数的作用"><a href="#构造函数的作用" class="headerlink" title="构造函数的作用"></a>构造函数的作用</h3><p>构造方法作用：对对象进行初始化.<br>构造函数和普通的函数（方法）有啥区别？</p>
+<p>（1）. 一般函数是用于定义对象应该具备的功能。而构造函数定义的是，对象在调用功能之前，在建立时，应该具备的一些内容。也就是对象的初始化内容。</p>
+<p>（2）. 构造函数是在对象建立时由jvm调用, 给对象初始化。一般函数是对象建立后，当对象调用该功能时才会执行。</p>
+<p>（3）. 普通函数可以使用对象多次调用，构造函数就在创建对象时调用。</p>
+<p>（4）. 构造函数的函数名要与类名一样，而普通的函数只要符合标识符的命名规则即可。</p>
+<p>（5）. 构造函数没有返回值类型。<br>构造函数使用时的细节</p>
+<p>（1）. 当类中没有定义构造函数时，系统会指定给该类加上一个空参数的构造函数。这个是类中默认的构造函数。当类中如果自定义了构造函数，这时默认的构造函数就没有了。</p>
+<p>备注：可以通过javap命令验证。</p>
+<p>（2）.在一个类中可以定义多个构造函数，以进行不同的初始化。多个构造函数存在于类中，是以重载的形式体现的。因为构造函数的名称都相同。<br>构造代码块</p>
+<p>这个构造代码块有啥作用呢？注意构造代码块和静态块不一样。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">class People&#123;</span><br><span class="line">    public String name;</span><br><span class="line">    public int age;</span><br><span class="line">    public People(String name,int age) &#123;</span><br><span class="line">        this.age &#x3D; age;</span><br><span class="line">        this.name &#x3D; name;</span><br><span class="line">    &#125;</span><br><span class="line">    public People(int age,String name)&#123;</span><br><span class="line">    &#125;</span><br><span class="line">    &#x2F;&#x2F;静态块</span><br><span class="line">    static &#123;</span><br><span class="line">        System.out.println(&quot;这是静态块&quot;);</span><br><span class="line">    &#125;</span><br><span class="line">    &#x2F;&#x2F;这是构造代码块</span><br><span class="line">    &#123;</span><br><span class="line">        System.out.println(&quot;这是构造代码块&quot;);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>构造代码块的作用是：给所有的对象进行统一的初始化。<br>如果，构造函数中有比较多相同的部分，这样我们可以将它移出来，放在构造代码块中。<br>具体作用</p>
+<p>1：给对象进行初始化。对象一建立就运行并且优先于构造函数。<br>与构造函数区别</p>
+<p>2：构造代码块和构造函数的区别，构造代码块是给所有对象进行统一初始化， 构造函数给对应的对象初始化。</p>
+<p>3：构造代码块的作用：它的作用就是将所有构造方法中公共的信息进行抽取。</p>
+<h3 id="需要注意的是："><a href="#需要注意的是：" class="headerlink" title="需要注意的是："></a>需要注意的是：</h3><p>在Java中，子类的构造过程中，必须 调用其父类的构造函数, 是因为有继承关系存在时, 子类要把父类的内容继承下来, 通过什么手段做到的？ 这样： 当你new一个子类对象的时候, 必须首先要new一个父类的对像出来, 这个父类对象位于子类对象的内部, 所以说，子类对象比父类对象大, 子类对象里面包含了一个父类的对象, 这是内存中真实的情况.</p>
+<p>构造方法是new一个对象的时候, 必须要调的方法, 这是规定, 要new父类对象出来, 那么肯定要调用其构造方法, 所以 第一个规则：子类的构造过程中，必须 调用其父类的构造方法</p>
+<p>一个类, 如果我们不写构造方法, 那么编译器会帮我们加上一个默认的构造方法, 所谓默认的构造方法, 就是没有参数的构造方法, 但是如果你自己写了构造方法, 那么编译器就不会给你添加了</p>
+<p>所以有时候当你new一个子类对象的时候，肯定调用了子类的构造方法，但是在子类构造方法中我们并没有显示的调用基类的构造方法，就是没写，如：super(); 并没有这样写，但是</p>
+]]></content>
+      <categories>
+        <category>Java</category>
+      </categories>
+      <tags>
+        <tag>Java</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>201709Java面试题目总结</title>
     <url>/2017/09/26/201709Java%E9%9D%A2%E8%AF%95%E9%A2%98%E7%9B%AE%E6%80%BB%E7%BB%93%20/</url>
     <content><![CDATA[<p>碰到的Java笔试题</p>
@@ -789,38 +819,6 @@ ViewResolver 结合Model和View，来渲染视图
       <tags>
         <tag>Java</tag>
         <tag>面试题</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>Java构造函数详解</title>
-    <url>/2017/09/26/Java%E6%9E%84%E9%80%A0%E5%87%BD%E6%95%B0%E8%AF%A6%E8%A7%A3/</url>
-    <content><![CDATA[<h3 id="构造函数"><a href="#构造函数" class="headerlink" title="构造函数"></a>构造函数</h3><p>当我们新实例化一个对象的时候，都想对这个对象做一些初始化的工作，比如给对象的属性初始化相关的值。这就是构造函数要做的事。</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">public class People&#123;</span><br><span class="line">	public String name;</span><br><span class="line">	    public int age;</span><br><span class="line">	    public People(String name,int age) &#123;</span><br><span class="line">	        this.age &#x3D; age;</span><br><span class="line">	        this.name &#x3D; name;</span><br><span class="line">	    &#125;</span><br><span class="line">	    public People(int age,String name)&#123;</span><br><span class="line">	</span><br><span class="line">	    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h3 id="构造函数的作用"><a href="#构造函数的作用" class="headerlink" title="构造函数的作用"></a>构造函数的作用</h3><p>构造方法作用：对对象进行初始化.<br>构造函数和普通的函数（方法）有啥区别？</p>
-<p>（1）. 一般函数是用于定义对象应该具备的功能。而构造函数定义的是，对象在调用功能之前，在建立时，应该具备的一些内容。也就是对象的初始化内容。</p>
-<p>（2）. 构造函数是在对象建立时由jvm调用, 给对象初始化。一般函数是对象建立后，当对象调用该功能时才会执行。</p>
-<p>（3）. 普通函数可以使用对象多次调用，构造函数就在创建对象时调用。</p>
-<p>（4）. 构造函数的函数名要与类名一样，而普通的函数只要符合标识符的命名规则即可。</p>
-<p>（5）. 构造函数没有返回值类型。<br>构造函数使用时的细节</p>
-<p>（1）. 当类中没有定义构造函数时，系统会指定给该类加上一个空参数的构造函数。这个是类中默认的构造函数。当类中如果自定义了构造函数，这时默认的构造函数就没有了。</p>
-<p>备注：可以通过javap命令验证。</p>
-<p>（2）.在一个类中可以定义多个构造函数，以进行不同的初始化。多个构造函数存在于类中，是以重载的形式体现的。因为构造函数的名称都相同。<br>构造代码块</p>
-<p>这个构造代码块有啥作用呢？注意构造代码块和静态块不一样。</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">class People&#123;</span><br><span class="line">    public String name;</span><br><span class="line">    public int age;</span><br><span class="line">    public People(String name,int age) &#123;</span><br><span class="line">        this.age &#x3D; age;</span><br><span class="line">        this.name &#x3D; name;</span><br><span class="line">    &#125;</span><br><span class="line">    public People(int age,String name)&#123;</span><br><span class="line">    &#125;</span><br><span class="line">    &#x2F;&#x2F;静态块</span><br><span class="line">    static &#123;</span><br><span class="line">        System.out.println(&quot;这是静态块&quot;);</span><br><span class="line">    &#125;</span><br><span class="line">    &#x2F;&#x2F;这是构造代码块</span><br><span class="line">    &#123;</span><br><span class="line">        System.out.println(&quot;这是构造代码块&quot;);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>构造代码块的作用是：给所有的对象进行统一的初始化。<br>如果，构造函数中有比较多相同的部分，这样我们可以将它移出来，放在构造代码块中。<br>具体作用</p>
-<p>1：给对象进行初始化。对象一建立就运行并且优先于构造函数。<br>与构造函数区别</p>
-<p>2：构造代码块和构造函数的区别，构造代码块是给所有对象进行统一初始化， 构造函数给对应的对象初始化。</p>
-<p>3：构造代码块的作用：它的作用就是将所有构造方法中公共的信息进行抽取。</p>
-<h3 id="需要注意的是："><a href="#需要注意的是：" class="headerlink" title="需要注意的是："></a>需要注意的是：</h3><p>在Java中，子类的构造过程中，必须 调用其父类的构造函数, 是因为有继承关系存在时, 子类要把父类的内容继承下来, 通过什么手段做到的？ 这样： 当你new一个子类对象的时候, 必须首先要new一个父类的对像出来, 这个父类对象位于子类对象的内部, 所以说，子类对象比父类对象大, 子类对象里面包含了一个父类的对象, 这是内存中真实的情况.</p>
-<p>构造方法是new一个对象的时候, 必须要调的方法, 这是规定, 要new父类对象出来, 那么肯定要调用其构造方法, 所以 第一个规则：子类的构造过程中，必须 调用其父类的构造方法</p>
-<p>一个类, 如果我们不写构造方法, 那么编译器会帮我们加上一个默认的构造方法, 所谓默认的构造方法, 就是没有参数的构造方法, 但是如果你自己写了构造方法, 那么编译器就不会给你添加了</p>
-<p>所以有时候当你new一个子类对象的时候，肯定调用了子类的构造方法，但是在子类构造方法中我们并没有显示的调用基类的构造方法，就是没写，如：super(); 并没有这样写，但是</p>
-]]></content>
-      <categories>
-        <category>Java</category>
-      </categories>
-      <tags>
-        <tag>Java</tag>
       </tags>
   </entry>
   <entry>
