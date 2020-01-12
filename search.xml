@@ -1,6 +1,51 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
+    <title>zuul2.x官方文档翻译</title>
+    <url>/2020/01/13/zuul2-x%E5%AE%98%E6%96%B9%E6%96%87%E6%A1%A3%E7%BF%BB%E8%AF%91/</url>
+    <content><![CDATA[<h2 id="首页-Home"><a href="#首页-Home" class="headerlink" title="首页(Home)"></a>首页(Home)</h2><p>Arthur Gonigberg edited this page on Mar 14, 2018 · <a href="https://github.com/Netflix/zuul/wiki/Home/_history" target="_blank" rel="noopener">19 revisions</a></p>
+<h3 id="什么是Zuul-What-is-Zuul"><a href="#什么是Zuul-What-is-Zuul" class="headerlink" title="什么是Zuul(What is Zuul?)"></a>什么是Zuul(What is Zuul?)</h3><p>Zuul is the front door for all requests from devices and web sites to the backend of the Netflix streaming application. As an edge service application, Zuul is built to enable dynamic routing, monitoring, resiliency and security. It also has the ability to route requests to multiple Amazon Auto Scaling Groups as appropriate.</p>
+<p>To dive right in: <a href="https://github.com/Netflix/zuul/wiki/Getting-Started-2.0" target="_blank" rel="noopener">Getting Started 2.0</a></p>
+<hr>
+<p>对于所有的发自终端和网站并访问Netflix后台的影音流应用的请求，zuul 像一道前置的门。作为一个边缘的服务，Zuul为了开启服务的动态路由，监控，弹性伸缩，安全而研发。在适当的配置下，它还有能力为请求路由到多样的亚马逊自动伸缩服务中去。</p>
+<p>想去查看这里：<a href="https://github.com/Netflix/zuul/wiki/Getting-Started-2.0" target="_blank" rel="noopener">Getting Started 2.0</a></p>
+<h3 id="为什么我们开发Zuul-Why-did-we-build-Zuul"><a href="#为什么我们开发Zuul-Why-did-we-build-Zuul" class="headerlink" title="为什么我们开发Zuul?(Why did we build Zuul?)"></a>为什么我们开发Zuul?(Why did we build Zuul?)</h3><p>The volume and diversity of Netflix API traffic sometimes results in production issues arising quickly and without warning. We need a system that allows us to rapidly change behavior in order to react to these situations.</p>
+<p>Zuul uses a range of different types of filters that enables us to quickly and nimbly apply functionality to our edge service. These filters help us perform the following functions:</p>
+<ul>
+<li>Authentication and Security - identifying authentication requirements for each resource and rejecting requests that do not satisfy them.</li>
+<li>Insights and Monitoring - tracking meaningful data and statistics at the edge in order to give us an accurate view of production.</li>
+<li>Dynamic Routing - dynamically routing requests to different backend clusters as needed.</li>
+<li>Stress Testing - gradually increasing the traffic to a cluster in order to gauge performance.</li>
+<li>Load Shedding - allocating capacity for each type of request and dropping requests that go over the limit.</li>
+<li>Static Response handling - building some responses directly at the edge instead of forwarding them to an internal cluster</li>
+<li>Multiregion Resiliency - routing requests across AWS regions in order to diversify our ELB usage and move our edge closer to our members</li>
+</ul>
+<p>For more details: <a href="https://github.com/Netflix/zuul/wiki/How-We-Use-Zuul-At-Netflix" target="_blank" rel="noopener">How We Use Zuul At Netflix</a></p>
+<hr>
+<h3 id="Zuul组件-Zuul-Components"><a href="#Zuul组件-Zuul-Components" class="headerlink" title="Zuul组件(Zuul Components)"></a>Zuul组件(Zuul Components)</h3><p>Zuul 2.x components:</p>
+<ul>
+<li><a href="https://github.com/Netflix/zuul/tree/2.1/zuul-core" target="_blank" rel="noopener">zuul-core</a> - the core functionality of Zuul 2.0</li>
+<li><a href="https://github.com/Netflix/zuul/tree/2.1/zuul-sample" target="_blank" rel="noopener">zuul-sample</a> - a sample driver application for Zuul 2.0</li>
+</ul>
+<p>Zuul 1.x components:</p>
+<ul>
+<li><a href="https://github.com/Netflix/zuul/tree/1.x/zuul-core" target="_blank" rel="noopener">zuul-core</a> - library which contains the core functionality of compiling and executing <a href="https://github.com/Netflix/zuul/wiki/Filters" target="_blank" rel="noopener">Filters</a></li>
+<li><a href="https://github.com/Netflix/zuul/tree/1.x/zuul-simple-webapp" target="_blank" rel="noopener">zuul-simple-webapp</a> - webapp which shows a simple example of how to build an application with zuul-core</li>
+<li><a href="https://github.com/Netflix/zuul/tree/1.x/zuul-netflix" target="_blank" rel="noopener">zuul-netflix</a> - library which adds other NetflixOSS components to Zuul - using Ribbon for routing requests, for example.</li>
+<li><a href="https://github.com/Netflix/zuul/tree/1.x/zuul-netflix-webapp" target="_blank" rel="noopener">zuul-netflix-webapp</a> - webapp which packages zuul-core and zuul-netflix together into an easy to use package</li>
+</ul>
+]]></content>
+      <categories>
+        <category>翻译</category>
+        <category>Java</category>
+      </categories>
+      <tags>
+        <tag>zuul</tag>
+        <tag>网关</tag>
+        <tag>文档</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>分析一次网关OOM异常</title>
     <url>/2020/01/09/%E5%88%86%E6%9E%90%E4%B8%80%E6%AC%A1%E7%BD%91%E5%85%B3OOM%E5%BC%82%E5%B8%B8/</url>
     <content><![CDATA[<h3 id="起因"><a href="#起因" class="headerlink" title="起因"></a>起因</h3><p>最近的工作是上线一些服务，其中就包括团队开发的网关服务，然而在很早之前，在内网测试的是否并没有可以的关注这个问题，可以说是几乎就没有发现这个问题。然后在内网最后的调试阶段，我们需要把网关和前端的服务调通，这样可以安心的部署上线到外网，但是在相互调试阶段，发现网关服务一直启动不了，或者是启动了之后，前端页面访问无法响应。在排除是不是前端接口调错了接口的情况下，最终我认为问题是出现在网关，查看日志文件发现了出现了OOM问题。</p>
@@ -109,6 +154,7 @@
 
 
 
+<p>。。。未完待续。</p>
 ]]></content>
       <categories>
         <category>Java</category>
@@ -672,6 +718,25 @@ finally中最好不要包含return，否则程序会提前退出，返回值不�
       </tags>
   </entry>
   <entry>
+    <title>一道题目引发的思考</title>
+    <url>/2017/09/26/%E4%B8%80%E9%81%93%E9%A2%98%E7%9B%AE%E5%BC%95%E5%8F%91%E7%9A%84%E6%80%9D%E8%80%83/</url>
+    <content><![CDATA[<p>在看一份Java面试题集的时候遇到一个这样的问题：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">public class Test &#123;</span><br><span class="line">        public static void main(String[] args)&#123;</span><br><span class="line">            Father father &#x3D; new Father();</span><br><span class="line">            Father child &#x3D; new Child();</span><br><span class="line">            System.out.println(father.getName());</span><br><span class="line">            System.out.println(child.getName());</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    class Father&#123;</span><br><span class="line">        public static String getName()&#123;</span><br><span class="line">            return &quot;Father&quot;;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    class Child extends Father&#123;</span><br><span class="line">        public static String getName()&#123;</span><br><span class="line">            return &quot;Child&quot;;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+<p>请问输出的结果是：<br>结果是都是Father。<br>为什么呢？</p>
+<p>我们看到这里的都是子类 ， 父类的静态方法。第一个输出为Father我们不奇怪，但是第二个为啥也是Father呢？为什么不是调用子类的静态方法呢？<br>我们看到，子类对象被父类变量所引用，这里是想测验我们，父类的实例方法能否被子类重写，如果重写了，那么调用这个方法，就应该输出子类的相关信息。要是不能，那就是调用父类的静态方法了。<br>解释</p>
+<p>父类代码：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">public class Fu &#123;  </span><br><span class="line">    public static void show() &#123;  </span><br><span class="line">        System.out.println(&quot;父类的静态方法&quot;);  </span><br><span class="line">    &#125;  </span><br><span class="line">    public void method() &#123;  </span><br><span class="line">        System.out.println(&quot;父类的普通方法&quot;);  </span><br><span class="line">    &#125;  </span><br><span class="line">&#125;  </span><br><span class="line"></span><br><span class="line">子类代码：</span><br><span class="line"></span><br><span class="line">public class Zi extends Fu &#123;  </span><br><span class="line">    public static void main(String[] args) &#123;  </span><br><span class="line">        Fu fu &#x3D; new Zi();  </span><br><span class="line">        fu.show();  </span><br><span class="line">        fu.method();  </span><br><span class="line">    &#125;  </span><br><span class="line">    public static void show() &#123;  </span><br><span class="line">        System.out.println(&quot;子类的静态方法&quot;);  </span><br><span class="line">    &#125;  </span><br><span class="line">    public void method() &#123;  </span><br><span class="line">        System.out.println(&quot;子类的普通方法&quot;);  </span><br><span class="line">    &#125;  </span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>从这里我们可以看出，父类的静态方法是不能被子类重写的，其实重写只能适用于实例方法，不能用于静态方法，对于上面这种静态方法而言，我们应该称之为隐藏。<br>Java静态方法形式上可以重写，但从本质上来说不是Java的重写。因为静态方法只与类相关，不与具体实现相关。声明的是什么类，则引用相应类的静态方法(本来静态无需声明，可以直接引用)。并且static方法不是后期绑定的，它在编译期就绑定了。换句话说，这个方法不会进行多态的判断，只与声明的类有关。</p>
+]]></content>
+      <categories>
+        <category>Java</category>
+      </categories>
+      <tags>
+        <tag>Java</tag>
+        <tag>静态方法</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>201709Java面试题目总结</title>
     <url>/2017/09/26/201709Java%E9%9D%A2%E8%AF%95%E9%A2%98%E7%9B%AE%E6%80%BB%E7%BB%93%20/</url>
     <content><![CDATA[<p>碰到的Java笔试题</p>
@@ -819,25 +884,6 @@ ViewResolver 结合Model和View，来渲染视图
       <tags>
         <tag>Java</tag>
         <tag>面试题</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>一道题目引发的思考</title>
-    <url>/2017/09/26/%E4%B8%80%E9%81%93%E9%A2%98%E7%9B%AE%E5%BC%95%E5%8F%91%E7%9A%84%E6%80%9D%E8%80%83/</url>
-    <content><![CDATA[<p>在看一份Java面试题集的时候遇到一个这样的问题：</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">public class Test &#123;</span><br><span class="line">        public static void main(String[] args)&#123;</span><br><span class="line">            Father father &#x3D; new Father();</span><br><span class="line">            Father child &#x3D; new Child();</span><br><span class="line">            System.out.println(father.getName());</span><br><span class="line">            System.out.println(child.getName());</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    class Father&#123;</span><br><span class="line">        public static String getName()&#123;</span><br><span class="line">            return &quot;Father&quot;;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    class Child extends Father&#123;</span><br><span class="line">        public static String getName()&#123;</span><br><span class="line">            return &quot;Child&quot;;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
-<p>请问输出的结果是：<br>结果是都是Father。<br>为什么呢？</p>
-<p>我们看到这里的都是子类 ， 父类的静态方法。第一个输出为Father我们不奇怪，但是第二个为啥也是Father呢？为什么不是调用子类的静态方法呢？<br>我们看到，子类对象被父类变量所引用，这里是想测验我们，父类的实例方法能否被子类重写，如果重写了，那么调用这个方法，就应该输出子类的相关信息。要是不能，那就是调用父类的静态方法了。<br>解释</p>
-<p>父类代码：</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">public class Fu &#123;  </span><br><span class="line">    public static void show() &#123;  </span><br><span class="line">        System.out.println(&quot;父类的静态方法&quot;);  </span><br><span class="line">    &#125;  </span><br><span class="line">    public void method() &#123;  </span><br><span class="line">        System.out.println(&quot;父类的普通方法&quot;);  </span><br><span class="line">    &#125;  </span><br><span class="line">&#125;  </span><br><span class="line"></span><br><span class="line">子类代码：</span><br><span class="line"></span><br><span class="line">public class Zi extends Fu &#123;  </span><br><span class="line">    public static void main(String[] args) &#123;  </span><br><span class="line">        Fu fu &#x3D; new Zi();  </span><br><span class="line">        fu.show();  </span><br><span class="line">        fu.method();  </span><br><span class="line">    &#125;  </span><br><span class="line">    public static void show() &#123;  </span><br><span class="line">        System.out.println(&quot;子类的静态方法&quot;);  </span><br><span class="line">    &#125;  </span><br><span class="line">    public void method() &#123;  </span><br><span class="line">        System.out.println(&quot;子类的普通方法&quot;);  </span><br><span class="line">    &#125;  </span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>从这里我们可以看出，父类的静态方法是不能被子类重写的，其实重写只能适用于实例方法，不能用于静态方法，对于上面这种静态方法而言，我们应该称之为隐藏。<br>Java静态方法形式上可以重写，但从本质上来说不是Java的重写。因为静态方法只与类相关，不与具体实现相关。声明的是什么类，则引用相应类的静态方法(本来静态无需声明，可以直接引用)。并且static方法不是后期绑定的，它在编译期就绑定了。换句话说，这个方法不会进行多态的判断，只与声明的类有关。</p>
-]]></content>
-      <categories>
-        <category>Java</category>
-      </categories>
-      <tags>
-        <tag>Java</tag>
-        <tag>静态方法</tag>
       </tags>
   </entry>
   <entry>
