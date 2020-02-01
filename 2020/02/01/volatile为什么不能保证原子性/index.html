@@ -60,7 +60,7 @@
 <meta property="og:image" content="https://lzhaoyang.github.io/2020/02/01/volatile%E4%B8%BA%E4%BB%80%E4%B9%88%E4%B8%8D%E8%83%BD%E4%BF%9D%E8%AF%81%E5%8E%9F%E5%AD%90%E6%80%A7/15660328514676.jpg">
 <meta property="og:image" content="https://lzhaoyang.github.io/2020/02/01/volatile%E4%B8%BA%E4%BB%80%E4%B9%88%E4%B8%8D%E8%83%BD%E4%BF%9D%E8%AF%81%E5%8E%9F%E5%AD%90%E6%80%A7/15660329140984.jpg">
 <meta property="article:published_time" content="2020-02-01T13:32:03.000Z">
-<meta property="article:modified_time" content="2020-02-01T14:16:32.511Z">
+<meta property="article:modified_time" content="2020-02-01T14:19:43.779Z">
 <meta property="article:author" content="sunrise">
 <meta property="article:tag" content="volatile">
 <meta property="article:tag" content="原子性">
@@ -262,7 +262,7 @@
               <span class="post-meta-item-text">发表于</span>
               
 
-              <time title="创建时间：2020-02-01 21:32:03 / 修改时间：22:16:32" itemprop="dateCreated datePublished" datetime="2020-02-01T21:32:03+08:00">2020-02-01</time>
+              <time title="创建时间：2020-02-01 21:32:03 / 修改时间：22:19:43" itemprop="dateCreated datePublished" datetime="2020-02-01T21:32:03+08:00">2020-02-01</time>
             </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -364,7 +364,6 @@
 <p>因为CAS是基于乐观锁的，也就是说当写入的时候，如果寄存器旧值已经不等于现值，说明有其他CPU在修改，那就继续尝试。所以这就保证了操作的原子性。</p>
 <p><img src="/2020/02/01/volatile%E4%B8%BA%E4%BB%80%E4%B9%88%E4%B8%8D%E8%83%BD%E4%BF%9D%E8%AF%81%E5%8E%9F%E5%AD%90%E6%80%A7/191824497484728.png" alt="ConcurrencyCAS"></p>
 <p>原文转载自：<a href="https://www.cnblogs.com/lfalex0831/p/9516777.html" target="_blank" rel="noopener">https://www.cnblogs.com/lfalex0831/p/9516777.html</a></p>
-<hr>
 <h1 id="为什么volatile-不是原子性的"><a href="#为什么volatile-不是原子性的" class="headerlink" title="为什么volatile++不是原子性的"></a>为什么volatile++不是原子性的</h1><h2 id="问题"><a href="#问题" class="headerlink" title="问题"></a>问题</h2><p>在讨论原子性操作时，我们经常会听到一个说法：任意单个volatile变量的读写具有原子性，但是volatile++这种操作除外。</p>
 <p>所以问题就是：为什么volatile++不是原子性的？</p>
 <h2 id="答案"><a href="#答案" class="headerlink" title="答案"></a>答案</h2><p>因为它实际上是三个操作组成的一个符合操作。</p>
@@ -403,7 +402,6 @@
 <p>由于其中掺杂了一个自增的CPU内部操作，就造成这个复合操作不再保有原子性。</p>
 <p>然后，讨论了如何保证volatile++这类操作的原子性，比如使用synchronized或者AtomicInteger/AtomicLong原子类。</p>
 <p>原文转载自：<a href="https://blog.csdn.net/dm_vincent/article/details/79604716" target="_blank" rel="noopener">https://blog.csdn.net/dm_vincent/article/details/79604716</a></p>
-<hr>
 <h1 id="既然synchronized是”万能”的，为什么还需要volatile呢"><a href="#既然synchronized是”万能”的，为什么还需要volatile呢" class="headerlink" title="既然synchronized是”万能”的，为什么还需要volatile呢"></a>既然synchronized是”万能”的，为什么还需要volatile呢</h1><p>在我的博客和公众号中，发表过很多篇关于并发编程的文章，之前的文章中我们介绍过了两个在Java并发编程中比较重要的两个关键字：synchronized和volatile</p>
 <p>我们简单回顾一下相关内容：</p>
 <p>1、Java语言为了解决并发编程中存在的原子性、可见性和有序性问题，提供了一系列和并发处理相关的关键字，比如synchronized、volatile、final、concurren包等。(<a href="http://www.hollischuang.com/archives/2550" target="_blank" rel="noopener">再有人问你Java内存模型是什么，就把这篇文章发给他</a>)</p>
