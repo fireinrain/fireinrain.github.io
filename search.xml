@@ -199,9 +199,15 @@
 <p>从上面的截图可以看出，我们找到了我们想要的东西了，原来藏在这里。</p>
 <p><img src="/2020/02/01/var-lib-docker-volumes-%E5%9C%A8%E5%93%AA%E9%87%8C/image-20200201202046099.png" alt="image-20200201202046099"></p>
 <p>可以看到 我们执行docker 是找不到这个命令的，这也印证了我们上面说的，docker 命令其实是客户端的命令，我们是通过docker 客户端命令去和docker engine 通讯的，我们的操作 都会通过这个客户端命令 传给docker engine 来执行，所以有很多相对路径的指定，或者是上下文的指定 其实都是相对于docker engine所在的环境的，这里需要特别注意一下。</p>
+<p>参考：<a href="https://stackoverflow.com/questions/38532483/where-is-var-lib-docker-on-mac-os-x" target="_blank" rel="noopener">https://stackoverflow.com/questions/38532483/where-is-var-lib-docker-on-mac-os-x</a></p>
 <h3 id="指定我们宿主机的绝对路径"><a href="#指定我们宿主机的绝对路径" class="headerlink" title="指定我们宿主机的绝对路径"></a>指定我们宿主机的绝对路径</h3><p>如果我们使用相对路径来指定宿主机到容器的路径映射，那么文件就会存在在docker engine所在的vm中，那么可以把我们宿主机的目录指定进去呢？</p>
 <p><img src="/2020/02/01/var-lib-docker-volumes-%E5%9C%A8%E5%93%AA%E9%87%8C/image-20200201204347245.png" alt="image-20200201204347245"></p>
-<p>我在本机创建了nexus-data 目录，然后使用命令启动docker 容器，好像并没有启动起来，说我指定的路径包含非法的字符。</p>
+<p>我在本机创建了nexus-data 目录，然后使用命令启动docker 容器，好像并没有启动起来，说我指定的路径包含非法的字符。其实我们这里缺少了mount的参数 type=bind，加上就好了。</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">docker run -d --name nexus3 --restart=always \</span><br><span class="line">    -p 8081:8081 \</span><br><span class="line">    --mount <span class="built_in">type</span>=<span class="built_in">bind</span>,src=/Users/sunrise/BackSoftWares/docker/nexus-data,target=/nexus-data \</span><br><span class="line">    sonatype/nexus3</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/02/01/var-lib-docker-volumes-%E5%9C%A8%E5%93%AA%E9%87%8C/image-20200201232612689.png" alt="image-20200201232612689"></p>
+<p>我们去我们的本机看看是不是nexus-data 有数据在其中。</p>
+<p><img src="/2020/02/01/var-lib-docker-volumes-%E5%9C%A8%E5%93%AA%E9%87%8C/image-20200201233826763.png" alt="image-20200201233826763"></p>
 ]]></content>
       <categories>
         <category>Docker</category>
