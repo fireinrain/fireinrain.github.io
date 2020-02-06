@@ -1,6 +1,247 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
+    <title>centos搭建fastdfs-nginx</title>
+    <url>/2020/02/06/centos%E6%90%AD%E5%BB%BAfastdfs-nginx/</url>
+    <content><![CDATA[<p>我们在做一下简单的网站服务时，遇到需要存储一些文件的，比如mp3，图片，视频，我们可能会直接保存在服务器的一个目录下，但是如果我们的文件比较多，种类也比较多的话，这种做法显然是不合理的。我们其实还可以使用各种云服务的oss 对象存储，但是需要钱来买这些服务。对于这种多文件存储的需求，使用分布式文件存储服务也是一个不错的选择。本着从简的原则，在centos上搭建一个单机版本的fastdfs，记录一下。</p>
+<h2 id="fastdfs-是什么"><a href="#fastdfs-是什么" class="headerlink" title="fastdfs 是什么"></a>fastdfs 是什么</h2><blockquote>
+<p>fastdfs(fast distribute file system),FastDFS是一款开源的轻量级分布式文件系统纯C实现，支持Linux、FreeBSD等UNIX系统类google FS，不是通用的文件系统，只能通过专有API访问，目前提供了C、Java和PHP API为互联网应用量身定做，解决大容量文件存储问题，追求高性能和高扩展性FastDFS可以看做是基于文件的key value pair存储系统，称作分布式文件存储服务更为合适。<br> —— 来自官网介绍</p>
+</blockquote>
+<p>可以分为三个部分，client 客户端，tracker-server 跟踪服务器，storage-server 存储服务器</p>
+<p>tracker-server:</p>
+<blockquote>
+<p>跟踪服务器， 主要做调度工作， 起负载均衡的作用。 在内存中记录集群中所有存储组和存储服务器的状态信息， 是客户端和数据服务器交互的枢纽。 相比GFS中的master更为精简， 不记录文件索引信息， 占用的内存量很少。</p>
+</blockquote>
+<p>storage-server:</p>
+<blockquote>
+<p>存储服务器（ 又称：存储节点或数据服务器） ， 文件和文件属性（ metadata） 都保存到存储服务器上。 Storage server直接利用OS的文件系统调用管理文件。</p>
+</blockquote>
+<p>group:</p>
+<blockquote>
+<p>组， 也可称为卷。 同组内服务器上的文件是完全相同的 ，同一组内的storage server之间是对等的， 文件上传、 删除等操作可以在任意一台storage server上进行 。</p>
+</blockquote>
+<p>meta data:</p>
+<blockquote>
+<p>meta data：文件相关属性，键值对（ Key Value Pair） 方式，如：width=1024,heigth=768 。</p>
+</blockquote>
+<h2 id="单机文件系统的对比"><a href="#单机文件系统的对比" class="headerlink" title="单机文件系统的对比"></a>单机文件系统的对比</h2><table>
+<thead>
+<tr>
+<th>文件系统</th>
+<th align="center">高可用</th>
+<th align="right">扩展</th>
+<th>部署复杂程度</th>
+<th align="center">性能</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>单机文件系统</td>
+<td align="center">低，依赖于单机服务器，只要服务器崩溃，完全不可用。</td>
+<td align="right">低，要扩容只能停机增加硬盘。</td>
+<td>低</td>
+<td align="center">当文件数量多到一定的程度，磁盘IO寻址操作将会成为瓶颈</td>
+</tr>
+<tr>
+<td>分布式文件系统</td>
+<td align="center">高，一个group内的服务器崩溃后，group内的其他storage将接管服务。</td>
+<td align="right">高，可以不停机增加group机器。</td>
+<td>高，部署较复杂</td>
+<td align="center">高，通过集群或者分布式的方式分担服务器的压力。</td>
+</tr>
+</tbody></table>
+<h2 id="其他文件系统的对比"><a href="#其他文件系统的对比" class="headerlink" title="其他文件系统的对比"></a>其他文件系统的对比</h2><table>
+<thead>
+<tr>
+<th>指标</th>
+<th align="center">适合类型</th>
+<th align="right">文件分布</th>
+<th>系统性能</th>
+<th align="center">复杂度</th>
+<th align="center">FUSE</th>
+<th align="center">POSIX</th>
+<th align="right">备份机制</th>
+<th>通讯协议接口</th>
+<th align="center">社区支持</th>
+<th align="center">开发语言</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>FastDFS</td>
+<td align="center">4KB~500MB</td>
+<td align="right">小文件合并存储不分片处理</td>
+<td>很高</td>
+<td align="center">简单</td>
+<td align="center">不支持</td>
+<td align="center">不支持</td>
+<td align="right">组内冗余备份</td>
+<td>Api HTTP</td>
+<td align="center">国内用户群</td>
+<td align="center">C语言</td>
+</tr>
+<tr>
+<td>TFS</td>
+<td align="center">所有文件</td>
+<td align="right">小文件合并，以block组织分片</td>
+<td></td>
+<td align="center">复杂</td>
+<td align="center">不支持</td>
+<td align="center"></td>
+<td align="right">Block存储多份,主辅灾备</td>
+<td>API http</td>
+<td align="center">少</td>
+<td align="center">C++</td>
+</tr>
+<tr>
+<td>MFS</td>
+<td align="center">大于64K</td>
+<td align="right">分片存储</td>
+<td>Master占内存多</td>
+<td align="center"></td>
+<td align="center">支持</td>
+<td align="center">支持</td>
+<td align="right">多点备份动态冗余</td>
+<td>使用fuse挂在</td>
+<td align="center">较多</td>
+<td align="center">Perl</td>
+</tr>
+<tr>
+<td>HDFS</td>
+<td align="center">大文件</td>
+<td align="right">大文件分片分块存储</td>
+<td></td>
+<td align="center">简单</td>
+<td align="center">支持</td>
+<td align="center">支持</td>
+<td align="right">多副本</td>
+<td>原生api</td>
+<td align="center">较多</td>
+<td align="center">Java</td>
+</tr>
+<tr>
+<td>Ceph</td>
+<td align="center">对象文件块</td>
+<td align="right">OSD一主多从</td>
+<td></td>
+<td align="center">复杂</td>
+<td align="center">支持</td>
+<td align="center">支持</td>
+<td align="right">多副本</td>
+<td>原生api</td>
+<td align="center">较少</td>
+<td align="center">C++</td>
+</tr>
+<tr>
+<td>MogileFS</td>
+<td align="center">海量小图片</td>
+<td align="right"></td>
+<td>高</td>
+<td align="center">复杂</td>
+<td align="center">可以支持</td>
+<td align="center">不支持</td>
+<td align="right">动态冗余</td>
+<td>原生api</td>
+<td align="center">文档少</td>
+<td align="center">Perl</td>
+</tr>
+<tr>
+<td>ClusterFS</td>
+<td align="center">大文件</td>
+<td align="right"></td>
+<td></td>
+<td align="center">简单</td>
+<td align="center">支持</td>
+<td align="center">支持</td>
+<td align="right"></td>
+<td></td>
+<td align="center">多</td>
+<td align="center">C</td>
+</tr>
+</tbody></table>
+<h2 id="适用场景："><a href="#适用场景：" class="headerlink" title="适用场景："></a>适用场景：</h2><p>特别适合以中小文件（ 建议范围： 4KB 到 500MB ） 为载体的在线服务， 如相册网站、 视频网站等等。</p>
+<h2 id="部署结构"><a href="#部署结构" class="headerlink" title="部署结构"></a>部署结构</h2><p><img src="/2020/02/06/centos%E6%90%AD%E5%BB%BAfastdfs-nginx/3696220-9824c50495fa8e2a-20200206174947050.png" alt="img"></p>
+<p>fastdfs文件系统结构图</p>
+<p><img src="/2020/02/06/centos%E6%90%AD%E5%BB%BAfastdfs-nginx/3696220-5864388cc2af2999.png" alt="img"></p>
+<p>最小化部署图</p>
+<h2 id="下载安装依赖"><a href="#下载安装依赖" class="headerlink" title="下载安装依赖"></a>下载安装依赖</h2><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="built_in">cd</span> /home/sunrise</span><br><span class="line">mkdir fastdfs-single</span><br><span class="line"><span class="built_in">cd</span> fastdfs-single</span><br><span class="line"></span><br><span class="line"><span class="comment"># 下载源码</span></span><br><span class="line">libfastcommon包下载： </span><br><span class="line">wget https://github.com/happyfish100/libfastcommon/archive/V1.0.43.tar.gz -O libfastcommon.tar.gz</span><br><span class="line">fastdfs包下载：</span><br><span class="line">wget https://github.com/happyfish100/fastdfs/archive/V6.06.tar.gz -O fastdfs.tar.gz</span><br><span class="line">nginx包下载：</span><br><span class="line">wget http://nginx.org/download/nginx-1.12.0.tar.gz -O nginx.tar.gz</span><br><span class="line">fastdfs-nginx模块包下载：</span><br><span class="line">wget https://github.com/happyfish100/fastdfs-nginx-module/archive/V1.22.tar.gz -O fastdfs-nginx-module.tar.gz</span><br><span class="line"><span class="comment">### -O 表示重命名下载包</span></span><br><span class="line"><span class="comment">### 除了nginx包，其他包都在这里下载：https://github.com/happyfish100</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="安装编译依赖"><a href="#安装编译依赖" class="headerlink" title="安装编译依赖"></a>安装编译依赖</h2><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">安装gcc环境 </span><br><span class="line">yum -y install gcc-c++ </span><br><span class="line">安装pcre-devel与openssl-devel </span><br><span class="line">yum -y install pcre-devel openssl openssl-devel </span><br><span class="line">这个命令是解决安装nginx时出现的错误问题：./configure: error: the HTTP rewrite module requires the PCRE library.</span><br></pre></td></tr></table></figure>
+
+<h2 id="安装libfastcommon"><a href="#安装libfastcommon" class="headerlink" title="安装libfastcommon"></a>安装libfastcommon</h2><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 解压软件包</span></span><br><span class="line">tar -zxvf libfastcommon.tar.gz</span><br><span class="line"><span class="built_in">cd</span> libfastcommon-1.0.43</span><br><span class="line"><span class="comment"># 安装</span></span><br><span class="line">./make.sh</span><br><span class="line">./make.sh install</span><br></pre></td></tr></table></figure>
+
+<h2 id="安装fastdfs"><a href="#安装fastdfs" class="headerlink" title="安装fastdfs"></a>安装fastdfs</h2><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 解压软件包</span></span><br><span class="line">tar -zxvf fastdfs.tar.gz</span><br><span class="line"><span class="built_in">cd</span> fastdfs-6.06/</span><br><span class="line"><span class="comment"># 安装</span></span><br><span class="line">./make.sh</span><br><span class="line">./make.sh install</span><br><span class="line"><span class="comment"># 如果安装成功，那么在/etc/fastdfs 目录下会出现下面这些文件</span></span><br><span class="line">root@VM_0_12_centos fdfs]<span class="comment"># ll</span></span><br><span class="line">total 32</span><br><span class="line">-rw-r--r-- 1 root root  1909 Feb  6 22:25 client.conf.sample</span><br><span class="line">-rw-r--r-- 1 root root 10246 Feb  6 22:25 storage.conf.sample</span><br><span class="line">-rw-r--r-- 1 root root   620 Feb  6 22:25 storage_ids.conf.sample</span><br><span class="line">-rw-r--r-- 1 root root  9138 Feb  6 22:25 tracker.conf.sample</span><br><span class="line"></span><br><span class="line"><span class="comment"># client.conf.sample，storage.conf.sample，tracker.conf.sample。修改为.conf 文件</span></span><br><span class="line">mv client.conf.sample client.conf</span><br><span class="line">mv storage.conf.sample storage.conf</span><br><span class="line">mv tracker.conf.sample tracker.conf</span><br></pre></td></tr></table></figure>
+
+<h2 id="配置tracker-服务"><a href="#配置tracker-服务" class="headerlink" title="配置tracker 服务"></a>配置tracker 服务</h2><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 创建保存tracker的data和log的目录：</span></span><br><span class="line">mkdir -p /usr/<span class="built_in">local</span>/fast-dfs/fastdfs_tracker</span><br><span class="line"><span class="comment"># 进入目录 </span></span><br><span class="line"><span class="built_in">cd</span> /etc/fdfs</span><br><span class="line"><span class="comment"># 修改tracker.conf文件：</span></span><br><span class="line">vim tracker.conf</span><br><span class="line"><span class="comment"># 修改如下：</span></span><br><span class="line">    disabled=<span class="literal">false</span> <span class="comment">#默认开启</span></span><br><span class="line">    port=22122 <span class="comment">#默认端口号</span></span><br><span class="line">    base_path=/usr/<span class="built_in">local</span>/fast-dfs/fastdfs_tracker <span class="comment">#刚刚创建的目录</span></span><br><span class="line">    http.server_port=6666 <span class="comment">#默认端口是8080</span></span><br><span class="line"><span class="comment"># 修改完后设置软连接</span></span><br><span class="line">ln -s /usr/bin/fdfs_trackerd /usr/<span class="built_in">local</span>/bin</span><br><span class="line"><span class="comment"># 启动tracker: </span></span><br><span class="line">fdfs_trackerd /etc/fdfs/tracker.conf restart</span><br><span class="line"><span class="comment"># 查看tracker是否有端口：</span></span><br><span class="line">netstat -ntpul |grep fdfs （如果没有出现端口，说明tracker启动失败）</span><br><span class="line"><span class="comment"># 其它命令：</span></span><br><span class="line">重启tracker: /usr/bin/fdfs_trackerd /etc/fdfs/tracker.conf restart</span><br><span class="line">停止tracker: /usr/bin/fdfs_trackerd /etc/fdfs/tracker.conf stop</span><br><span class="line"><span class="comment"># 添加开机启动：</span></span><br><span class="line">chmod +x /etc/rc.d/rc.local</span><br><span class="line"><span class="built_in">echo</span> <span class="string">'/usr/bin/fdfs_trackerd /etc/fdfs/tracker.conf restart'</span> &gt;&gt; /etc/rc.d/rc.local</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/02/06/centos%E6%90%AD%E5%BB%BAfastdfs-nginx/image-20200206223957147.png" alt="image-20200206223957147"></p>
+<p>以上说明我们的tracker服务启动成功。</p>
+<h2 id="配置storage-服务"><a href="#配置storage-服务" class="headerlink" title="配置storage 服务"></a>配置storage 服务</h2><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 创建保存storage的data和log的目录：</span></span><br><span class="line">mkdir /usr/<span class="built_in">local</span>/fast-dfs/fastdfs_storage</span><br><span class="line"><span class="comment"># 再创建一个文件存储目录：</span></span><br><span class="line">mkdir /usr/<span class="built_in">local</span>/fast-dfs/fastdfs_storage_data</span><br><span class="line"><span class="comment"># 进入目录：</span></span><br><span class="line"><span class="built_in">cd</span> /etc/fdfs</span><br><span class="line"><span class="comment"># 修改storage.conf文件：</span></span><br><span class="line">vim storage.conf</span><br><span class="line"><span class="comment"># 修改如下：</span></span><br><span class="line">    disabled=<span class="literal">false</span> <span class="comment">#默认false</span></span><br><span class="line">    group_name=group1 <span class="comment">#组名，根据实际情况修改</span></span><br><span class="line">    port=23000 <span class="comment">#设置storage的端口号，默认是23000，同一个组的storage端口号必须一致</span></span><br><span class="line">    base_path=/usr/<span class="built_in">local</span>/fast-dfs/fastdfs_storage <span class="comment">#设置storage数据文件和日志目录</span></span><br><span class="line">    store_path_count=1 <span class="comment">#存储路径个数，需要和store_path个数匹配</span></span><br><span class="line">    store_path0=/usr/<span class="built_in">local</span>/fast-dfs/fastdfs_storage_data <span class="comment">#实际文件存储路径</span></span><br><span class="line">    tracker_server=服务器公网ip地址:22122</span><br><span class="line">    http.server_port=8888 <span class="comment">#设置 http 端口号</span></span><br><span class="line"><span class="comment"># 修改保存后创建软引用</span></span><br><span class="line">ln -s /usr/bin/fdfs_storaged /usr/<span class="built_in">local</span>/bin</span><br><span class="line"><span class="comment"># 启动storage: </span></span><br><span class="line">fdfs_storaged /etc/fdfs/storage.conf restart</span><br><span class="line"><span class="comment"># 查看storage是否有端口：</span></span><br><span class="line">netstat -ntpul |grep fdfs （如果没有出现端口，说明storage启动失败）</span><br><span class="line"><span class="comment"># 其它命令：</span></span><br><span class="line">重启storage: /usr/bin/fdfs_storaged /etc/fdfs/storage.conf restart</span><br><span class="line">停止storage: /usr/bin/fdfs_storaged /etc/fdfs/storage.conf stop</span><br><span class="line"><span class="comment"># 添加开机启动：</span></span><br><span class="line"><span class="built_in">echo</span> <span class="string">'/usr/bin/fdfs_storaged /etc/fdfs/storage.conf restart'</span> &gt;&gt; /etc/rc.d/rc.local</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/02/06/centos%E6%90%AD%E5%BB%BAfastdfs-nginx/image-20200206225918423.png" alt="image-20200206225918423"></p>
+<p>以上说明我们的storage服务启动成功。</p>
+<h2 id="校验整合-确定storage是否注册到了tracker中去"><a href="#校验整合-确定storage是否注册到了tracker中去" class="headerlink" title="校验整合,确定storage是否注册到了tracker中去"></a>校验整合,确定storage是否注册到了tracker中去</h2><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">/usr/bin/fdfs_monitor /etc/fdfs/storage.conf</span><br><span class="line"></span><br><span class="line"><span class="comment"># 得到以下结果</span></span><br><span class="line">DEBUG - base_path=/usr/<span class="built_in">local</span>/fast-dfs/fastdfs_storage, connect_timeout=5, network_timeout=60, tracker_server_count=1, anti_steal_token=0, anti_steal_secret_key length=0, use_connection_pool=1, g_connection_pool_max_idle_time=3600s, use_storage_id=0, storage server id count: 0</span><br><span class="line"></span><br><span class="line">server_count=1, server_index=0</span><br><span class="line">[2020-02-06 23:01:33] ERROR - file: connection_pool.c, line: 142, connect to server 193.112.76.162:22122 fail, errno: 110, error info: Connection timed out</span><br></pre></td></tr></table></figure>
+
+<p>说明没有注册成功，我这里相关的端口还没有在腾讯云的管理界面放开，所以会出现这样的情况。这里统计一下端口情况。</p>
+<ul>
+<li>tracker 22122，6666</li>
+<li>storage 23000，8888</li>
+</ul>
+<p>所以我们在腾讯云上放开这些端口。</p>
+<p><img src="/2020/02/06/centos%E6%90%AD%E5%BB%BAfastdfs-nginx/image-20200206231027049.png" alt="image-20200206231027049"></p>
+<p>放开之后，我们在执行以下刚才的命令：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">/usr/bin/fdfs_monitor /etc/fdfs/storage.conf</span><br></pre></td></tr></table></figure>
+
+<img src="/2020/02/06/centos%E6%90%AD%E5%BB%BAfastdfs-nginx/image-20200206231223273.png" alt="image-20200206231223273" style="zoom:50%;">
+
+<p>以上说明我们的storage 服务注册到了tracker 中。</p>
+<h2 id="配置客户端client"><a href="#配置客户端client" class="headerlink" title="配置客户端client"></a>配置客户端client</h2><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 进入目录：</span></span><br><span class="line"><span class="built_in">cd</span> /etc/fdfs</span><br><span class="line"><span class="comment"># 修改client.conf: </span></span><br><span class="line">vim client.conf</span><br><span class="line"><span class="comment"># 修改如下：</span></span><br><span class="line">    base_path=/usr/<span class="built_in">local</span>/fast-dfs/fastdfs_tracker <span class="comment">#tracker服务器文件路径</span></span><br><span class="line">    tracker_server=服务器公网ip地址:22122 <span class="comment">#tracker服务器IP地址和端口号</span></span><br><span class="line">    http.tracker_server_port=6666 <span class="comment"># tracker 服务器的 http端口号，必须和tracker的设置对应起来！</span></span><br><span class="line"><span class="comment"># 保存</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="测试本地是否可以上传成功"><a href="#测试本地是否可以上传成功" class="headerlink" title="测试本地是否可以上传成功"></a>测试本地是否可以上传成功</h2><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 使用格式：</span></span><br><span class="line">/usr/bin/fdfs_test 客户端配置文件地址  upload  上传文件</span><br><span class="line"><span class="comment"># 比如上传本地的一个脚本</span></span><br><span class="line">/usr/bin/fdfs_test /etc/fdfs/client.conf upload /home/sunrise/stop_nginx.sh</span><br><span class="line"><span class="comment"># 上传成功</span></span><br><span class="line">This is FastDFS client <span class="built_in">test</span> program v6.06</span><br><span class="line"></span><br><span class="line">Copyright (C) 2008, Happy Fish / YuQing</span><br><span class="line"></span><br><span class="line">FastDFS may be copied only under the terms of the GNU General</span><br><span class="line">Public License V3, <span class="built_in">which</span> may be found <span class="keyword">in</span> the FastDFS <span class="built_in">source</span> kit.</span><br><span class="line">Please visit the FastDFS Home Page http://www.fastken.com/</span><br><span class="line"><span class="keyword">for</span> more detail.</span><br><span class="line"></span><br><span class="line">[2020-02-06 23:39:25] DEBUG - base_path=/usr/<span class="built_in">local</span>/fast-dfs/fastdfs_tracker, connect_timeout=5, network_timeout=60, tracker_server_count=1, anti_steal_token=0, anti_steal_secret_key length=0, use_connection_pool=0, g_connection_pool_max_idle_time=3600s, use_storage_id=0, storage server id count: 0</span><br><span class="line"></span><br><span class="line">tracker_query_storage_store_list_without_group:</span><br><span class="line">	server 1. group_name=, ip_addr=193.112.76.162, port=23000</span><br><span class="line"></span><br><span class="line">group_name=group1, ip_addr=193.112.76.162, port=23000</span><br><span class="line">storage_upload_by_filename</span><br><span class="line">group_name=group1, remote_filename=M00/00/00/wXBMol48My2AfyQtAAAAJLo0X304571.sh</span><br><span class="line"><span class="built_in">source</span> ip address: 193.112.76.162</span><br><span class="line">file timestamp=2020-02-06 23:39:25</span><br><span class="line">file size=36</span><br><span class="line">file crc32=3123994493</span><br><span class="line">example file url: http://193.112.76.162:6666/group1/M00/00/00/wXBMol48My2AfyQtAAAAJLo0X304571.sh</span><br><span class="line">storage_upload_slave_by_filename</span><br><span class="line">group_name=group1, remote_filename=M00/00/00/wXBMol48My2AfyQtAAAAJLo0X304571_big.sh</span><br><span class="line"><span class="built_in">source</span> ip address: 193.112.76.162</span><br><span class="line">file timestamp=2020-02-06 23:39:25</span><br><span class="line">file size=36</span><br><span class="line">file crc32=3123994493</span><br><span class="line">example file url: http://193.112.76.162:6666/group1/M00/00/00/wXBMol48My2AfyQtAAAAJLo0X304571_big.sh</span><br><span class="line"></span><br><span class="line"><span class="comment"># 以上输出 说明我们上传成功</span></span><br><span class="line">对应storage服务器资源存放路径store_path下的：</span><br><span class="line">data/00/00/wXBMol48My2AfyQtAAAAJLo0X304571_big.sh</span><br><span class="line"><span class="comment"># 由于我们还没有和nginx整合 所以无法使用http下载</span></span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/02/06/centos%E6%90%AD%E5%BB%BAfastdfs-nginx/image-20200206234508412.png" alt="image-20200206234508412"></p>
+<h2 id="FastDFS的nginx模块安装"><a href="#FastDFS的nginx模块安装" class="headerlink" title="FastDFS的nginx模块安装"></a>FastDFS的nginx模块安装</h2><h3 id="storage-server-整合nginx"><a href="#storage-server-整合nginx" class="headerlink" title="storage server 整合nginx"></a>storage server 整合nginx</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="built_in">cd</span> /home/sunrise/fastdfs-single</span><br><span class="line"><span class="comment"># 解压解压fastdfs的Nginx模块包</span></span><br><span class="line">tar -zvxf fastdfs-nginx-module.tar.gz</span><br><span class="line"><span class="comment"># 重命名模块目录：</span></span><br><span class="line">mv fastdfs-nginx-module-1.22 fastdfs-nginx-module</span><br><span class="line"><span class="comment"># 修改模块配置文件：</span></span><br><span class="line"><span class="built_in">cd</span> fastdfs-nginx-module</span><br><span class="line">vim src/config </span><br><span class="line"><span class="comment"># 修改如下：</span></span><br><span class="line">    ngx_module_incs=<span class="string">"/usr/include/fastdfs /usr/include/fastcommon/"</span></span><br><span class="line">    CORE_INCS=<span class="string">"<span class="variable">$CORE_INCS</span> /usr/include/fastdfs /usr/include/fastcommon/"</span></span><br><span class="line">    CORE_LIBS=<span class="string">"<span class="variable">$CORE_LIBS</span> -L/usr/lib -lfastcommon -lfdfsclient"</span></span><br><span class="line"><span class="comment"># 保存后，建立软链接：</span></span><br><span class="line">ln -s /usr/include/fast* /usr/<span class="built_in">local</span>/include/</span><br><span class="line"><span class="comment"># 编译nginx</span></span><br><span class="line"><span class="comment"># 解压nginx包: </span></span><br><span class="line">tar -zxvf nginx.tar.gz</span><br><span class="line"><span class="comment"># 进入nginx解压目录并添加fastdfs的nginx模块：</span></span><br><span class="line"><span class="built_in">cd</span> nginx-1.12.0</span><br><span class="line">./configure --prefix=/usr/<span class="built_in">local</span>/storage-nginx --add-module=/home/sunrise/fastdfs-single/fastdfs-nginx-module/src</span><br><span class="line"><span class="comment"># ./configure --prefix=/usr/local/storage-nginx --add-module=/home/sunrise/fastdfs-single/fastdfs-nginx-module/src \--with-http_ssl_module \--with-http_stub_status_module \--with-http_realip_module \--with-threads</span></span><br><span class="line">如果没出错，就依次执行：</span><br><span class="line">make</span><br><span class="line">make install</span><br><span class="line"></span><br><span class="line"><span class="comment"># 修改安装好的nginx 配置文件</span></span><br><span class="line"><span class="built_in">cd</span> /usr/<span class="built_in">local</span>/store-nginx</span><br><span class="line">vim conf/nginx.conf</span><br><span class="line"><span class="comment"># 修改为如下内容</span></span><br><span class="line">修改监听端口 listen 9999， 新增location（由于nginx编码严格，不要复制，手动输入，否则会出现nginx: [emerg] unknown directive <span class="string">" "</span> <span class="keyword">in</span> /usr/<span class="built_in">local</span>/nginx-1.12.0-storage/conf/nginx.conf:49）：</span><br><span class="line">server &#123;</span><br><span class="line">        listen       9999;</span><br><span class="line">        server_name  localhost;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">        location / &#123;</span><br><span class="line">            root   html;</span><br><span class="line">            index  index.html index.htm;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">        location ~/group1/M00 &#123;</span><br><span class="line">            root /usr/<span class="built_in">local</span>/fast-dfs/fastdfs_storage_data/data;</span><br><span class="line">            ngx_fastdfs_module;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment"># 复制配置文件</span></span><br><span class="line"><span class="built_in">cd</span> /home/sunrise/fastdfs-single/fastdfs-6.06/conf</span><br><span class="line">cp http.conf /etc/fdfs/</span><br><span class="line">cp mime.types /etc/fdfs/</span><br><span class="line">cp /home/sunrise/fastdfs-single/fastdfs-nginx-module/src/mod_fastdfs.conf /etc/fdfs/</span><br><span class="line"></span><br><span class="line"><span class="comment"># 修改配置文件</span></span><br><span class="line">vim /etc/fdfs/mod_fastdfs.conf</span><br><span class="line"><span class="comment"># 修改为以下内容</span></span><br><span class="line">	base_path=/usr/<span class="built_in">local</span>/fast-dfs/fastdfs_storage  <span class="comment">#保存日志目录</span></span><br><span class="line"> 	tracker_server=服务器公网ip地址:22122 <span class="comment">#tracker服务器的IP地址以及端口号</span></span><br><span class="line"> 	storage_server_port=23000 <span class="comment">#storage服务器的端口号</span></span><br><span class="line"> 	url_have_group_name = <span class="literal">true</span> <span class="comment">#文件 url 中是否有 group 名</span></span><br><span class="line"> 	store_path0=/usr/<span class="built_in">local</span>/fast-dfs/fastdfs_storage_data   <span class="comment">#存储路径</span></span><br><span class="line"> 	group_count = 3 <span class="comment">#设置组的个数，事实上这次只使用了group1</span></span><br><span class="line">在文件的最后，设置group</span><br><span class="line">[group1]</span><br><span class="line">group_name=group1</span><br><span class="line">storage_server_port=23000</span><br><span class="line">store_path_count=1</span><br><span class="line">store_path0=/usr/<span class="built_in">local</span>/fast-dfs/fastdfs_storage_data</span><br><span class="line"></span><br><span class="line">[group2]</span><br><span class="line">group_name=group2</span><br><span class="line">storage_server_port=23000</span><br><span class="line">store_path_count=1</span><br><span class="line">store_path0=/usr/<span class="built_in">local</span>/fast-dfs/fastdfs_storage_data</span><br><span class="line"></span><br><span class="line">[group3]</span><br><span class="line">group_name=group3</span><br><span class="line">storage_server_port=23000</span><br><span class="line">store_path_count=1</span><br><span class="line">store_path0=/usr/<span class="built_in">local</span>/fast-dfs/fastdfs_storage_data</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment"># 保存后，创建M00至storage存储目录的符号连接：</span></span><br><span class="line">ln  -s  /usr/<span class="built_in">local</span>/fast-dfs/fastdfs_storage_data/data/ /usr/<span class="built_in">local</span>/fast-dfs/fastdfs_storage_data/data/M00</span><br><span class="line"><span class="comment"># 启动nginx:</span></span><br><span class="line">/usr/<span class="built_in">local</span>/storage-nginx/sbin/nginx -c /usr/<span class="built_in">local</span>/storage-nginx/conf/nginx.conf</span><br><span class="line">查看端口是否启动：</span><br><span class="line">netstat -ntpul |grep nginx <span class="comment">#出现9999端口的nignx説明启动成功</span></span><br></pre></td></tr></table></figure>
+
+<p>我们来测试一下我们的storage server 和nginx 整合的情况，我们又上传一张图片。</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">/usr/bin/fdfs_test /etc/fdfs/client.conf upload /home/sunrise/931661.png</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/02/06/centos%E6%90%AD%E5%BB%BAfastdfs-nginx/image-20200207003937892.png" alt="image-20200207003937892"></p>
+<p>我们设置的nginx端口为9999，所以我们访问的url的端口应该改为9999.</p>
+<p><img src="/2020/02/06/centos%E6%90%AD%E5%BB%BAfastdfs-nginx/image-20200207004121621.png" alt="image-20200207004121621"></p>
+<h3 id="tracker-server-整合nginx"><a href="#tracker-server-整合nginx" class="headerlink" title="tracker server 整合nginx"></a>tracker server 整合nginx</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 重新配置一下nginx config</span></span><br><span class="line"><span class="built_in">cd</span> /home/sunrise/fastdfs-single/nginx-1.12.0</span><br><span class="line">./configure --prefix=/usr/<span class="built_in">local</span>/tracker-nginx --add-module=/home/sunrise/fastdfs-single/fastdfs-nginx-module/src</span><br><span class="line"><span class="comment"># ./configure --prefix=/usr/local/tracker-nginx --add-module=/home/sunrise/fastdfs-single/fastdfs-nginx-module/src \--with-http_ssl_module \--with-http_stub_status_module \--with-http_realip_module \--with-threads</span></span><br><span class="line"></span><br><span class="line">make &amp;&amp; make install</span><br><span class="line"><span class="comment"># 修改tracker-nginx 配置</span></span><br><span class="line"><span class="built_in">cd</span> /usr/<span class="built_in">local</span>/tracker-nginx</span><br><span class="line">vim conf/nginx.conf</span><br><span class="line"><span class="comment"># 修改为以下内容</span></span><br><span class="line">		upstream fdfs_group1 &#123;</span><br><span class="line">        server 127.0.0.1:9999;</span><br><span class="line">    &#125;</span><br><span class="line">    server &#123;</span><br><span class="line">        listen       80;</span><br><span class="line">        server_name  localhost;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">        <span class="comment">#charset koi8-r;</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">        <span class="comment">#access_log  logs/host.access.log  main;</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">        location /group1/M00 &#123;</span><br><span class="line">            proxy_pass http://fdfs_group1;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">#location / &#123;</span></span><br><span class="line">        <span class="comment">#    root   html;</span></span><br><span class="line">        <span class="comment">#    index  index.html index.htm;</span></span><br><span class="line">        <span class="comment">#&#125;</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">        <span class="comment">#error_page  404              /404.html;</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">        <span class="comment"># redirect server error pages to the static page /50x.html</span></span><br><span class="line">        <span class="comment">#</span></span><br><span class="line">        error_page   500 502 503 504  /50x.html;</span><br><span class="line">        location = /50x.html &#123;</span><br><span class="line">            root   html;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"><span class="comment"># 保存后启动tracker-nginx</span></span><br><span class="line">/usr/<span class="built_in">local</span>/tracker-nginx/sbin/nginx -c /usr/<span class="built_in">local</span>/tracker-nginx/conf/nginx.conf</span><br><span class="line"><span class="comment"># 查看端口是否有80和9999：</span></span><br><span class="line">netstat -ntpul |grep nginx</span><br><span class="line"></span><br><span class="line">以上FastDFS服务部署完成。</span><br></pre></td></tr></table></figure>
+
+<p>有了tracker nginx 这一层，主要是将9999端口给隐藏起来，我们可以直接使用ip+图片访问的后缀来访问我们上传的图片</p>
+<p><img src="/2020/02/06/centos%E6%90%AD%E5%BB%BAfastdfs-nginx/image-20200207010044015.png" alt="image-20200207010044015"></p>
+<h2 id="端口使用情况"><a href="#端口使用情况" class="headerlink" title="端口使用情况"></a>端口使用情况</h2><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 防火墙开启所有配置的端口：</span></span><br><span class="line">firewall-cmd --zone=public --add-port=80/tcp --permanent <span class="comment">#开启80端口号</span></span><br><span class="line">firewall-cmd --zone=public --add-port=23000/tcp --permanent <span class="comment">#开启23000端口号</span></span><br><span class="line">firewall-cmd --zone=public --add-port=22122/tcp --permanent <span class="comment">#开启22122端口号</span></span><br><span class="line">firewall-cmd --zone=public --add-port=9999/tcp --permanent <span class="comment">#开启9999端口号</span></span><br><span class="line">firewall-cmd --zone=public --add-port=6666/tcp --permanent <span class="comment">#开启6666端口号</span></span><br><span class="line">firewall-cmd --zone=public --add-port=8888/tcp --permanent <span class="comment">#开启8888端口号</span></span><br><span class="line"><span class="comment"># 相应的腾讯云安全组策略中也需要放开这些端口</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 重启防火墙</span></span><br><span class="line">CentOS7 防火墙相关命令：</span><br><span class="line">firewall-cmd --zone=public --list-ports <span class="comment">#查看开启的端口</span></span><br><span class="line">firewall-cmd state   <span class="comment">#查看防火墙是否开启</span></span><br><span class="line">systemctl <span class="built_in">enable</span> firewalld.service    <span class="comment">#开启防火墙</span></span><br><span class="line">systemctl stop firewalld.service     <span class="comment">#关闭防火墙(开机会仍会启动)</span></span><br><span class="line">systemctl <span class="built_in">disable</span> firewalld.service  <span class="comment">#禁用防火墙(开机后不再启动)</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="代码测试"><a href="#代码测试" class="headerlink" title="代码测试"></a>代码测试</h2><ul>
+<li>打开idea，拉取代码：<a href="https://github.com/happyfish100/fastdfs-client-java.git" target="_blank" rel="noopener">https://github.com/happyfish100/fastdfs-client-java.git</a></li>
+<li>等待maven 拉取依赖后，在lifecycle 点击install，将jar包安装到本地</li>
+<li>新建空白的maven项目，添加以下依赖</li>
+</ul>
+<figure class="highlight xml"><table><tr><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">      <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.csource<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">      <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>fastdfs-client-java<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">      <span class="tag">&lt;<span class="name">version</span>&gt;</span>1.27-SNAPSHOT<span class="tag">&lt;/<span class="name">version</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><p>在resources目录下创建fdfs_client.conf 文件，加入一下内容：tracker_server=服务器公网ip地址:22122</p>
+</li>
+<li><p>编写相关代码</p>
+</li>
+</ul>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">FastDfsUpload</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> <span class="keyword">throws</span> Exception</span>&#123;</span><br><span class="line">        <span class="comment">//加载配置文件，配置文件中的内容就是 tracker 服务的地址</span></span><br><span class="line">        ClientGlobal.init(<span class="string">"fdfs_client.conf"</span>);</span><br><span class="line">        <span class="comment">//创建一个 TrackerClient 对象。直接 new 一个</span></span><br><span class="line">        TrackerClient trackerClient=<span class="keyword">new</span> TrackerClient();</span><br><span class="line">        <span class="comment">//使用 TrackerClient 对象创建连接，获得一个 TrackerServer 对象。</span></span><br><span class="line">        TrackerServer trackerServer=trackerClient.getTrackerServer();</span><br><span class="line">        <span class="comment">//创建一个 StorageServer 的引用，值为 null</span></span><br><span class="line">        StorageServer storageServer=<span class="keyword">null</span>;</span><br><span class="line">        <span class="comment">//创建一个 StorageClient 对象，需要两个参数 TrackerServer 对象、StorageServer 的引用</span></span><br><span class="line">        StorageClient storageClient=<span class="keyword">new</span> StorageClient(trackerServer,storageServer);</span><br><span class="line">        <span class="comment">//使用 StorageClient 对象上传图片。</span></span><br><span class="line">        <span class="comment">//扩展名不带“.”</span></span><br><span class="line">        String[] strings=storageClient.upload_file(<span class="string">"/Users/sunrise/Pictures/wallhaven-39yz2y.jpg"</span>,<span class="string">"jpg"</span>,<span class="keyword">null</span>);</span><br><span class="line">        <span class="comment">//遍历数组打印包含组名和图片的路径。</span></span><br><span class="line">        <span class="keyword">for</span> (String string:strings)&#123;</span><br><span class="line">            System.out.println(string);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/02/06/centos%E6%90%AD%E5%BB%BAfastdfs-nginx/image-20200207014628167.png" alt="image-20200207014628167"></p>
+<p>上传成功，我们来访问一下：</p>
+<p><img src="/2020/02/06/centos%E6%90%AD%E5%BB%BAfastdfs-nginx/image-20200207014831873.png" alt="image-20200207014831873"></p>
+<h2 id="后记"><a href="#后记" class="headerlink" title="后记"></a>后记</h2><p>单机版本的fastdfs差不多就是这样使用的，等有时间折腾一下fastdfs集群怎么搭建。</p>
+]]></content>
+      <categories>
+        <category>分布式</category>
+      </categories>
+      <tags>
+        <tag>fastdfs</tag>
+        <tag>nginx</tag>
+        <tag>文件系统</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>consul命令指南</title>
     <url>/2020/02/06/consul%E5%91%BD%E4%BB%A4%E6%8C%87%E5%8D%97/</url>
     <content><![CDATA[<p>安装完consul后，通过在控制台直接实现<code>consul</code>命令了解consul命令行的用法，输出如下：</p>
@@ -1164,6 +1405,85 @@ finally中最好不要包含return，否则程序会提前退出，返回值不�
       </tags>
   </entry>
   <entry>
+    <title>Java子类与父类之间的转换</title>
+    <url>/2017/09/26/Java%E5%AD%90%E7%B1%BB%E4%B8%8E%E7%88%B6%E7%B1%BB%E4%B9%8B%E9%97%B4%E7%9A%84%E8%BD%AC%E6%8D%A2/</url>
+    <content><![CDATA[<p>在使用Java的多态机制时，常常使用的一个特性便是子类和父类之间的对象转换。从子类向父类的转换称为向上转换（upcasting），通过向上转换，我们能够在编写程序时采用通用程序设计的思想，在需要使用子类对象的时候，通过把变量定义为父类型，我们可以通过一个变量，使用该父类型的所有子类型实例；从父类型向子类型的转换称为向下转换（downcasting），通过向下转换，我们能在必要的时候，将父类型变量转换成子类型变量，使用一些通过子类型才能够使用的方法。以下是我对于对象转换的一些个人理解，如有不对，欢迎指正，虚心向大神们请教。</p>
+<p>首先是从子类向父类的向上转换。向上转换比较直观，总是能够将一个子类的实例转换为一个父类的对象，从继承链的角度，这个特性很容易理解：继承是一种“是一种”的关系，从父类派生出的子类，我们都能理解为，子类总是父类的一个实例。比如说，Fruit类派生出了Orange类，Apple类，Orange和Apple都是Fruit；Animal类派生出了Tiger类和Lion类，Tiger和Lion都是Animal。因此，从子类向父类的转换不需要什么限制，只需直接将子类实例赋值给父类变量即可，这也是Java中的多态的实现机制。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">&#x2F;&#x2F;Test.java</span><br><span class="line">public class Test &#123;</span><br><span class="line">    public static void main(String args[]) &#123;</span><br><span class="line">        Animal tiger &#x3D; new Tiger();</span><br><span class="line">        Animal lion &#x3D; new Lion();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line">class Animal &#123;</span><br><span class="line">    String name;</span><br><span class="line">    Animal() &#123;</span><br><span class="line">        name &#x3D; &quot;animal&quot;;</span><br><span class="line">    &#125;</span><br><span class="line">    Animal(String name) &#123;</span><br><span class="line">        this.name &#x3D; name;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line">class Tiger extends Animal &#123;</span><br><span class="line">    Tiger() &#123;</span><br><span class="line">        super(&quot;tiger&quot;);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line">class Lion extends Animal &#123;</span><br><span class="line">    Lion() &#123;</span><br><span class="line">        super(&quot;lion&quot;);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>然而从父类向子类的向下转换就稍微复杂一些了。在讲述向下转换之前，也许有些刚学java的朋友会有点不解为什么要使用向下转换，使用多态和动态绑定机制通过父类型变量使用子变量不就可以了么（比如我就曾对此感到疑惑）。这就要考虑到，在继承关系中，有一些方法是不适合由父类定义并由子类继承并重写的，有些方法是子类特有的，不应该通过继承得到，且子类可能也会有自己特有的成员变量，那么在使用多态机制的时候，若我们要通过父类型变量使用到这些子类特有的方法和属性的话，就需要将服类型变量转换成对应的子类型变量。一个典型例子便是标准库中的数据类型包装类：Integer类，Double类，Long类等，它们都继承自Number类，且它们都有一个方法叫做compareTo用于比较两个同样的类型。然而这个方法是这些子类通过实现Comparable接口来实现的，在Number类中并没有该方法的实现，因此若要通过Number类型变量来使用compareTo方法，就要先将Number类转换成子类的对象。</p>
+<p>从父类向子类的转换就有限制了。首先，父类变量向子类转换必须通过显式强制类型转换,采取和向上转换相同的直接赋值方式是不行的，；并且，当把一个父类型变量实例转换为子类型变量时，必须确保该父类变量是子类的一个实例，从继承链的角度来理解这些原因：子类一定是父类的一个实例，然而父类却不一定是子类的实例；比如说，Fruit未必是Orange，它可能是Apple；Animal也不一定是Tiger，它可能是Lion。用代码来解释一下：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">Animal tiger &#x3D; new Tiger();</span><br><span class="line">Animal lion &#x3D; new Lion();</span><br></pre></td></tr></table></figure>
+<p>在前面向上转换的代码示例当中，main方法中的这两行代码，意思就是父类型变量tiger是子类Tiger的一个实例，lion是Lion的一个实例。<br>也就是说，如果要把tiger转换为Tiger类型，必须保证tiger本身是Tiger的一个实例，在上例中，如果要把tiger转换成Lion类型，或是把Lion类型转换为Tiger类型，都是行不通的，在运行时，这会抛出一个运行异常ClassCastException，表示类转换异常。因此，在进行父类向子类的转换时，一个好的习惯是通过instanceof运算符来判断父类变量是否是该子类的一个实例：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">Tiger t &#x3D; null;</span><br><span class="line">if(tiger instanceof Tiger)</span><br><span class="line">    t &#x3D; (Tiger)tiger;</span><br></pre></td></tr></table></figure>
+<p>如果要通过父类调用子类变量的方法，那么要注意要将父类型变量和强制转换用括号括起来：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">Number i &#x3D; new Integer(3)；</span><br><span class="line">System.out.println(</span><br><span class="line">    ((Integer)i).compareTo(new Integer(4))</span><br><span class="line">                  ）；</span><br></pre></td></tr></table></figure>
+<p>因为成员访问运算符.的优先级大于类型转换，所以要用括号括起来保证类型转换先于成员访问进行运算。<br>前面说到用instanceof判断父类是否是子类的一个实例是一个好习惯，如果不养成这个习惯的话很容易出问题，请看下面这段代码：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">Animal animal &#x3D; new Tiger();</span><br><span class="line">Lion lion &#x3D; (Lion)animal;</span><br></pre></td></tr></table></figure>
+<p>前面说到，这段代码会在运行时抛出ClassCastException异常，然而，这段代码却是能够编译成功的。原因是因为，Java编译器并没有聪明到能够在编译阶段就知道父类型变量是哪一个子类的实例，所以，将animal转换为Lion类型的代码：(Lion)animal是能够编译通过的，即使事实上我们能看到animal是Tiger的一个实例，因为Animal类型确实能转换成Lion类型，所以这条语句是合法的。所以，如果没有使用instanceof防止不同子类型之间的对象转换，而又不能指望编译器检查出这种转换逻辑错误的话，就很容易犯错了。<br>总结</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">public class ConvertPro extends Father &#123;</span><br><span class="line">    public static void main(String[] args) &#123;</span><br><span class="line">        Father father &#x3D; new Father();</span><br><span class="line">        Father father1 &#x3D; new ConvertPro();</span><br><span class="line">        ConvertPro son &#x3D; new ConvertPro();</span><br><span class="line">        &#x2F;&#x2F; ConvertPro son1 &#x3D; (ConvertPro) new Father();</span><br><span class="line">        &#x2F;&#x2F; son &#x3D; (ConvertPro)father;</span><br><span class="line">        son &#x3D; (ConvertPro) father1;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line">&#x2F;**</span><br><span class="line"> * 父类</span><br><span class="line"> * </span><br><span class="line"> * @author icer</span><br><span class="line"> * </span><br><span class="line"> *&#x2F;</span><br><span class="line">class Father &#123;</span><br><span class="line">    private String name;</span><br><span class="line">    public String getName() &#123;</span><br><span class="line">        return name;</span><br><span class="line">    &#125;</span><br><span class="line">    public void setName(String name) &#123;</span><br><span class="line">        this.name &#x3D; name;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>上面代码注释掉的两行是会运行错误的. 根据代码显示, 只有我们的父类对象本身就是用子类new出来的时候, 才可以在将来被强制转换为子类对象.</p>
+<p>子类继承父类的所有(包括属性以及方法), 也就是说子类包含的内容应该是比父类要大的. 如果正常环境下, 把一个父类转换成子类一定会损失精度. 但是如果父类对象本身就是用子类去new出来的, 就类似于一个本来就是儿子角色的人, 去装了一会儿父亲, 这个角色是可以在未来转换回去的, 但是一个父亲, 永远不可能去装儿子的.</p>
+]]></content>
+      <categories>
+        <category>Java</category>
+      </categories>
+      <tags>
+        <tag>Java</tag>
+        <tag>多态</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>一道题目引发的思考</title>
+    <url>/2017/09/26/%E4%B8%80%E9%81%93%E9%A2%98%E7%9B%AE%E5%BC%95%E5%8F%91%E7%9A%84%E6%80%9D%E8%80%83/</url>
+    <content><![CDATA[<p>在看一份Java面试题集的时候遇到一个这样的问题：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">public class Test &#123;</span><br><span class="line">        public static void main(String[] args)&#123;</span><br><span class="line">            Father father &#x3D; new Father();</span><br><span class="line">            Father child &#x3D; new Child();</span><br><span class="line">            System.out.println(father.getName());</span><br><span class="line">            System.out.println(child.getName());</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    class Father&#123;</span><br><span class="line">        public static String getName()&#123;</span><br><span class="line">            return &quot;Father&quot;;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    class Child extends Father&#123;</span><br><span class="line">        public static String getName()&#123;</span><br><span class="line">            return &quot;Child&quot;;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+<p>请问输出的结果是：<br>结果是都是Father。<br>为什么呢？</p>
+<p>我们看到这里的都是子类 ， 父类的静态方法。第一个输出为Father我们不奇怪，但是第二个为啥也是Father呢？为什么不是调用子类的静态方法呢？<br>我们看到，子类对象被父类变量所引用，这里是想测验我们，父类的实例方法能否被子类重写，如果重写了，那么调用这个方法，就应该输出子类的相关信息。要是不能，那就是调用父类的静态方法了。<br>解释</p>
+<p>父类代码：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">public class Fu &#123;  </span><br><span class="line">    public static void show() &#123;  </span><br><span class="line">        System.out.println(&quot;父类的静态方法&quot;);  </span><br><span class="line">    &#125;  </span><br><span class="line">    public void method() &#123;  </span><br><span class="line">        System.out.println(&quot;父类的普通方法&quot;);  </span><br><span class="line">    &#125;  </span><br><span class="line">&#125;  </span><br><span class="line"></span><br><span class="line">子类代码：</span><br><span class="line"></span><br><span class="line">public class Zi extends Fu &#123;  </span><br><span class="line">    public static void main(String[] args) &#123;  </span><br><span class="line">        Fu fu &#x3D; new Zi();  </span><br><span class="line">        fu.show();  </span><br><span class="line">        fu.method();  </span><br><span class="line">    &#125;  </span><br><span class="line">    public static void show() &#123;  </span><br><span class="line">        System.out.println(&quot;子类的静态方法&quot;);  </span><br><span class="line">    &#125;  </span><br><span class="line">    public void method() &#123;  </span><br><span class="line">        System.out.println(&quot;子类的普通方法&quot;);  </span><br><span class="line">    &#125;  </span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>从这里我们可以看出，父类的静态方法是不能被子类重写的，其实重写只能适用于实例方法，不能用于静态方法，对于上面这种静态方法而言，我们应该称之为隐藏。<br>Java静态方法形式上可以重写，但从本质上来说不是Java的重写。因为静态方法只与类相关，不与具体实现相关。声明的是什么类，则引用相应类的静态方法(本来静态无需声明，可以直接引用)。并且static方法不是后期绑定的，它在编译期就绑定了。换句话说，这个方法不会进行多态的判断，只与声明的类有关。</p>
+]]></content>
+      <categories>
+        <category>Java</category>
+      </categories>
+      <tags>
+        <tag>Java</tag>
+        <tag>静态方法</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Java构造函数详解</title>
+    <url>/2017/09/26/Java%E6%9E%84%E9%80%A0%E5%87%BD%E6%95%B0%E8%AF%A6%E8%A7%A3/</url>
+    <content><![CDATA[<h3 id="构造函数"><a href="#构造函数" class="headerlink" title="构造函数"></a>构造函数</h3><p>当我们新实例化一个对象的时候，都想对这个对象做一些初始化的工作，比如给对象的属性初始化相关的值。这就是构造函数要做的事。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">public class People&#123;</span><br><span class="line">	public String name;</span><br><span class="line">	    public int age;</span><br><span class="line">	    public People(String name,int age) &#123;</span><br><span class="line">	        this.age &#x3D; age;</span><br><span class="line">	        this.name &#x3D; name;</span><br><span class="line">	    &#125;</span><br><span class="line">	    public People(int age,String name)&#123;</span><br><span class="line">	</span><br><span class="line">	    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="构造函数的作用"><a href="#构造函数的作用" class="headerlink" title="构造函数的作用"></a>构造函数的作用</h3><p>构造方法作用：对对象进行初始化.<br>构造函数和普通的函数（方法）有啥区别？</p>
+<p>（1）. 一般函数是用于定义对象应该具备的功能。而构造函数定义的是，对象在调用功能之前，在建立时，应该具备的一些内容。也就是对象的初始化内容。</p>
+<p>（2）. 构造函数是在对象建立时由jvm调用, 给对象初始化。一般函数是对象建立后，当对象调用该功能时才会执行。</p>
+<p>（3）. 普通函数可以使用对象多次调用，构造函数就在创建对象时调用。</p>
+<p>（4）. 构造函数的函数名要与类名一样，而普通的函数只要符合标识符的命名规则即可。</p>
+<p>（5）. 构造函数没有返回值类型。<br>构造函数使用时的细节</p>
+<p>（1）. 当类中没有定义构造函数时，系统会指定给该类加上一个空参数的构造函数。这个是类中默认的构造函数。当类中如果自定义了构造函数，这时默认的构造函数就没有了。</p>
+<p>备注：可以通过javap命令验证。</p>
+<p>（2）.在一个类中可以定义多个构造函数，以进行不同的初始化。多个构造函数存在于类中，是以重载的形式体现的。因为构造函数的名称都相同。<br>构造代码块</p>
+<p>这个构造代码块有啥作用呢？注意构造代码块和静态块不一样。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">class People&#123;</span><br><span class="line">    public String name;</span><br><span class="line">    public int age;</span><br><span class="line">    public People(String name,int age) &#123;</span><br><span class="line">        this.age &#x3D; age;</span><br><span class="line">        this.name &#x3D; name;</span><br><span class="line">    &#125;</span><br><span class="line">    public People(int age,String name)&#123;</span><br><span class="line">    &#125;</span><br><span class="line">    &#x2F;&#x2F;静态块</span><br><span class="line">    static &#123;</span><br><span class="line">        System.out.println(&quot;这是静态块&quot;);</span><br><span class="line">    &#125;</span><br><span class="line">    &#x2F;&#x2F;这是构造代码块</span><br><span class="line">    &#123;</span><br><span class="line">        System.out.println(&quot;这是构造代码块&quot;);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>构造代码块的作用是：给所有的对象进行统一的初始化。<br>如果，构造函数中有比较多相同的部分，这样我们可以将它移出来，放在构造代码块中。<br>具体作用</p>
+<p>1：给对象进行初始化。对象一建立就运行并且优先于构造函数。<br>与构造函数区别</p>
+<p>2：构造代码块和构造函数的区别，构造代码块是给所有对象进行统一初始化， 构造函数给对应的对象初始化。</p>
+<p>3：构造代码块的作用：它的作用就是将所有构造方法中公共的信息进行抽取。</p>
+<h3 id="需要注意的是："><a href="#需要注意的是：" class="headerlink" title="需要注意的是："></a>需要注意的是：</h3><p>在Java中，子类的构造过程中，必须 调用其父类的构造函数, 是因为有继承关系存在时, 子类要把父类的内容继承下来, 通过什么手段做到的？ 这样： 当你new一个子类对象的时候, 必须首先要new一个父类的对像出来, 这个父类对象位于子类对象的内部, 所以说，子类对象比父类对象大, 子类对象里面包含了一个父类的对象, 这是内存中真实的情况.</p>
+<p>构造方法是new一个对象的时候, 必须要调的方法, 这是规定, 要new父类对象出来, 那么肯定要调用其构造方法, 所以 第一个规则：子类的构造过程中，必须 调用其父类的构造方法</p>
+<p>一个类, 如果我们不写构造方法, 那么编译器会帮我们加上一个默认的构造方法, 所谓默认的构造方法, 就是没有参数的构造方法, 但是如果你自己写了构造方法, 那么编译器就不会给你添加了</p>
+<p>所以有时候当你new一个子类对象的时候，肯定调用了子类的构造方法，但是在子类构造方法中我们并没有显示的调用基类的构造方法，就是没写，如：super(); 并没有这样写，但是</p>
+]]></content>
+      <categories>
+        <category>Java</category>
+      </categories>
+      <tags>
+        <tag>Java</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>201709Java面试题目总结</title>
     <url>/2017/09/26/201709Java%E9%9D%A2%E8%AF%95%E9%A2%98%E7%9B%AE%E6%80%BB%E7%BB%93%20/</url>
     <content><![CDATA[<p>碰到的Java笔试题</p>
@@ -1311,85 +1631,6 @@ ViewResolver 结合Model和View，来渲染视图
       <tags>
         <tag>Java</tag>
         <tag>面试题</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>Java子类与父类之间的转换</title>
-    <url>/2017/09/26/Java%E5%AD%90%E7%B1%BB%E4%B8%8E%E7%88%B6%E7%B1%BB%E4%B9%8B%E9%97%B4%E7%9A%84%E8%BD%AC%E6%8D%A2/</url>
-    <content><![CDATA[<p>在使用Java的多态机制时，常常使用的一个特性便是子类和父类之间的对象转换。从子类向父类的转换称为向上转换（upcasting），通过向上转换，我们能够在编写程序时采用通用程序设计的思想，在需要使用子类对象的时候，通过把变量定义为父类型，我们可以通过一个变量，使用该父类型的所有子类型实例；从父类型向子类型的转换称为向下转换（downcasting），通过向下转换，我们能在必要的时候，将父类型变量转换成子类型变量，使用一些通过子类型才能够使用的方法。以下是我对于对象转换的一些个人理解，如有不对，欢迎指正，虚心向大神们请教。</p>
-<p>首先是从子类向父类的向上转换。向上转换比较直观，总是能够将一个子类的实例转换为一个父类的对象，从继承链的角度，这个特性很容易理解：继承是一种“是一种”的关系，从父类派生出的子类，我们都能理解为，子类总是父类的一个实例。比如说，Fruit类派生出了Orange类，Apple类，Orange和Apple都是Fruit；Animal类派生出了Tiger类和Lion类，Tiger和Lion都是Animal。因此，从子类向父类的转换不需要什么限制，只需直接将子类实例赋值给父类变量即可，这也是Java中的多态的实现机制。</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">&#x2F;&#x2F;Test.java</span><br><span class="line">public class Test &#123;</span><br><span class="line">    public static void main(String args[]) &#123;</span><br><span class="line">        Animal tiger &#x3D; new Tiger();</span><br><span class="line">        Animal lion &#x3D; new Lion();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line">class Animal &#123;</span><br><span class="line">    String name;</span><br><span class="line">    Animal() &#123;</span><br><span class="line">        name &#x3D; &quot;animal&quot;;</span><br><span class="line">    &#125;</span><br><span class="line">    Animal(String name) &#123;</span><br><span class="line">        this.name &#x3D; name;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line">class Tiger extends Animal &#123;</span><br><span class="line">    Tiger() &#123;</span><br><span class="line">        super(&quot;tiger&quot;);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line">class Lion extends Animal &#123;</span><br><span class="line">    Lion() &#123;</span><br><span class="line">        super(&quot;lion&quot;);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>然而从父类向子类的向下转换就稍微复杂一些了。在讲述向下转换之前，也许有些刚学java的朋友会有点不解为什么要使用向下转换，使用多态和动态绑定机制通过父类型变量使用子变量不就可以了么（比如我就曾对此感到疑惑）。这就要考虑到，在继承关系中，有一些方法是不适合由父类定义并由子类继承并重写的，有些方法是子类特有的，不应该通过继承得到，且子类可能也会有自己特有的成员变量，那么在使用多态机制的时候，若我们要通过父类型变量使用到这些子类特有的方法和属性的话，就需要将服类型变量转换成对应的子类型变量。一个典型例子便是标准库中的数据类型包装类：Integer类，Double类，Long类等，它们都继承自Number类，且它们都有一个方法叫做compareTo用于比较两个同样的类型。然而这个方法是这些子类通过实现Comparable接口来实现的，在Number类中并没有该方法的实现，因此若要通过Number类型变量来使用compareTo方法，就要先将Number类转换成子类的对象。</p>
-<p>从父类向子类的转换就有限制了。首先，父类变量向子类转换必须通过显式强制类型转换,采取和向上转换相同的直接赋值方式是不行的，；并且，当把一个父类型变量实例转换为子类型变量时，必须确保该父类变量是子类的一个实例，从继承链的角度来理解这些原因：子类一定是父类的一个实例，然而父类却不一定是子类的实例；比如说，Fruit未必是Orange，它可能是Apple；Animal也不一定是Tiger，它可能是Lion。用代码来解释一下：</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">Animal tiger &#x3D; new Tiger();</span><br><span class="line">Animal lion &#x3D; new Lion();</span><br></pre></td></tr></table></figure>
-<p>在前面向上转换的代码示例当中，main方法中的这两行代码，意思就是父类型变量tiger是子类Tiger的一个实例，lion是Lion的一个实例。<br>也就是说，如果要把tiger转换为Tiger类型，必须保证tiger本身是Tiger的一个实例，在上例中，如果要把tiger转换成Lion类型，或是把Lion类型转换为Tiger类型，都是行不通的，在运行时，这会抛出一个运行异常ClassCastException，表示类转换异常。因此，在进行父类向子类的转换时，一个好的习惯是通过instanceof运算符来判断父类变量是否是该子类的一个实例：</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">Tiger t &#x3D; null;</span><br><span class="line">if(tiger instanceof Tiger)</span><br><span class="line">    t &#x3D; (Tiger)tiger;</span><br></pre></td></tr></table></figure>
-<p>如果要通过父类调用子类变量的方法，那么要注意要将父类型变量和强制转换用括号括起来：</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">Number i &#x3D; new Integer(3)；</span><br><span class="line">System.out.println(</span><br><span class="line">    ((Integer)i).compareTo(new Integer(4))</span><br><span class="line">                  ）；</span><br></pre></td></tr></table></figure>
-<p>因为成员访问运算符.的优先级大于类型转换，所以要用括号括起来保证类型转换先于成员访问进行运算。<br>前面说到用instanceof判断父类是否是子类的一个实例是一个好习惯，如果不养成这个习惯的话很容易出问题，请看下面这段代码：</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">Animal animal &#x3D; new Tiger();</span><br><span class="line">Lion lion &#x3D; (Lion)animal;</span><br></pre></td></tr></table></figure>
-<p>前面说到，这段代码会在运行时抛出ClassCastException异常，然而，这段代码却是能够编译成功的。原因是因为，Java编译器并没有聪明到能够在编译阶段就知道父类型变量是哪一个子类的实例，所以，将animal转换为Lion类型的代码：(Lion)animal是能够编译通过的，即使事实上我们能看到animal是Tiger的一个实例，因为Animal类型确实能转换成Lion类型，所以这条语句是合法的。所以，如果没有使用instanceof防止不同子类型之间的对象转换，而又不能指望编译器检查出这种转换逻辑错误的话，就很容易犯错了。<br>总结</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">public class ConvertPro extends Father &#123;</span><br><span class="line">    public static void main(String[] args) &#123;</span><br><span class="line">        Father father &#x3D; new Father();</span><br><span class="line">        Father father1 &#x3D; new ConvertPro();</span><br><span class="line">        ConvertPro son &#x3D; new ConvertPro();</span><br><span class="line">        &#x2F;&#x2F; ConvertPro son1 &#x3D; (ConvertPro) new Father();</span><br><span class="line">        &#x2F;&#x2F; son &#x3D; (ConvertPro)father;</span><br><span class="line">        son &#x3D; (ConvertPro) father1;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line">&#x2F;**</span><br><span class="line"> * 父类</span><br><span class="line"> * </span><br><span class="line"> * @author icer</span><br><span class="line"> * </span><br><span class="line"> *&#x2F;</span><br><span class="line">class Father &#123;</span><br><span class="line">    private String name;</span><br><span class="line">    public String getName() &#123;</span><br><span class="line">        return name;</span><br><span class="line">    &#125;</span><br><span class="line">    public void setName(String name) &#123;</span><br><span class="line">        this.name &#x3D; name;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>上面代码注释掉的两行是会运行错误的. 根据代码显示, 只有我们的父类对象本身就是用子类new出来的时候, 才可以在将来被强制转换为子类对象.</p>
-<p>子类继承父类的所有(包括属性以及方法), 也就是说子类包含的内容应该是比父类要大的. 如果正常环境下, 把一个父类转换成子类一定会损失精度. 但是如果父类对象本身就是用子类去new出来的, 就类似于一个本来就是儿子角色的人, 去装了一会儿父亲, 这个角色是可以在未来转换回去的, 但是一个父亲, 永远不可能去装儿子的.</p>
-]]></content>
-      <categories>
-        <category>Java</category>
-      </categories>
-      <tags>
-        <tag>Java</tag>
-        <tag>多态</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>Java构造函数详解</title>
-    <url>/2017/09/26/Java%E6%9E%84%E9%80%A0%E5%87%BD%E6%95%B0%E8%AF%A6%E8%A7%A3/</url>
-    <content><![CDATA[<h3 id="构造函数"><a href="#构造函数" class="headerlink" title="构造函数"></a>构造函数</h3><p>当我们新实例化一个对象的时候，都想对这个对象做一些初始化的工作，比如给对象的属性初始化相关的值。这就是构造函数要做的事。</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">public class People&#123;</span><br><span class="line">	public String name;</span><br><span class="line">	    public int age;</span><br><span class="line">	    public People(String name,int age) &#123;</span><br><span class="line">	        this.age &#x3D; age;</span><br><span class="line">	        this.name &#x3D; name;</span><br><span class="line">	    &#125;</span><br><span class="line">	    public People(int age,String name)&#123;</span><br><span class="line">	</span><br><span class="line">	    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h3 id="构造函数的作用"><a href="#构造函数的作用" class="headerlink" title="构造函数的作用"></a>构造函数的作用</h3><p>构造方法作用：对对象进行初始化.<br>构造函数和普通的函数（方法）有啥区别？</p>
-<p>（1）. 一般函数是用于定义对象应该具备的功能。而构造函数定义的是，对象在调用功能之前，在建立时，应该具备的一些内容。也就是对象的初始化内容。</p>
-<p>（2）. 构造函数是在对象建立时由jvm调用, 给对象初始化。一般函数是对象建立后，当对象调用该功能时才会执行。</p>
-<p>（3）. 普通函数可以使用对象多次调用，构造函数就在创建对象时调用。</p>
-<p>（4）. 构造函数的函数名要与类名一样，而普通的函数只要符合标识符的命名规则即可。</p>
-<p>（5）. 构造函数没有返回值类型。<br>构造函数使用时的细节</p>
-<p>（1）. 当类中没有定义构造函数时，系统会指定给该类加上一个空参数的构造函数。这个是类中默认的构造函数。当类中如果自定义了构造函数，这时默认的构造函数就没有了。</p>
-<p>备注：可以通过javap命令验证。</p>
-<p>（2）.在一个类中可以定义多个构造函数，以进行不同的初始化。多个构造函数存在于类中，是以重载的形式体现的。因为构造函数的名称都相同。<br>构造代码块</p>
-<p>这个构造代码块有啥作用呢？注意构造代码块和静态块不一样。</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">class People&#123;</span><br><span class="line">    public String name;</span><br><span class="line">    public int age;</span><br><span class="line">    public People(String name,int age) &#123;</span><br><span class="line">        this.age &#x3D; age;</span><br><span class="line">        this.name &#x3D; name;</span><br><span class="line">    &#125;</span><br><span class="line">    public People(int age,String name)&#123;</span><br><span class="line">    &#125;</span><br><span class="line">    &#x2F;&#x2F;静态块</span><br><span class="line">    static &#123;</span><br><span class="line">        System.out.println(&quot;这是静态块&quot;);</span><br><span class="line">    &#125;</span><br><span class="line">    &#x2F;&#x2F;这是构造代码块</span><br><span class="line">    &#123;</span><br><span class="line">        System.out.println(&quot;这是构造代码块&quot;);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>构造代码块的作用是：给所有的对象进行统一的初始化。<br>如果，构造函数中有比较多相同的部分，这样我们可以将它移出来，放在构造代码块中。<br>具体作用</p>
-<p>1：给对象进行初始化。对象一建立就运行并且优先于构造函数。<br>与构造函数区别</p>
-<p>2：构造代码块和构造函数的区别，构造代码块是给所有对象进行统一初始化， 构造函数给对应的对象初始化。</p>
-<p>3：构造代码块的作用：它的作用就是将所有构造方法中公共的信息进行抽取。</p>
-<h3 id="需要注意的是："><a href="#需要注意的是：" class="headerlink" title="需要注意的是："></a>需要注意的是：</h3><p>在Java中，子类的构造过程中，必须 调用其父类的构造函数, 是因为有继承关系存在时, 子类要把父类的内容继承下来, 通过什么手段做到的？ 这样： 当你new一个子类对象的时候, 必须首先要new一个父类的对像出来, 这个父类对象位于子类对象的内部, 所以说，子类对象比父类对象大, 子类对象里面包含了一个父类的对象, 这是内存中真实的情况.</p>
-<p>构造方法是new一个对象的时候, 必须要调的方法, 这是规定, 要new父类对象出来, 那么肯定要调用其构造方法, 所以 第一个规则：子类的构造过程中，必须 调用其父类的构造方法</p>
-<p>一个类, 如果我们不写构造方法, 那么编译器会帮我们加上一个默认的构造方法, 所谓默认的构造方法, 就是没有参数的构造方法, 但是如果你自己写了构造方法, 那么编译器就不会给你添加了</p>
-<p>所以有时候当你new一个子类对象的时候，肯定调用了子类的构造方法，但是在子类构造方法中我们并没有显示的调用基类的构造方法，就是没写，如：super(); 并没有这样写，但是</p>
-]]></content>
-      <categories>
-        <category>Java</category>
-      </categories>
-      <tags>
-        <tag>Java</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>一道题目引发的思考</title>
-    <url>/2017/09/26/%E4%B8%80%E9%81%93%E9%A2%98%E7%9B%AE%E5%BC%95%E5%8F%91%E7%9A%84%E6%80%9D%E8%80%83/</url>
-    <content><![CDATA[<p>在看一份Java面试题集的时候遇到一个这样的问题：</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">public class Test &#123;</span><br><span class="line">        public static void main(String[] args)&#123;</span><br><span class="line">            Father father &#x3D; new Father();</span><br><span class="line">            Father child &#x3D; new Child();</span><br><span class="line">            System.out.println(father.getName());</span><br><span class="line">            System.out.println(child.getName());</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    class Father&#123;</span><br><span class="line">        public static String getName()&#123;</span><br><span class="line">            return &quot;Father&quot;;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    class Child extends Father&#123;</span><br><span class="line">        public static String getName()&#123;</span><br><span class="line">            return &quot;Child&quot;;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
-<p>请问输出的结果是：<br>结果是都是Father。<br>为什么呢？</p>
-<p>我们看到这里的都是子类 ， 父类的静态方法。第一个输出为Father我们不奇怪，但是第二个为啥也是Father呢？为什么不是调用子类的静态方法呢？<br>我们看到，子类对象被父类变量所引用，这里是想测验我们，父类的实例方法能否被子类重写，如果重写了，那么调用这个方法，就应该输出子类的相关信息。要是不能，那就是调用父类的静态方法了。<br>解释</p>
-<p>父类代码：</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">public class Fu &#123;  </span><br><span class="line">    public static void show() &#123;  </span><br><span class="line">        System.out.println(&quot;父类的静态方法&quot;);  </span><br><span class="line">    &#125;  </span><br><span class="line">    public void method() &#123;  </span><br><span class="line">        System.out.println(&quot;父类的普通方法&quot;);  </span><br><span class="line">    &#125;  </span><br><span class="line">&#125;  </span><br><span class="line"></span><br><span class="line">子类代码：</span><br><span class="line"></span><br><span class="line">public class Zi extends Fu &#123;  </span><br><span class="line">    public static void main(String[] args) &#123;  </span><br><span class="line">        Fu fu &#x3D; new Zi();  </span><br><span class="line">        fu.show();  </span><br><span class="line">        fu.method();  </span><br><span class="line">    &#125;  </span><br><span class="line">    public static void show() &#123;  </span><br><span class="line">        System.out.println(&quot;子类的静态方法&quot;);  </span><br><span class="line">    &#125;  </span><br><span class="line">    public void method() &#123;  </span><br><span class="line">        System.out.println(&quot;子类的普通方法&quot;);  </span><br><span class="line">    &#125;  </span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>从这里我们可以看出，父类的静态方法是不能被子类重写的，其实重写只能适用于实例方法，不能用于静态方法，对于上面这种静态方法而言，我们应该称之为隐藏。<br>Java静态方法形式上可以重写，但从本质上来说不是Java的重写。因为静态方法只与类相关，不与具体实现相关。声明的是什么类，则引用相应类的静态方法(本来静态无需声明，可以直接引用)。并且static方法不是后期绑定的，它在编译期就绑定了。换句话说，这个方法不会进行多态的判断，只与声明的类有关。</p>
-]]></content>
-      <categories>
-        <category>Java</category>
-      </categories>
-      <tags>
-        <tag>Java</tag>
-        <tag>静态方法</tag>
       </tags>
   </entry>
   <entry>
