@@ -1,6 +1,340 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
+    <title>consul命令指南</title>
+    <url>/2020/02/06/consul%E5%91%BD%E4%BB%A4%E6%8C%87%E5%8D%97/</url>
+    <content><![CDATA[<p>安装完consul后，通过在控制台直接实现<code>consul</code>命令了解consul命令行的用法，输出如下：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">Usage: consul [--version] [--help] &lt;command&gt; [&lt;args&gt;]</span><br><span class="line"></span><br><span class="line">Available commands are:</span><br><span class="line">agent          Runs a Consul agent</span><br><span class="line">catalog        Interact with the catalog</span><br><span class="line">event          Fire a new event</span><br><span class="line">exec           Executes a command on Consul nodes</span><br><span class="line">force-leave    Forces a member of the cluster to enter the &quot;left&quot; state</span><br><span class="line">info           Provides debugging information for operators.</span><br><span class="line">join           Tell Consul agent to join cluster</span><br><span class="line">keygen         Generates a new encryption key</span><br><span class="line">keyring        Manages gossip layer encryption keys</span><br><span class="line">kv             Interact with the key-value store</span><br><span class="line">leave          Gracefully leaves the Consul cluster and shuts down</span><br><span class="line">lock           Execute a command holding a lock</span><br><span class="line">maint          Controls node or service maintenance mode</span><br><span class="line">members        Lists the members of a Consul cluster</span><br><span class="line">monitor        Stream logs from a Consul agent</span><br><span class="line">operator       Provides cluster-level tools for Consul operators</span><br><span class="line">reload         Triggers the agent to reload configuration files</span><br><span class="line">rtt            Estimates network round trip time between nodes</span><br><span class="line">snapshot       Saves, restores and inspects snapshots of Consul server state</span><br><span class="line">validate       Validate config files&#x2F;directories</span><br><span class="line">version        Prints the Consul version</span><br><span class="line">watch          Watch for changes in Consul</span><br></pre></td></tr></table></figure>
+
+<p>如上所示， consul提供的命令很多，下面就逐个学习下每个命令的作用和用法。</p>
+<h2 id="agent"><a href="#agent" class="headerlink" title="agent"></a>agent</h2><p><code>agent</code> 命令的作用是启动一个<code>consul</code> 进程， 该进程的具体作用和该命令的参数有关。</p>
+<p>通过 <code>consul agent --help</code> 可以获取该命令的详细用法</p>
+<h3 id="datacenter"><a href="#datacenter" class="headerlink" title="datacenter"></a>datacenter</h3><p>该参数指定该<code>agent</code>所在的数据中心名称。格式如下：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">-datacenter&#x3D;&lt;value&gt;</span><br></pre></td></tr></table></figure>
+
+<p>该参数用来设置<code>advertise</code>所使用的地址。默认值和<code>-bind</code>指定的地址一样</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">-advertise&#x3D;&lt;value&gt;</span><br></pre></td></tr></table></figure>
+
+<h3 id="advertise-wan"><a href="#advertise-wan" class="headerlink" title="advertise-wan"></a>advertise-wan</h3><p>设置广域网环境的的<code>advertise</code>地址。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">-advertise-wan&#x3D;&lt;value&gt;</span><br></pre></td></tr></table></figure>
+
+<h3 id="bind"><a href="#bind" class="headerlink" title="-bind"></a>-bind</h3><p>设置集群通信所使用的IP地址。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">-bind&#x3D;&lt;value&gt;</span><br></pre></td></tr></table></figure>
+
+<h3 id="bootstrap"><a href="#bootstrap" class="headerlink" title="bootstrap"></a>bootstrap</h3><p>将Server设置为<code>boostrap</code>模式。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">-bootstrap</span><br></pre></td></tr></table></figure>
+
+<h3 id="bootstrap-expect"><a href="#bootstrap-expect" class="headerlink" title="bootstrap-expect"></a>bootstrap-expect</h3><p>将Server设置为<code>expect boostrap</code>模式。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">-bootstrap-expect&#x3D;&lt;value&gt;</span><br></pre></td></tr></table></figure>
+
+<h3 id="client"><a href="#client" class="headerlink" title="client"></a>client</h3><p>设置客户端访问所使用的IP地址。 该地址可用于RPC, DNS,HTTP,HTTPS通信使用。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">-client&#x3D;&lt;value&gt;</span><br></pre></td></tr></table></figure>
+
+<h3 id="config-dir"><a href="#config-dir" class="headerlink" title="config-dir"></a>config-dir</h3><p>设置配置文件所在的目录的路径。consul会读取该目录下所有以<code>.json</code>结尾的文件作为配置文件，并且以文件名字典序来应用这些配置文件。</p>
+<p>该参数可以多次使用，来指定多个配置文件目录。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">-config-dir&#x3D;&lt;value&gt;</span><br></pre></td></tr></table></figure>
+
+<h3 id="config-file"><a href="#config-file" class="headerlink" title="config-file"></a>config-file</h3><p>指定配置文件路径，可以多次多次使用，用来指定多个配置文件。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">-config-file&#x3D;&lt;value&gt;</span><br></pre></td></tr></table></figure>
+
+<h3 id="config-format"><a href="#config-format" class="headerlink" title="config-format"></a>config-format</h3><p>设置配置文件的格式。 <code>json</code>或<code>hcl</code></p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">-config-format&#x3D;&lt;value&gt;</span><br></pre></td></tr></table></figure>
+
+<h3 id="data-dir"><a href="#data-dir" class="headerlink" title="data-dir"></a>data-dir</h3><p>设置保存<code>agent</code>状态数据的目录。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">-data-dir&#x3D;&lt;value&gt;</span><br></pre></td></tr></table></figure>
+
+<h3 id="dev"><a href="#dev" class="headerlink" title="dev"></a>dev</h3><p>该<code>agent</code>以开发模式运行。会输出详细的日子信息</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">-dev</span><br></pre></td></tr></table></figure>
+
+<h3 id="disable-host-node-id"><a href="#disable-host-node-id" class="headerlink" title="disable-host-node-id"></a>disable-host-node-id</h3><p>该该选项设置为true, 则consul不会使用所在主机的信息生成集群结点id。 从而每次都生成一个随机值。<br>建议不要开始该选项。默认的结点id将会是主机名<code>hostname</code></p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">-disable-host-node-id</span><br></pre></td></tr></table></figure>
+
+<h3 id="disable-keyring-file"><a href="#disable-keyring-file" class="headerlink" title="disable-keyring-file"></a>disable-keyring-file</h3><p>禁止将<code>keyring</code>备份到文件中。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">-disable-keyring-file</span><br></pre></td></tr></table></figure>
+
+<h3 id="dns-port"><a href="#dns-port" class="headerlink" title="dns-port"></a>dns-port</h3><p>设置DNS 查询所使用的端口。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">-dns-port&#x3D;&lt;value&gt;</span><br></pre></td></tr></table></figure>
+
+<h3 id="domain"><a href="#domain" class="headerlink" title="domain"></a>domain</h3><p>DNS 接口所使用的域名。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">-domain&#x3D;&lt;value&gt;</span><br></pre></td></tr></table></figure>
+
+<h3 id="enable-script-checks"><a href="#enable-script-checks" class="headerlink" title="enable-script-checks"></a>enable-script-checks</h3><p>启用健康检测脚本。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">-enable-script-checks</span><br></pre></td></tr></table></figure>
+
+<h3 id="encrypt"><a href="#encrypt" class="headerlink" title="encrypt"></a>encrypt</h3><p>提供<code>gossip</code>广播加密数据所使用的key.</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">-encrypt&#x3D;&lt;value&gt;</span><br></pre></td></tr></table></figure>
+
+<h3 id="hcl"><a href="#hcl" class="headerlink" title="hcl"></a>hcl</h3><p><code>hcl</code> 配置片段。 可以多次使用。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">-hcl&#x3D;&lt;value&gt;</span><br></pre></td></tr></table></figure>
+
+<h3 id="http-port"><a href="#http-port" class="headerlink" title="http-port"></a>http-port</h3><p>设置http API 服务监听的端口。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">-http-port&#x3D;&lt;value&gt;</span><br></pre></td></tr></table></figure>
+
+<h3 id="join"><a href="#join" class="headerlink" title="join"></a>join</h3><p>设置该<code>agent</code>启动时加入所在集群的成员IP地址。可以多次使用。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">-join&#x3D;&lt;value&gt;</span><br></pre></td></tr></table></figure>
+
+<h3 id="join-wan"><a href="#join-wan" class="headerlink" title="join-wan"></a>join-wan</h3><p>设置该<code>agent</code>启动时加入所在跨IDC集群的成员IP地址。可以多次使用。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">-join-wan&#x3D;&lt;value&gt;</span><br></pre></td></tr></table></figure>
+
+<h3 id="log-level"><a href="#log-level" class="headerlink" title="log-level"></a>log-level</h3><p>设置<code>agent</code>的日志输出级别。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">-log-level&#x3D;&lt;value&gt;</span><br></pre></td></tr></table></figure>
+
+<h3 id="node"><a href="#node" class="headerlink" title="node"></a>node</h3><p>设置该结点在集群中的名称，必须唯一。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">-node&#x3D;&lt;value&gt;</span><br></pre></td></tr></table></figure>
+
+<h3 id="node-id"><a href="#node-id" class="headerlink" title="node-id"></a>node-id</h3><p>设置该结点在集群中永恒的ID，默认是一个随机生成的值，并保存的数据目录中。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">-node-id&#x3D;&lt;value&gt;</span><br></pre></td></tr></table></figure>
+
+<h3 id="node-meta"><a href="#node-meta" class="headerlink" title="node-meta"></a>node-meta</h3><p>给该结点设置元数据。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">-node-meta&#x3D;&lt;key:value&gt;</span><br></pre></td></tr></table></figure>
+
+<h3 id="non-voting-server"><a href="#non-voting-server" class="headerlink" title="non-voting-server"></a>non-voting-server</h3><p>该选项使该Server不参于Raft协议的选举流程，仅仅进行数据同步。这样角色的结点主要用来扩展consul集群的读能力。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">-non-voting-server</span><br></pre></td></tr></table></figure>
+
+<h3 id="pid-file"><a href="#pid-file" class="headerlink" title="pid-file"></a>pid-file</h3><p>指定保存pid的文件路径。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">-pid-file&#x3D;&lt;value&gt;</span><br></pre></td></tr></table></figure>
+
+<h3 id="protocol"><a href="#protocol" class="headerlink" title="protocol"></a>protocol</h3><p>设置协议版本。默认使用最新版本。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">-protocol&#x3D;&lt;value&gt;</span><br></pre></td></tr></table></figure>
+
+<h3 id="raft-protocol"><a href="#raft-protocol" class="headerlink" title="raft-protocol"></a>raft-protocol</h3><p>设置Raft协议的版本。默认使用最新版本。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">-raft-protocol&#x3D;&lt;value&gt;</span><br></pre></td></tr></table></figure>
+
+<h3 id="recursor"><a href="#recursor" class="headerlink" title="recursor"></a>recursor</h3><p>上游DNS服务器的地址。可以多次使用，指定多个地址。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">-recursor&#x3D;&lt;value&gt;</span><br></pre></td></tr></table></figure>
+
+<h3 id="rejoin"><a href="#rejoin" class="headerlink" title="rejoin"></a>rejoin</h3><p>忽略上次的离开，并尝试从新加入集群。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">-rejoin</span><br></pre></td></tr></table></figure>
+
+<h3 id="retry-interval"><a href="#retry-interval" class="headerlink" title="retry-interval"></a>retry-interval</h3><p>每次尝试重试加入集群的重试时间间隔。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">-retry-interval&#x3D;&lt;value&gt;</span><br></pre></td></tr></table></figure>
+
+<h3 id="retry-interval-wan"><a href="#retry-interval-wan" class="headerlink" title="retry-interval-wan"></a>retry-interval-wan</h3><p>同样用来指定加入集群的重试时间间隔，不过针对的广域网。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">-retry-interval-wan&#x3D;&lt;value&gt;</span><br></pre></td></tr></table></figure>
+
+<h3 id="retry-join"><a href="#retry-join" class="headerlink" title="retry-join"></a>retry-join</h3><p>Address of an agent to join at start time with retries enabled. Can<br>be specified multiple times.</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">-retry-join&#x3D;&lt;value&gt;</span><br></pre></td></tr></table></figure>
+
+<h3 id="retry-join-wan"><a href="#retry-join-wan" class="headerlink" title="retry-join-wan"></a>retry-join-wan</h3><p>Address of an agent to join -wan at start time with retries<br>enabled. Can be specified multiple times.</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">-retry-join-wan&#x3D;&lt;value&gt;</span><br></pre></td></tr></table></figure>
+
+<h3 id="retry-max"><a href="#retry-max" class="headerlink" title="retry-max"></a>retry-max</h3><p>设置重试的最大次数。默认值是<code>0</code>, 意味着一直进行尝试。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">-retry-max&#x3D;&lt;value&gt;</span><br></pre></td></tr></table></figure>
+
+<h3 id="retry-max-wan"><a href="#retry-max-wan" class="headerlink" title="retry-max-wan"></a>retry-max-wan</h3><p>设置重试的最大次数。针对的是广域网。默认值是<code>0</code>, 意味着一直进行尝试。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">-retry-max-wan&#x3D;&lt;value&gt;</span><br></pre></td></tr></table></figure>
+
+<h3 id="segment"><a href="#segment" class="headerlink" title="segment"></a>segment</h3><p>(企业级版本才有的功能) 设置加入的网络段。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">-segment&#x3D;&lt;value&gt;</span><br></pre></td></tr></table></figure>
+
+<h3 id="serf-lan-bind"><a href="#serf-lan-bind" class="headerlink" title="serf-lan-bind"></a>serf-lan-bind</h3><p>Address to bind Serf LAN listeners to.</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">-serf-lan-bind&#x3D;&lt;value&gt;</span><br></pre></td></tr></table></figure>
+
+<h3 id="serf-wan-bind"><a href="#serf-wan-bind" class="headerlink" title="serf-wan-bind"></a>serf-wan-bind</h3><p>Address to bind Serf WAN listeners to.</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">-serf-wan-bind&#x3D;&lt;value&gt;</span><br></pre></td></tr></table></figure>
+
+<h3 id="server"><a href="#server" class="headerlink" title="-server"></a>-server</h3><p>以<code>server</code>模式启动，默认是<code>client</code></p>
+<h3 id="syslog"><a href="#syslog" class="headerlink" title="syslog"></a>syslog</h3><p>将日志输出到syslog.</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">-syslog</span><br></pre></td></tr></table></figure>
+
+<h3 id="ui"><a href="#ui" class="headerlink" title="ui"></a>ui</h3><p>启用consul内置的静态wei UI服务器。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">-ui</span><br></pre></td></tr></table></figure>
+
+<h3 id="ui-dir"><a href="#ui-dir" class="headerlink" title="ui-dir"></a>ui-dir</h3><p>指定包含web界面的资源目录。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">-ui-dir&#x3D;&lt;value&gt;</span><br></pre></td></tr></table></figure>
+
+<h2 id="catalog"><a href="#catalog" class="headerlink" title="catalog"></a>catalog</h2><p>此命令具有与Consul目录交互的子命令。该目录不应与代理混淆，尽管API和回应可能类似。</p>
+<p>以下是一些简单示例，并提供了更详细的示例在子命令或文档中。</p>
+<p>列出所有数据中心</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">$ consul catalog datacenters</span><br></pre></td></tr></table></figure>
+
+<p>列出所有结点</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">$ consul catalog nodes</span><br></pre></td></tr></table></figure>
+
+<p>列出所有服务</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">$ consul catalog services</span><br></pre></td></tr></table></figure>
+
+<h2 id="event"><a href="#event" class="headerlink" title="event"></a>event</h2><p>跨数据中心发布自定义用户事件。 必须提供事件名称，但事件的内容是可选的。</p>
+<p>支持通过正则表达式，节点名称，服务名称，或标签进行过滤。</p>
+<h3 id="name"><a href="#name" class="headerlink" title="name"></a>name</h3><p>事件的名称</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">-name&#x3D;&lt;string&gt;</span><br></pre></td></tr></table></figure>
+
+<h3 id="node-1"><a href="#node-1" class="headerlink" title="node"></a>node</h3><p>用来指定通过正则表达式过滤的节点名称。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">-node&#x3D;&lt;string&gt;</span><br></pre></td></tr></table></figure>
+
+<h3 id="service"><a href="#service" class="headerlink" title="service"></a>service</h3><p>用来指定通过正则表达式过滤的服务名称。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">-service&#x3D;&lt;string&gt;</span><br></pre></td></tr></table></figure>
+
+<h3 id="tag"><a href="#tag" class="headerlink" title="tag"></a>tag</h3><p>用来指定通过正则表达式过滤的服务的标签名称。必须和<code>-service</code>选项一起使用。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">-tag&#x3D;&lt;string&gt;</span><br></pre></td></tr></table></figure>
+
+<h2 id="exec"><a href="#exec" class="headerlink" title="exec"></a>exec</h2><p>在远程Consul节点上执行命令。 节点的响应内容可以通过正则表达式进行过滤。</p>
+<p>可用的选项如下：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">-node&#x3D;&lt;string&gt;</span><br><span class="line"></span><br><span class="line">Regular expression to filter on node names.</span><br><span class="line"></span><br><span class="line">-prefix&#x3D;&lt;string&gt;</span><br><span class="line"></span><br><span class="line">Prefix in the KV store to use for request data.</span><br><span class="line"></span><br><span class="line">-service&#x3D;&lt;string&gt;</span><br><span class="line"></span><br><span class="line">Regular expression to filter on service instances.</span><br><span class="line"></span><br><span class="line">-shell</span><br><span class="line"></span><br><span class="line">Use a shell to run the command.</span><br><span class="line"></span><br><span class="line">-tag&#x3D;&lt;string&gt;</span><br><span class="line"></span><br><span class="line">Regular expression to filter on service tags. Must be used with</span><br><span class="line">-service.</span><br><span class="line"></span><br><span class="line">-verbose</span><br><span class="line"></span><br><span class="line">Enables verbose output.</span><br><span class="line"></span><br><span class="line">-wait&#x3D;&lt;duration&gt;</span><br><span class="line"></span><br><span class="line">Period to wait with no responses before terminating execution.</span><br><span class="line"></span><br><span class="line">-wait-repl&#x3D;&lt;duration&gt;</span><br><span class="line"></span><br><span class="line">Period to wait for replication before firing event. This is an</span><br><span class="line">optimization to allow stale reads to be performed.</span><br></pre></td></tr></table></figure>
+
+<h2 id="leave"><a href="#leave" class="headerlink" title="leave"></a>leave</h2><p>将一个结点优雅进入<code>leave</code>状态，并关闭。</p>
+<h2 id="force-leave"><a href="#force-leave" class="headerlink" title="force-leave"></a>force-leave</h2><p>强制一个集群的节点进入<code>left</code>状态。</p>
+<h2 id="info"><a href="#info" class="headerlink" title="info"></a>info</h2><p>提供操作命令的调试信息。</p>
+<h2 id="join-1"><a href="#join-1" class="headerlink" title="join"></a>join</h2><p>使一个运行中的agent加入到集群中。</p>
+<h3 id="wan"><a href="#wan" class="headerlink" title="wan"></a>wan</h3><figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">-wan</span><br></pre></td></tr></table></figure>
+
+<h2 id="keygen"><a href="#keygen" class="headerlink" title="keygen"></a>keygen</h2><p>生成一个新的加密用的key，用来供agent对网络流量就行加密。</p>
+<h2 id="keyring"><a href="#keyring" class="headerlink" title="keyring"></a>keyring</h2><p>管理用来加密<code>gossip</code>消息的秘钥。<code>Gossip</code>加密是可以选的。当启用<code>Gossip</code>加密，该命令可以用来检查集群中处于激活状态下的加密key，添加新的key，删除老的key。把这些功能结合起来，就可以实现不破坏集群的前提下，更新加密秘钥的功能。</p>
+<p>该命令提供的所有操作都只能在<code>Server</code>模式的结点上执行， 并且影响范围包括<code>LAN</code>和<code>WAN</code>。</p>
+<p>当所有结点正确返回时，该命令输出:0, 否则其他任何情况都输出1。</p>
+<p>该命令的选项如下：</p>
+<h3 id="install"><a href="#install" class="headerlink" title="install"></a>install</h3><p>安装一个新的秘钥，并广播到集群的所有结点中。秘钥的格式是base64的。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">-install&#x3D;&lt;string&gt;</span><br></pre></td></tr></table></figure>
+
+<h3 id="list"><a href="#list" class="headerlink" title="list"></a>list</h3><p>列出所有正在集群中使用的秘钥。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">-list</span><br></pre></td></tr></table></figure>
+
+<h3 id="relay-factor"><a href="#relay-factor" class="headerlink" title="relay-factor"></a>relay-factor</h3><p>Setting this to a non-zero value will cause nodes to relay their<br>response to the operation through this many randomly-chosen other<br>nodes in the cluster. The maximum allowed value is 5.</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">-relay-factor&#x3D;&lt;int&gt;</span><br></pre></td></tr></table></figure>
+
+<h3 id="remove"><a href="#remove" class="headerlink" title="remove"></a>remove</h3><p>从集群中删除秘钥。 该操作只能针对哪些当前不是主秘钥的秘钥。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">-remove&#x3D;&lt;string&gt;</span><br></pre></td></tr></table></figure>
+
+<h3 id="use"><a href="#use" class="headerlink" title="use"></a>use</h3><p>Change the primary encryption key, which is used to encrypt<br>messages. The key must already be installed before this operation<br>can succeed.</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">-use&#x3D;&lt;string&gt;</span><br></pre></td></tr></table></figure>
+
+<h2 id="kv"><a href="#kv" class="headerlink" title="kv"></a>kv</h2><p>该命令包含一些操作Consul K-V 存储的子命令。</p>
+<p>下面是一些简单的例子：</p>
+<p>创建或更新一个名称为<code>redis/config/connections</code>，值为5的键值对。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">$ consul kv put redis&#x2F;config&#x2F;connections 5</span><br></pre></td></tr></table></figure>
+
+<p>获取该键值对的值</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">$ consul kv get redis&#x2F;config&#x2F;connections</span><br></pre></td></tr></table></figure>
+
+<p>获取该键值对的详细信息</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">$ consul kv get -detailed redis&#x2F;config&#x2F;connections</span><br></pre></td></tr></table></figure>
+
+<p>删除该键值对</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">$ consul kv delete redis&#x2F;config&#x2F;connections</span><br></pre></td></tr></table></figure>
+
+<h3 id="子命令"><a href="#子命令" class="headerlink" title="子命令"></a>子命令</h3><p>delete Removes data from the KV store<br>export Exports a tree from the KV store as JSON<br>get Retrieves or lists data from the KV store<br>import Imports a tree stored as JSON to the KV store<br>put Sets or updates data in the KV store</p>
+<h2 id="lock"><a href="#lock" class="headerlink" title="lock"></a>lock</h2><p>Acquires a lock or semaphore at a given path, and invokes a child process<br>when successful. The child process can assume the lock is held while it<br>executes. If the lock is lost or communication is disrupted the child<br>process will be sent a SIGTERM signal and given time to gracefully exit.<br>After the grace period expires the process will be hard terminated.</p>
+<p>For Consul agents on Windows, the child process is always hard terminated<br>with a SIGKILL, since Windows has no POSIX compatible notion for SIGTERM.</p>
+<p>When -n=1, only a single lock holder or leader exists providing mutual<br>exclusion. Setting a higher value switches to a semaphore allowing multiple<br>holders to coordinate.</p>
+<p>The prefix provided must have write privileges.</p>
+<h2 id="maint"><a href="#maint" class="headerlink" title="maint"></a>maint</h2><p>该命令的作用是将节点或服务置于维护模式。在维护模式下，无论通过DNS查询还是HTTP接口，都不再返回节点或服务的信息。命令有效地将其从可用池中取出节点。该命令的执行原理是通过注册节点或服务的健康检查来完成的。</p>
+<p>为节点或服务启用维护模式时，你可以选择指定一个字符串来表明原因。该字符串将出现在“Notes”字段中<br>对节点或注册的重要健康检查服务。如果没有提供原因，将使用默认值。</p>
+<p>维护模式是持久的，并且会在agent重启启动的时候恢复。 因此，在将给定节点或服务将被放回可以池中之前需要禁用维护模式。</p>
+<p>默认情况下，我们将一个节点作为一个整体进行操作。通过指定<code>-service</code>参数，可以操作具体的服务。</p>
+<p>如果没有给出参数，将显示agent的维护状态。如果当前没有任何维护，则返回空白。</p>
+<h3 id="disable"><a href="#disable" class="headerlink" title="disable"></a>disable</h3><p>禁用维护模式</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">-disable</span><br></pre></td></tr></table></figure>
+
+<h3 id="enable"><a href="#enable" class="headerlink" title="enable"></a>enable</h3><p>启用维护模式</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">-enable</span><br></pre></td></tr></table></figure>
+
+<h3 id="reason"><a href="#reason" class="headerlink" title="reason"></a>reason</h3><figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">-reason&#x3D;&lt;string&gt;</span><br></pre></td></tr></table></figure>
+
+<p>指定本次操作的原因描述信息</p>
+<h3 id="service-1"><a href="#service-1" class="headerlink" title="service"></a>service</h3><p>指定操作的服务ID。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">-service&#x3D;&lt;string&gt;</span><br></pre></td></tr></table></figure>
+
+<h2 id="members"><a href="#members" class="headerlink" title="members"></a>members</h2><p>该命令的作用是：输出集群成员信息</p>
+<p>可用的参数有：</p>
+<h3 id="detailed"><a href="#detailed" class="headerlink" title="-detailed"></a>-detailed</h3><p>输出更详细的节点信息。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">consul members -detailed</span><br><span class="line">Node   Address         Status  Tags</span><br><span class="line">bogon  127.0.0.1:8301  alive   build&#x3D;1.0.2:b55059f,dc&#x3D;dc1,id&#x3D;fc1742c4-d97b-8a5b-ff3c-ab11941e2fea,port&#x3D;8300,raft_vsn&#x3D;3,role&#x3D;consul,segment&#x3D;&lt;all&gt;,vsn&#x3D;2,vsn_max&#x3D;3,vsn_min&#x3D;2,wan_join_port&#x3D;8302</span><br></pre></td></tr></table></figure>
+
+<h3 id="segment-1"><a href="#segment-1" class="headerlink" title="segment"></a>segment</h3><figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">-segment&#x3D;&lt;string&gt;</span><br></pre></td></tr></table></figure>
+
+<p>企业级版本才有的功能。 可以只输出所属segment的结点信息。</p>
+<h3 id="status"><a href="#status" class="headerlink" title="status"></a>status</h3><figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">-status&#x3D;&lt;string&gt;</span><br></pre></td></tr></table></figure>
+
+<p>根据状态进行过滤需要输出的结点。</p>
+<h3 id="wan-1"><a href="#wan-1" class="headerlink" title="wan"></a>wan</h3><p>如果agent允许在server模式下，该选项可以输出其它在<code>WAN</code>广域网的节点信息。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">-wan</span><br></pre></td></tr></table></figure>
+
+<h2 id="monitor"><a href="#monitor" class="headerlink" title="monitor"></a>monitor</h2><p>显示Consul agent 的最近日志消息，并连接到agent，实时输出agent上日志消息。 而且可以通过参数来指定需要查看的日志级别。默认输出的是DEBUG级别的日志。</p>
+<h2 id="operator"><a href="#operator" class="headerlink" title="operator"></a>operator</h2><p>该命令提供了Consul集群级别的操作能力， 在使用时需要非常小心。使用不当有可能造成，节点数据过期或数据丢失。</p>
+<p>子命令如下：</p>
+<h3 id="autopilot"><a href="#autopilot" class="headerlink" title="autopilot"></a>autopilot</h3><p><code>autopilot</code> 命令用于与Consul的<code>autopilot</code>子系统进行交互。 该命令可用于查看或修改当前配置。</p>
+<h4 id="get-config"><a href="#get-config" class="headerlink" title="get-config"></a>get-config</h4><p>显示当前的自动驾驶仪配置</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">consul operator autopilot get-config</span><br><span class="line">CleanupDeadServers &#x3D; true</span><br><span class="line">LastContactThreshold &#x3D; 200ms</span><br><span class="line">MaxTrailingLogs &#x3D; 250</span><br><span class="line">ServerStabilizationTime &#x3D; 10s</span><br><span class="line">RedundancyZoneTag &#x3D; &quot;&quot;</span><br><span class="line">DisableUpgradeMigration &#x3D; false</span><br><span class="line">UpgradeVersionTag &#x3D; &quot;&quot;</span><br></pre></td></tr></table></figure>
+
+<h4 id="set-config"><a href="#set-config" class="headerlink" title="set-config"></a>set-config</h4><p>修改当前的自动驾驶仪配置</p>
+<h3 id="raft"><a href="#raft" class="headerlink" title="raft"></a>raft</h3><h4 id="list-peers"><a href="#list-peers" class="headerlink" title="list-peers"></a>list-peers</h4><p>Display the current Raft peer configuration</p>
+<h4 id="remove-peer"><a href="#remove-peer" class="headerlink" title="remove-peer"></a>remove-peer</h4><p>Remove a Consul server from the Raft configuration</p>
+<h2 id="reload"><a href="#reload" class="headerlink" title="reload"></a>reload</h2><p>该命令的作用是重新加载配置文件，以此来替代<code>SIGHUP</code>信号。</p>
+<h2 id="rtt"><a href="#rtt" class="headerlink" title="rtt"></a>rtt</h2><p><code>rtt</code>命令的用法如下：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">Usage: consul rtt [options] node1 [node2]</span><br></pre></td></tr></table></figure>
+
+<p>该命令的作用是：预估2个结点间一次通信的耗时状况的。至少需要提供一个节点名称。如果只提供了一个节点的名称，<br>则第二个结点的名称默认就是agent所在的结点名称。</p>
+<blockquote>
+<p>需要注意的是：这些节点名称和<code>consul members</code>输出中的结点名称相同，不是一个IP地址。</p>
+</blockquote>
+<p>默认情况下，都是假设2个节点在同一个数据中心内，并使用局域网的网络协调器。如果有<code>-wan</code>参数，那么使用格式如下：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">consul rtt -wan bogon.dc1</span><br><span class="line">Estimated bogon.dc1 &lt;-&gt; bogon.dc1 rtt: 0.020 ms (using WAN coordinates)</span><br></pre></td></tr></table></figure>
+
+<p>节点的名称后面需要添加所属数据中心的名称。</p>
+<p>该命令不能用来测量局域网和广域网2个节点间的网络通信耗时，因为他们位于不同的<code>gossip</code>域。</p>
+<p>该命令可以使用的参数如下：</p>
+<h3 id="ca-file"><a href="#ca-file" class="headerlink" title="ca-file"></a>ca-file</h3><p>指定TLS通信是使用的<code>CA</code>文件。 该选项的值也可以通过环境变量<code>CONSUL_CACERT</code>的值获取。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">-ca-file&#x3D;&lt;value&gt;</span><br></pre></td></tr></table></figure>
+
+<h3 id="ca-path"><a href="#ca-path" class="headerlink" title="ca-path"></a>ca-path</h3><p>指定TLS通信是使用的<code>CA</code>文件所在的目录。 该选项的值也可以通过环境变量<code>CONSUL_CAPATH</code>的值获取。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">-ca-path&#x3D;&lt;value&gt;</span><br></pre></td></tr></table></figure>
+
+<h3 id="client-cert"><a href="#client-cert" class="headerlink" title="client-cert"></a>client-cert</h3><p>指定在使用TLS进行通信时，并且启用了<code>verify_incoming</code>功能时，客户端所使用的证书文件，<br>也可以通过环境变量<code>CONSUL_CLIENT_CERT</code> 来指定。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">-client-cert&#x3D;&lt;value&gt;</span><br></pre></td></tr></table></figure>
+
+<h3 id="client-key"><a href="#client-key" class="headerlink" title="client-key"></a>client-key</h3><p>指定在使用TLS进行通信时，并且启用了<code>verify_incoming</code>功能时，客户端所使用的key文件。也可以通过环境变量<code>CONSUL_CLIENT_KEY</code> 来指定。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">-client-key&#x3D;&lt;value&gt;</span><br></pre></td></tr></table></figure>
+
+<h3 id="http-addr"><a href="#http-addr" class="headerlink" title="http-addr"></a>http-addr</h3><p>指定提供http服务的Consul agent 的IP地址和端口号。也可以通过环境变量<code>CONSUL_HTTP_ADDR</code>的值来指定。</p>
+<p>默认的值是：<code>http://127.0.0.1:8500</code>。 也可以通过设置环境变量<code>CONSUL_HTTP_SSL=true</code>来启用https进行通信。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">-http-addr&#x3D;&lt;address&gt;</span><br></pre></td></tr></table></figure>
+
+<h3 id="tls-server-name"><a href="#tls-server-name" class="headerlink" title="tls-server-name"></a>tls-server-name</h3><p>指定当通过TLS进行通信时作为<code>SNI</code>主机的服务器名称。也可以通过<code>CONSUL_TLS_SERVER_NAME</code>环境变量来指定。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">-tls-server-name&#x3D;&lt;value&gt;</span><br></pre></td></tr></table></figure>
+
+<h3 id="token"><a href="#token" class="headerlink" title="token"></a>token</h3><figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">-token&#x3D;&lt;value&gt;</span><br></pre></td></tr></table></figure>
+
+<p>指定请求中使用的ACL token的值。也可以通过环境变量<code>CONSUL_HTTP_TOKEN</code>来指定。如果没有指定，则使用通过http 访问Consul agent 所使用的token值。</p>
+<h3 id="wan-2"><a href="#wan-2" class="headerlink" title="wan"></a>wan</h3><figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">-wan</span><br></pre></td></tr></table></figure>
+
+<p>使用广域网协调器来替代局域网协调器。</p>
+<h2 id="snapshot"><a href="#snapshot" class="headerlink" title="snapshot"></a>snapshot</h2><p>该命令包含一些子命令，作用是保存，重新加载 或在故障恢复时检查 Consul Server 的状态。</p>
+<p>这些操作都是原子性的，保存当前时间点 包括<code>键/值条目</code>，<code>服务目录</code>，<code>准备好的查询</code>，<code>会话和ACL</code>信息的快照。</p>
+<p>如果启用了<code>ACLS</code>功能，那么在使用这些子命令时，需要提供管理token来进行快照的操作。</p>
+<h3 id="创建一个快照"><a href="#创建一个快照" class="headerlink" title="创建一个快照"></a>创建一个快照</h3><figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">$ consul snapshot save backup.snap</span><br><span class="line">​&#96;&#96;&#96;      </span><br><span class="line"></span><br><span class="line">### 从快照中恢复</span><br></pre></td></tr></table></figure>
+
+<p>$ consul snapshot restore backup.snap</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">先启动一个没有任何数据的agent,然后执行该命令，加载指定的快照信息。</span><br><span class="line"></span><br><span class="line">### 检查快照信息</span><br></pre></td></tr></table></figure>
+
+
+
+<p>$ consul snapshot inspect backup.snap</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">输出：</span><br></pre></td></tr></table></figure>
+
+
+
+<p>leo@bogon consul snapshot inspect a.snap<br>ID 2-110-1532832078752<br>Size 1175<br>Index 110<br>Term 2<br>Version 1<br>```</p>
+<p>可以允许一个Consul agent, 每小时保存一次快照信息。 不过该功能只有企业级版本才有。</p>
+<h2 id="validate"><a href="#validate" class="headerlink" title="validate"></a>validate</h2><p>校验consul配置文件，或配置文件目录下配置文件的正确性</p>
+<h2 id="version"><a href="#version" class="headerlink" title="version"></a>version</h2><p>打印consul的版本</p>
+<h2 id="watch"><a href="#watch" class="headerlink" title="watch"></a>watch</h2><p><strong>本文标题:</strong><a href="https://leokongwq.github.io/2018/07/29/consul-command-intro.html" target="_blank" rel="noopener">consul 命令介绍</a></p>
+]]></content>
+      <categories>
+        <category>微服务</category>
+      </categories>
+      <tags>
+        <tag>consul</tag>
+        <tag>命令</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>使用docker搭建nexus3运行docker-registry</title>
+    <url>/2020/02/02/%E4%BD%BF%E7%94%A8docker%E6%90%AD%E5%BB%BAnexus3%E8%BF%90%E8%A1%8Cdocker-registry/</url>
+    <content><![CDATA[]]></content>
+      <categories>
+        <category>x</category>
+      </categories>
+  </entry>
+  <entry>
     <title>volatile为什么不能保证原子性</title>
     <url>/2020/02/01/volatile%E4%B8%BA%E4%BB%80%E4%B9%88%E4%B8%8D%E8%83%BD%E4%BF%9D%E8%AF%81%E5%8E%9F%E5%AD%90%E6%80%A7/</url>
     <content><![CDATA[<h1 id="volatile为什么不能保证原子性"><a href="#volatile为什么不能保证原子性" class="headerlink" title="volatile为什么不能保证原子性"></a>volatile为什么不能保证原子性</h1><p>在看《大型网站系统和Java中间件实践》的时候，在第三章有个疑惑：synchronized 可以保证多线程下的互斥和多线程下的内存可见性。用volatile 修饰的属性值也是可以保证多线程下的内存可见性，但是为啥单用volatile修饰在多线程下就会出现问题呢？</p>
@@ -830,85 +1164,6 @@ finally中最好不要包含return，否则程序会提前退出，返回值不�
       </tags>
   </entry>
   <entry>
-    <title>Java子类与父类之间的转换</title>
-    <url>/2017/09/26/Java%E5%AD%90%E7%B1%BB%E4%B8%8E%E7%88%B6%E7%B1%BB%E4%B9%8B%E9%97%B4%E7%9A%84%E8%BD%AC%E6%8D%A2/</url>
-    <content><![CDATA[<p>在使用Java的多态机制时，常常使用的一个特性便是子类和父类之间的对象转换。从子类向父类的转换称为向上转换（upcasting），通过向上转换，我们能够在编写程序时采用通用程序设计的思想，在需要使用子类对象的时候，通过把变量定义为父类型，我们可以通过一个变量，使用该父类型的所有子类型实例；从父类型向子类型的转换称为向下转换（downcasting），通过向下转换，我们能在必要的时候，将父类型变量转换成子类型变量，使用一些通过子类型才能够使用的方法。以下是我对于对象转换的一些个人理解，如有不对，欢迎指正，虚心向大神们请教。</p>
-<p>首先是从子类向父类的向上转换。向上转换比较直观，总是能够将一个子类的实例转换为一个父类的对象，从继承链的角度，这个特性很容易理解：继承是一种“是一种”的关系，从父类派生出的子类，我们都能理解为，子类总是父类的一个实例。比如说，Fruit类派生出了Orange类，Apple类，Orange和Apple都是Fruit；Animal类派生出了Tiger类和Lion类，Tiger和Lion都是Animal。因此，从子类向父类的转换不需要什么限制，只需直接将子类实例赋值给父类变量即可，这也是Java中的多态的实现机制。</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">&#x2F;&#x2F;Test.java</span><br><span class="line">public class Test &#123;</span><br><span class="line">    public static void main(String args[]) &#123;</span><br><span class="line">        Animal tiger &#x3D; new Tiger();</span><br><span class="line">        Animal lion &#x3D; new Lion();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line">class Animal &#123;</span><br><span class="line">    String name;</span><br><span class="line">    Animal() &#123;</span><br><span class="line">        name &#x3D; &quot;animal&quot;;</span><br><span class="line">    &#125;</span><br><span class="line">    Animal(String name) &#123;</span><br><span class="line">        this.name &#x3D; name;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line">class Tiger extends Animal &#123;</span><br><span class="line">    Tiger() &#123;</span><br><span class="line">        super(&quot;tiger&quot;);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line">class Lion extends Animal &#123;</span><br><span class="line">    Lion() &#123;</span><br><span class="line">        super(&quot;lion&quot;);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>然而从父类向子类的向下转换就稍微复杂一些了。在讲述向下转换之前，也许有些刚学java的朋友会有点不解为什么要使用向下转换，使用多态和动态绑定机制通过父类型变量使用子变量不就可以了么（比如我就曾对此感到疑惑）。这就要考虑到，在继承关系中，有一些方法是不适合由父类定义并由子类继承并重写的，有些方法是子类特有的，不应该通过继承得到，且子类可能也会有自己特有的成员变量，那么在使用多态机制的时候，若我们要通过父类型变量使用到这些子类特有的方法和属性的话，就需要将服类型变量转换成对应的子类型变量。一个典型例子便是标准库中的数据类型包装类：Integer类，Double类，Long类等，它们都继承自Number类，且它们都有一个方法叫做compareTo用于比较两个同样的类型。然而这个方法是这些子类通过实现Comparable接口来实现的，在Number类中并没有该方法的实现，因此若要通过Number类型变量来使用compareTo方法，就要先将Number类转换成子类的对象。</p>
-<p>从父类向子类的转换就有限制了。首先，父类变量向子类转换必须通过显式强制类型转换,采取和向上转换相同的直接赋值方式是不行的，；并且，当把一个父类型变量实例转换为子类型变量时，必须确保该父类变量是子类的一个实例，从继承链的角度来理解这些原因：子类一定是父类的一个实例，然而父类却不一定是子类的实例；比如说，Fruit未必是Orange，它可能是Apple；Animal也不一定是Tiger，它可能是Lion。用代码来解释一下：</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">Animal tiger &#x3D; new Tiger();</span><br><span class="line">Animal lion &#x3D; new Lion();</span><br></pre></td></tr></table></figure>
-<p>在前面向上转换的代码示例当中，main方法中的这两行代码，意思就是父类型变量tiger是子类Tiger的一个实例，lion是Lion的一个实例。<br>也就是说，如果要把tiger转换为Tiger类型，必须保证tiger本身是Tiger的一个实例，在上例中，如果要把tiger转换成Lion类型，或是把Lion类型转换为Tiger类型，都是行不通的，在运行时，这会抛出一个运行异常ClassCastException，表示类转换异常。因此，在进行父类向子类的转换时，一个好的习惯是通过instanceof运算符来判断父类变量是否是该子类的一个实例：</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">Tiger t &#x3D; null;</span><br><span class="line">if(tiger instanceof Tiger)</span><br><span class="line">    t &#x3D; (Tiger)tiger;</span><br></pre></td></tr></table></figure>
-<p>如果要通过父类调用子类变量的方法，那么要注意要将父类型变量和强制转换用括号括起来：</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">Number i &#x3D; new Integer(3)；</span><br><span class="line">System.out.println(</span><br><span class="line">    ((Integer)i).compareTo(new Integer(4))</span><br><span class="line">                  ）；</span><br></pre></td></tr></table></figure>
-<p>因为成员访问运算符.的优先级大于类型转换，所以要用括号括起来保证类型转换先于成员访问进行运算。<br>前面说到用instanceof判断父类是否是子类的一个实例是一个好习惯，如果不养成这个习惯的话很容易出问题，请看下面这段代码：</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">Animal animal &#x3D; new Tiger();</span><br><span class="line">Lion lion &#x3D; (Lion)animal;</span><br></pre></td></tr></table></figure>
-<p>前面说到，这段代码会在运行时抛出ClassCastException异常，然而，这段代码却是能够编译成功的。原因是因为，Java编译器并没有聪明到能够在编译阶段就知道父类型变量是哪一个子类的实例，所以，将animal转换为Lion类型的代码：(Lion)animal是能够编译通过的，即使事实上我们能看到animal是Tiger的一个实例，因为Animal类型确实能转换成Lion类型，所以这条语句是合法的。所以，如果没有使用instanceof防止不同子类型之间的对象转换，而又不能指望编译器检查出这种转换逻辑错误的话，就很容易犯错了。<br>总结</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">public class ConvertPro extends Father &#123;</span><br><span class="line">    public static void main(String[] args) &#123;</span><br><span class="line">        Father father &#x3D; new Father();</span><br><span class="line">        Father father1 &#x3D; new ConvertPro();</span><br><span class="line">        ConvertPro son &#x3D; new ConvertPro();</span><br><span class="line">        &#x2F;&#x2F; ConvertPro son1 &#x3D; (ConvertPro) new Father();</span><br><span class="line">        &#x2F;&#x2F; son &#x3D; (ConvertPro)father;</span><br><span class="line">        son &#x3D; (ConvertPro) father1;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line">&#x2F;**</span><br><span class="line"> * 父类</span><br><span class="line"> * </span><br><span class="line"> * @author icer</span><br><span class="line"> * </span><br><span class="line"> *&#x2F;</span><br><span class="line">class Father &#123;</span><br><span class="line">    private String name;</span><br><span class="line">    public String getName() &#123;</span><br><span class="line">        return name;</span><br><span class="line">    &#125;</span><br><span class="line">    public void setName(String name) &#123;</span><br><span class="line">        this.name &#x3D; name;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>上面代码注释掉的两行是会运行错误的. 根据代码显示, 只有我们的父类对象本身就是用子类new出来的时候, 才可以在将来被强制转换为子类对象.</p>
-<p>子类继承父类的所有(包括属性以及方法), 也就是说子类包含的内容应该是比父类要大的. 如果正常环境下, 把一个父类转换成子类一定会损失精度. 但是如果父类对象本身就是用子类去new出来的, 就类似于一个本来就是儿子角色的人, 去装了一会儿父亲, 这个角色是可以在未来转换回去的, 但是一个父亲, 永远不可能去装儿子的.</p>
-]]></content>
-      <categories>
-        <category>Java</category>
-      </categories>
-      <tags>
-        <tag>Java</tag>
-        <tag>多态</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>Java构造函数详解</title>
-    <url>/2017/09/26/Java%E6%9E%84%E9%80%A0%E5%87%BD%E6%95%B0%E8%AF%A6%E8%A7%A3/</url>
-    <content><![CDATA[<h3 id="构造函数"><a href="#构造函数" class="headerlink" title="构造函数"></a>构造函数</h3><p>当我们新实例化一个对象的时候，都想对这个对象做一些初始化的工作，比如给对象的属性初始化相关的值。这就是构造函数要做的事。</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">public class People&#123;</span><br><span class="line">	public String name;</span><br><span class="line">	    public int age;</span><br><span class="line">	    public People(String name,int age) &#123;</span><br><span class="line">	        this.age &#x3D; age;</span><br><span class="line">	        this.name &#x3D; name;</span><br><span class="line">	    &#125;</span><br><span class="line">	    public People(int age,String name)&#123;</span><br><span class="line">	</span><br><span class="line">	    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h3 id="构造函数的作用"><a href="#构造函数的作用" class="headerlink" title="构造函数的作用"></a>构造函数的作用</h3><p>构造方法作用：对对象进行初始化.<br>构造函数和普通的函数（方法）有啥区别？</p>
-<p>（1）. 一般函数是用于定义对象应该具备的功能。而构造函数定义的是，对象在调用功能之前，在建立时，应该具备的一些内容。也就是对象的初始化内容。</p>
-<p>（2）. 构造函数是在对象建立时由jvm调用, 给对象初始化。一般函数是对象建立后，当对象调用该功能时才会执行。</p>
-<p>（3）. 普通函数可以使用对象多次调用，构造函数就在创建对象时调用。</p>
-<p>（4）. 构造函数的函数名要与类名一样，而普通的函数只要符合标识符的命名规则即可。</p>
-<p>（5）. 构造函数没有返回值类型。<br>构造函数使用时的细节</p>
-<p>（1）. 当类中没有定义构造函数时，系统会指定给该类加上一个空参数的构造函数。这个是类中默认的构造函数。当类中如果自定义了构造函数，这时默认的构造函数就没有了。</p>
-<p>备注：可以通过javap命令验证。</p>
-<p>（2）.在一个类中可以定义多个构造函数，以进行不同的初始化。多个构造函数存在于类中，是以重载的形式体现的。因为构造函数的名称都相同。<br>构造代码块</p>
-<p>这个构造代码块有啥作用呢？注意构造代码块和静态块不一样。</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">class People&#123;</span><br><span class="line">    public String name;</span><br><span class="line">    public int age;</span><br><span class="line">    public People(String name,int age) &#123;</span><br><span class="line">        this.age &#x3D; age;</span><br><span class="line">        this.name &#x3D; name;</span><br><span class="line">    &#125;</span><br><span class="line">    public People(int age,String name)&#123;</span><br><span class="line">    &#125;</span><br><span class="line">    &#x2F;&#x2F;静态块</span><br><span class="line">    static &#123;</span><br><span class="line">        System.out.println(&quot;这是静态块&quot;);</span><br><span class="line">    &#125;</span><br><span class="line">    &#x2F;&#x2F;这是构造代码块</span><br><span class="line">    &#123;</span><br><span class="line">        System.out.println(&quot;这是构造代码块&quot;);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>构造代码块的作用是：给所有的对象进行统一的初始化。<br>如果，构造函数中有比较多相同的部分，这样我们可以将它移出来，放在构造代码块中。<br>具体作用</p>
-<p>1：给对象进行初始化。对象一建立就运行并且优先于构造函数。<br>与构造函数区别</p>
-<p>2：构造代码块和构造函数的区别，构造代码块是给所有对象进行统一初始化， 构造函数给对应的对象初始化。</p>
-<p>3：构造代码块的作用：它的作用就是将所有构造方法中公共的信息进行抽取。</p>
-<h3 id="需要注意的是："><a href="#需要注意的是：" class="headerlink" title="需要注意的是："></a>需要注意的是：</h3><p>在Java中，子类的构造过程中，必须 调用其父类的构造函数, 是因为有继承关系存在时, 子类要把父类的内容继承下来, 通过什么手段做到的？ 这样： 当你new一个子类对象的时候, 必须首先要new一个父类的对像出来, 这个父类对象位于子类对象的内部, 所以说，子类对象比父类对象大, 子类对象里面包含了一个父类的对象, 这是内存中真实的情况.</p>
-<p>构造方法是new一个对象的时候, 必须要调的方法, 这是规定, 要new父类对象出来, 那么肯定要调用其构造方法, 所以 第一个规则：子类的构造过程中，必须 调用其父类的构造方法</p>
-<p>一个类, 如果我们不写构造方法, 那么编译器会帮我们加上一个默认的构造方法, 所谓默认的构造方法, 就是没有参数的构造方法, 但是如果你自己写了构造方法, 那么编译器就不会给你添加了</p>
-<p>所以有时候当你new一个子类对象的时候，肯定调用了子类的构造方法，但是在子类构造方法中我们并没有显示的调用基类的构造方法，就是没写，如：super(); 并没有这样写，但是</p>
-]]></content>
-      <categories>
-        <category>Java</category>
-      </categories>
-      <tags>
-        <tag>Java</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>一道题目引发的思考</title>
-    <url>/2017/09/26/%E4%B8%80%E9%81%93%E9%A2%98%E7%9B%AE%E5%BC%95%E5%8F%91%E7%9A%84%E6%80%9D%E8%80%83/</url>
-    <content><![CDATA[<p>在看一份Java面试题集的时候遇到一个这样的问题：</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">public class Test &#123;</span><br><span class="line">        public static void main(String[] args)&#123;</span><br><span class="line">            Father father &#x3D; new Father();</span><br><span class="line">            Father child &#x3D; new Child();</span><br><span class="line">            System.out.println(father.getName());</span><br><span class="line">            System.out.println(child.getName());</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    class Father&#123;</span><br><span class="line">        public static String getName()&#123;</span><br><span class="line">            return &quot;Father&quot;;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    class Child extends Father&#123;</span><br><span class="line">        public static String getName()&#123;</span><br><span class="line">            return &quot;Child&quot;;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
-<p>请问输出的结果是：<br>结果是都是Father。<br>为什么呢？</p>
-<p>我们看到这里的都是子类 ， 父类的静态方法。第一个输出为Father我们不奇怪，但是第二个为啥也是Father呢？为什么不是调用子类的静态方法呢？<br>我们看到，子类对象被父类变量所引用，这里是想测验我们，父类的实例方法能否被子类重写，如果重写了，那么调用这个方法，就应该输出子类的相关信息。要是不能，那就是调用父类的静态方法了。<br>解释</p>
-<p>父类代码：</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">public class Fu &#123;  </span><br><span class="line">    public static void show() &#123;  </span><br><span class="line">        System.out.println(&quot;父类的静态方法&quot;);  </span><br><span class="line">    &#125;  </span><br><span class="line">    public void method() &#123;  </span><br><span class="line">        System.out.println(&quot;父类的普通方法&quot;);  </span><br><span class="line">    &#125;  </span><br><span class="line">&#125;  </span><br><span class="line"></span><br><span class="line">子类代码：</span><br><span class="line"></span><br><span class="line">public class Zi extends Fu &#123;  </span><br><span class="line">    public static void main(String[] args) &#123;  </span><br><span class="line">        Fu fu &#x3D; new Zi();  </span><br><span class="line">        fu.show();  </span><br><span class="line">        fu.method();  </span><br><span class="line">    &#125;  </span><br><span class="line">    public static void show() &#123;  </span><br><span class="line">        System.out.println(&quot;子类的静态方法&quot;);  </span><br><span class="line">    &#125;  </span><br><span class="line">    public void method() &#123;  </span><br><span class="line">        System.out.println(&quot;子类的普通方法&quot;);  </span><br><span class="line">    &#125;  </span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>从这里我们可以看出，父类的静态方法是不能被子类重写的，其实重写只能适用于实例方法，不能用于静态方法，对于上面这种静态方法而言，我们应该称之为隐藏。<br>Java静态方法形式上可以重写，但从本质上来说不是Java的重写。因为静态方法只与类相关，不与具体实现相关。声明的是什么类，则引用相应类的静态方法(本来静态无需声明，可以直接引用)。并且static方法不是后期绑定的，它在编译期就绑定了。换句话说，这个方法不会进行多态的判断，只与声明的类有关。</p>
-]]></content>
-      <categories>
-        <category>Java</category>
-      </categories>
-      <tags>
-        <tag>Java</tag>
-        <tag>静态方法</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>201709Java面试题目总结</title>
     <url>/2017/09/26/201709Java%E9%9D%A2%E8%AF%95%E9%A2%98%E7%9B%AE%E6%80%BB%E7%BB%93%20/</url>
     <content><![CDATA[<p>碰到的Java笔试题</p>
@@ -1056,6 +1311,85 @@ ViewResolver 结合Model和View，来渲染视图
       <tags>
         <tag>Java</tag>
         <tag>面试题</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Java子类与父类之间的转换</title>
+    <url>/2017/09/26/Java%E5%AD%90%E7%B1%BB%E4%B8%8E%E7%88%B6%E7%B1%BB%E4%B9%8B%E9%97%B4%E7%9A%84%E8%BD%AC%E6%8D%A2/</url>
+    <content><![CDATA[<p>在使用Java的多态机制时，常常使用的一个特性便是子类和父类之间的对象转换。从子类向父类的转换称为向上转换（upcasting），通过向上转换，我们能够在编写程序时采用通用程序设计的思想，在需要使用子类对象的时候，通过把变量定义为父类型，我们可以通过一个变量，使用该父类型的所有子类型实例；从父类型向子类型的转换称为向下转换（downcasting），通过向下转换，我们能在必要的时候，将父类型变量转换成子类型变量，使用一些通过子类型才能够使用的方法。以下是我对于对象转换的一些个人理解，如有不对，欢迎指正，虚心向大神们请教。</p>
+<p>首先是从子类向父类的向上转换。向上转换比较直观，总是能够将一个子类的实例转换为一个父类的对象，从继承链的角度，这个特性很容易理解：继承是一种“是一种”的关系，从父类派生出的子类，我们都能理解为，子类总是父类的一个实例。比如说，Fruit类派生出了Orange类，Apple类，Orange和Apple都是Fruit；Animal类派生出了Tiger类和Lion类，Tiger和Lion都是Animal。因此，从子类向父类的转换不需要什么限制，只需直接将子类实例赋值给父类变量即可，这也是Java中的多态的实现机制。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">&#x2F;&#x2F;Test.java</span><br><span class="line">public class Test &#123;</span><br><span class="line">    public static void main(String args[]) &#123;</span><br><span class="line">        Animal tiger &#x3D; new Tiger();</span><br><span class="line">        Animal lion &#x3D; new Lion();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line">class Animal &#123;</span><br><span class="line">    String name;</span><br><span class="line">    Animal() &#123;</span><br><span class="line">        name &#x3D; &quot;animal&quot;;</span><br><span class="line">    &#125;</span><br><span class="line">    Animal(String name) &#123;</span><br><span class="line">        this.name &#x3D; name;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line">class Tiger extends Animal &#123;</span><br><span class="line">    Tiger() &#123;</span><br><span class="line">        super(&quot;tiger&quot;);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line">class Lion extends Animal &#123;</span><br><span class="line">    Lion() &#123;</span><br><span class="line">        super(&quot;lion&quot;);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>然而从父类向子类的向下转换就稍微复杂一些了。在讲述向下转换之前，也许有些刚学java的朋友会有点不解为什么要使用向下转换，使用多态和动态绑定机制通过父类型变量使用子变量不就可以了么（比如我就曾对此感到疑惑）。这就要考虑到，在继承关系中，有一些方法是不适合由父类定义并由子类继承并重写的，有些方法是子类特有的，不应该通过继承得到，且子类可能也会有自己特有的成员变量，那么在使用多态机制的时候，若我们要通过父类型变量使用到这些子类特有的方法和属性的话，就需要将服类型变量转换成对应的子类型变量。一个典型例子便是标准库中的数据类型包装类：Integer类，Double类，Long类等，它们都继承自Number类，且它们都有一个方法叫做compareTo用于比较两个同样的类型。然而这个方法是这些子类通过实现Comparable接口来实现的，在Number类中并没有该方法的实现，因此若要通过Number类型变量来使用compareTo方法，就要先将Number类转换成子类的对象。</p>
+<p>从父类向子类的转换就有限制了。首先，父类变量向子类转换必须通过显式强制类型转换,采取和向上转换相同的直接赋值方式是不行的，；并且，当把一个父类型变量实例转换为子类型变量时，必须确保该父类变量是子类的一个实例，从继承链的角度来理解这些原因：子类一定是父类的一个实例，然而父类却不一定是子类的实例；比如说，Fruit未必是Orange，它可能是Apple；Animal也不一定是Tiger，它可能是Lion。用代码来解释一下：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">Animal tiger &#x3D; new Tiger();</span><br><span class="line">Animal lion &#x3D; new Lion();</span><br></pre></td></tr></table></figure>
+<p>在前面向上转换的代码示例当中，main方法中的这两行代码，意思就是父类型变量tiger是子类Tiger的一个实例，lion是Lion的一个实例。<br>也就是说，如果要把tiger转换为Tiger类型，必须保证tiger本身是Tiger的一个实例，在上例中，如果要把tiger转换成Lion类型，或是把Lion类型转换为Tiger类型，都是行不通的，在运行时，这会抛出一个运行异常ClassCastException，表示类转换异常。因此，在进行父类向子类的转换时，一个好的习惯是通过instanceof运算符来判断父类变量是否是该子类的一个实例：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">Tiger t &#x3D; null;</span><br><span class="line">if(tiger instanceof Tiger)</span><br><span class="line">    t &#x3D; (Tiger)tiger;</span><br></pre></td></tr></table></figure>
+<p>如果要通过父类调用子类变量的方法，那么要注意要将父类型变量和强制转换用括号括起来：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">Number i &#x3D; new Integer(3)；</span><br><span class="line">System.out.println(</span><br><span class="line">    ((Integer)i).compareTo(new Integer(4))</span><br><span class="line">                  ）；</span><br></pre></td></tr></table></figure>
+<p>因为成员访问运算符.的优先级大于类型转换，所以要用括号括起来保证类型转换先于成员访问进行运算。<br>前面说到用instanceof判断父类是否是子类的一个实例是一个好习惯，如果不养成这个习惯的话很容易出问题，请看下面这段代码：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">Animal animal &#x3D; new Tiger();</span><br><span class="line">Lion lion &#x3D; (Lion)animal;</span><br></pre></td></tr></table></figure>
+<p>前面说到，这段代码会在运行时抛出ClassCastException异常，然而，这段代码却是能够编译成功的。原因是因为，Java编译器并没有聪明到能够在编译阶段就知道父类型变量是哪一个子类的实例，所以，将animal转换为Lion类型的代码：(Lion)animal是能够编译通过的，即使事实上我们能看到animal是Tiger的一个实例，因为Animal类型确实能转换成Lion类型，所以这条语句是合法的。所以，如果没有使用instanceof防止不同子类型之间的对象转换，而又不能指望编译器检查出这种转换逻辑错误的话，就很容易犯错了。<br>总结</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">public class ConvertPro extends Father &#123;</span><br><span class="line">    public static void main(String[] args) &#123;</span><br><span class="line">        Father father &#x3D; new Father();</span><br><span class="line">        Father father1 &#x3D; new ConvertPro();</span><br><span class="line">        ConvertPro son &#x3D; new ConvertPro();</span><br><span class="line">        &#x2F;&#x2F; ConvertPro son1 &#x3D; (ConvertPro) new Father();</span><br><span class="line">        &#x2F;&#x2F; son &#x3D; (ConvertPro)father;</span><br><span class="line">        son &#x3D; (ConvertPro) father1;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line">&#x2F;**</span><br><span class="line"> * 父类</span><br><span class="line"> * </span><br><span class="line"> * @author icer</span><br><span class="line"> * </span><br><span class="line"> *&#x2F;</span><br><span class="line">class Father &#123;</span><br><span class="line">    private String name;</span><br><span class="line">    public String getName() &#123;</span><br><span class="line">        return name;</span><br><span class="line">    &#125;</span><br><span class="line">    public void setName(String name) &#123;</span><br><span class="line">        this.name &#x3D; name;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>上面代码注释掉的两行是会运行错误的. 根据代码显示, 只有我们的父类对象本身就是用子类new出来的时候, 才可以在将来被强制转换为子类对象.</p>
+<p>子类继承父类的所有(包括属性以及方法), 也就是说子类包含的内容应该是比父类要大的. 如果正常环境下, 把一个父类转换成子类一定会损失精度. 但是如果父类对象本身就是用子类去new出来的, 就类似于一个本来就是儿子角色的人, 去装了一会儿父亲, 这个角色是可以在未来转换回去的, 但是一个父亲, 永远不可能去装儿子的.</p>
+]]></content>
+      <categories>
+        <category>Java</category>
+      </categories>
+      <tags>
+        <tag>Java</tag>
+        <tag>多态</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Java构造函数详解</title>
+    <url>/2017/09/26/Java%E6%9E%84%E9%80%A0%E5%87%BD%E6%95%B0%E8%AF%A6%E8%A7%A3/</url>
+    <content><![CDATA[<h3 id="构造函数"><a href="#构造函数" class="headerlink" title="构造函数"></a>构造函数</h3><p>当我们新实例化一个对象的时候，都想对这个对象做一些初始化的工作，比如给对象的属性初始化相关的值。这就是构造函数要做的事。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">public class People&#123;</span><br><span class="line">	public String name;</span><br><span class="line">	    public int age;</span><br><span class="line">	    public People(String name,int age) &#123;</span><br><span class="line">	        this.age &#x3D; age;</span><br><span class="line">	        this.name &#x3D; name;</span><br><span class="line">	    &#125;</span><br><span class="line">	    public People(int age,String name)&#123;</span><br><span class="line">	</span><br><span class="line">	    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="构造函数的作用"><a href="#构造函数的作用" class="headerlink" title="构造函数的作用"></a>构造函数的作用</h3><p>构造方法作用：对对象进行初始化.<br>构造函数和普通的函数（方法）有啥区别？</p>
+<p>（1）. 一般函数是用于定义对象应该具备的功能。而构造函数定义的是，对象在调用功能之前，在建立时，应该具备的一些内容。也就是对象的初始化内容。</p>
+<p>（2）. 构造函数是在对象建立时由jvm调用, 给对象初始化。一般函数是对象建立后，当对象调用该功能时才会执行。</p>
+<p>（3）. 普通函数可以使用对象多次调用，构造函数就在创建对象时调用。</p>
+<p>（4）. 构造函数的函数名要与类名一样，而普通的函数只要符合标识符的命名规则即可。</p>
+<p>（5）. 构造函数没有返回值类型。<br>构造函数使用时的细节</p>
+<p>（1）. 当类中没有定义构造函数时，系统会指定给该类加上一个空参数的构造函数。这个是类中默认的构造函数。当类中如果自定义了构造函数，这时默认的构造函数就没有了。</p>
+<p>备注：可以通过javap命令验证。</p>
+<p>（2）.在一个类中可以定义多个构造函数，以进行不同的初始化。多个构造函数存在于类中，是以重载的形式体现的。因为构造函数的名称都相同。<br>构造代码块</p>
+<p>这个构造代码块有啥作用呢？注意构造代码块和静态块不一样。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">class People&#123;</span><br><span class="line">    public String name;</span><br><span class="line">    public int age;</span><br><span class="line">    public People(String name,int age) &#123;</span><br><span class="line">        this.age &#x3D; age;</span><br><span class="line">        this.name &#x3D; name;</span><br><span class="line">    &#125;</span><br><span class="line">    public People(int age,String name)&#123;</span><br><span class="line">    &#125;</span><br><span class="line">    &#x2F;&#x2F;静态块</span><br><span class="line">    static &#123;</span><br><span class="line">        System.out.println(&quot;这是静态块&quot;);</span><br><span class="line">    &#125;</span><br><span class="line">    &#x2F;&#x2F;这是构造代码块</span><br><span class="line">    &#123;</span><br><span class="line">        System.out.println(&quot;这是构造代码块&quot;);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>构造代码块的作用是：给所有的对象进行统一的初始化。<br>如果，构造函数中有比较多相同的部分，这样我们可以将它移出来，放在构造代码块中。<br>具体作用</p>
+<p>1：给对象进行初始化。对象一建立就运行并且优先于构造函数。<br>与构造函数区别</p>
+<p>2：构造代码块和构造函数的区别，构造代码块是给所有对象进行统一初始化， 构造函数给对应的对象初始化。</p>
+<p>3：构造代码块的作用：它的作用就是将所有构造方法中公共的信息进行抽取。</p>
+<h3 id="需要注意的是："><a href="#需要注意的是：" class="headerlink" title="需要注意的是："></a>需要注意的是：</h3><p>在Java中，子类的构造过程中，必须 调用其父类的构造函数, 是因为有继承关系存在时, 子类要把父类的内容继承下来, 通过什么手段做到的？ 这样： 当你new一个子类对象的时候, 必须首先要new一个父类的对像出来, 这个父类对象位于子类对象的内部, 所以说，子类对象比父类对象大, 子类对象里面包含了一个父类的对象, 这是内存中真实的情况.</p>
+<p>构造方法是new一个对象的时候, 必须要调的方法, 这是规定, 要new父类对象出来, 那么肯定要调用其构造方法, 所以 第一个规则：子类的构造过程中，必须 调用其父类的构造方法</p>
+<p>一个类, 如果我们不写构造方法, 那么编译器会帮我们加上一个默认的构造方法, 所谓默认的构造方法, 就是没有参数的构造方法, 但是如果你自己写了构造方法, 那么编译器就不会给你添加了</p>
+<p>所以有时候当你new一个子类对象的时候，肯定调用了子类的构造方法，但是在子类构造方法中我们并没有显示的调用基类的构造方法，就是没写，如：super(); 并没有这样写，但是</p>
+]]></content>
+      <categories>
+        <category>Java</category>
+      </categories>
+      <tags>
+        <tag>Java</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>一道题目引发的思考</title>
+    <url>/2017/09/26/%E4%B8%80%E9%81%93%E9%A2%98%E7%9B%AE%E5%BC%95%E5%8F%91%E7%9A%84%E6%80%9D%E8%80%83/</url>
+    <content><![CDATA[<p>在看一份Java面试题集的时候遇到一个这样的问题：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">public class Test &#123;</span><br><span class="line">        public static void main(String[] args)&#123;</span><br><span class="line">            Father father &#x3D; new Father();</span><br><span class="line">            Father child &#x3D; new Child();</span><br><span class="line">            System.out.println(father.getName());</span><br><span class="line">            System.out.println(child.getName());</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    class Father&#123;</span><br><span class="line">        public static String getName()&#123;</span><br><span class="line">            return &quot;Father&quot;;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    class Child extends Father&#123;</span><br><span class="line">        public static String getName()&#123;</span><br><span class="line">            return &quot;Child&quot;;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+<p>请问输出的结果是：<br>结果是都是Father。<br>为什么呢？</p>
+<p>我们看到这里的都是子类 ， 父类的静态方法。第一个输出为Father我们不奇怪，但是第二个为啥也是Father呢？为什么不是调用子类的静态方法呢？<br>我们看到，子类对象被父类变量所引用，这里是想测验我们，父类的实例方法能否被子类重写，如果重写了，那么调用这个方法，就应该输出子类的相关信息。要是不能，那就是调用父类的静态方法了。<br>解释</p>
+<p>父类代码：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">public class Fu &#123;  </span><br><span class="line">    public static void show() &#123;  </span><br><span class="line">        System.out.println(&quot;父类的静态方法&quot;);  </span><br><span class="line">    &#125;  </span><br><span class="line">    public void method() &#123;  </span><br><span class="line">        System.out.println(&quot;父类的普通方法&quot;);  </span><br><span class="line">    &#125;  </span><br><span class="line">&#125;  </span><br><span class="line"></span><br><span class="line">子类代码：</span><br><span class="line"></span><br><span class="line">public class Zi extends Fu &#123;  </span><br><span class="line">    public static void main(String[] args) &#123;  </span><br><span class="line">        Fu fu &#x3D; new Zi();  </span><br><span class="line">        fu.show();  </span><br><span class="line">        fu.method();  </span><br><span class="line">    &#125;  </span><br><span class="line">    public static void show() &#123;  </span><br><span class="line">        System.out.println(&quot;子类的静态方法&quot;);  </span><br><span class="line">    &#125;  </span><br><span class="line">    public void method() &#123;  </span><br><span class="line">        System.out.println(&quot;子类的普通方法&quot;);  </span><br><span class="line">    &#125;  </span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>从这里我们可以看出，父类的静态方法是不能被子类重写的，其实重写只能适用于实例方法，不能用于静态方法，对于上面这种静态方法而言，我们应该称之为隐藏。<br>Java静态方法形式上可以重写，但从本质上来说不是Java的重写。因为静态方法只与类相关，不与具体实现相关。声明的是什么类，则引用相应类的静态方法(本来静态无需声明，可以直接引用)。并且static方法不是后期绑定的，它在编译期就绑定了。换句话说，这个方法不会进行多态的判断，只与声明的类有关。</p>
+]]></content>
+      <categories>
+        <category>Java</category>
+      </categories>
+      <tags>
+        <tag>Java</tag>
+        <tag>静态方法</tag>
       </tags>
   </entry>
   <entry>

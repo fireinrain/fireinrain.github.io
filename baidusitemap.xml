@@ -1,6 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
+    <loc>https://lzhaoyang.github.io/2020/02/06/consul%E5%91%BD%E4%BB%A4%E6%8C%87%E5%8D%97/</loc>
+    <lastmod>2020-02-06</lastmod>
+  </url>  <url>
+    <loc>https://lzhaoyang.github.io/2020/02/02/%E4%BD%BF%E7%94%A8docker%E6%90%AD%E5%BB%BAnexus3%E8%BF%90%E8%A1%8Cdocker-registry/</loc>
+    <lastmod>2020-02-01</lastmod>
+  </url>  <url>
     <loc>https://lzhaoyang.github.io/2020/02/01/var-lib-docker-volumes-%E5%9C%A8%E5%93%AA%E9%87%8C/</loc>
     <lastmod>2020-02-01</lastmod>
   </url>  <url>

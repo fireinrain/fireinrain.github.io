@@ -1,0 +1,1011 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+
+<script id="hexo-configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    hostname: new URL('https://lzhaoyang.github.io').hostname,
+    root: '/',
+    scheme: 'Mist',
+    version: '7.6.0',
+    exturl: false,
+    sidebar: {"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},
+    copycode: {"enable":true,"show_result":true,"style":"mac"},
+    back2top: {"enable":true,"sidebar":false,"scrollpercent":true},
+    bookmark: {"enable":true,"color":"#222","save":"auto"},
+    fancybox: false,
+    mediumzoom: true,
+    lazyload: false,
+    pangu: false,
+    comments: {"style":"tabs","active":"gitalk","storage":true,"lazyload":false,"nav":{"gitalk":{"order":-2}},"activeClass":"gitalk"},
+    algolia: {
+      appID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":true,"preload":true},
+    path: 'search.xml',
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}
+  };
+</script>
+
+  <meta name="description" content="看看consul有哪些命令">
+<meta property="og:type" content="article">
+<meta property="og:title" content="consul命令指南">
+<meta property="og:url" content="https://lzhaoyang.github.io/2020/02/06/consul%E5%91%BD%E4%BB%A4%E6%8C%87%E5%8D%97/index.html">
+<meta property="og:site_name" content="fire in the rain">
+<meta property="og:description" content="看看consul有哪些命令">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2020-02-06T06:40:03.000Z">
+<meta property="article:modified_time" content="2020-02-06T06:42:49.768Z">
+<meta property="article:author" content="sunrise">
+<meta property="article:tag" content="consul">
+<meta property="article:tag" content="命令">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="https://lzhaoyang.github.io/2020/02/06/consul%E5%91%BD%E4%BB%A4%E6%8C%87%E5%8D%97/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true
+  };
+</script>
+
+  <title>consul命令指南 | fire in the rain</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-meta">
+
+    <div>
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">fire in the rain</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+        <p class="site-subtitle">stay hungory stay foolish</p>
+  </div>
+
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-fw fa-th"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-fw fa-user"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-books">
+
+    <a href="/books/" rel="section"><i class="fa fa-fw fa-book"></i>阅读</a>
+
+  </li>
+        <li class="menu-item menu-item-movies">
+
+    <a href="/movies/" rel="section"><i class="fa fa-fw fa-video-camera"></i>电影</a>
+
+  </li>
+        <li class="menu-item menu-item-sitemap">
+
+    <a href="/sitemap.xml" rel="section"><i class="fa fa-fw fa-sitemap"></i>站点地图</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+
+</nav>
+  <div class="site-search">
+    <div class="popup search-popup">
+    <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocorrect="off" autocapitalize="none"
+           placeholder="搜索..." spellcheck="false"
+           type="text" id="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result"></div>
+
+</div>
+<div class="search-pop-overlay"></div>
+
+  </div>
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+  <a role="button" class="book-mark-link book-mark-link-fixed"></a>
+
+  <a href="https://github.com/lzhaoyang" class="github-corner" title="Follow me on GitHub" aria-label="Follow me on GitHub" rel="noopener" target="_blank"><svg width="80" height="80" viewBox="0 0 250 250" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content">
+            
+
+  <div class="posts-expand">
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://lzhaoyang.github.io/2020/02/06/consul%E5%91%BD%E4%BB%A4%E6%8C%87%E5%8D%97/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="sunrise">
+      <meta itemprop="description" content="A drop of rain see the whole universe">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="fire in the rain">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          consul命令指南
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2020-02-06 14:40:03 / 修改时间：14:42:49" itemprop="dateCreated datePublished" datetime="2020-02-06T14:40:03+08:00">2020-02-06</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E5%BE%AE%E6%9C%8D%E5%8A%A1/" itemprop="url" rel="index">
+                    <span itemprop="name">微服务</span>
+                  </a>
+                </span>
+            </span>
+
+          
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span><br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-file-word-o"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>11k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-clock-o"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>10 分钟</span>
+            </span>
+            <div class="post-description">看看consul有哪些命令</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>安装完consul后，通过在控制台直接实现<code>consul</code>命令了解consul命令行的用法，输出如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line">Usage: consul [--version] [--help] &lt;command&gt; [&lt;args&gt;]</span><br><span class="line"></span><br><span class="line">Available commands are:</span><br><span class="line">agent          Runs a Consul agent</span><br><span class="line">catalog        Interact with the catalog</span><br><span class="line">event          Fire a new event</span><br><span class="line">exec           Executes a command on Consul nodes</span><br><span class="line">force-leave    Forces a member of the cluster to enter the &quot;left&quot; state</span><br><span class="line">info           Provides debugging information for operators.</span><br><span class="line">join           Tell Consul agent to join cluster</span><br><span class="line">keygen         Generates a new encryption key</span><br><span class="line">keyring        Manages gossip layer encryption keys</span><br><span class="line">kv             Interact with the key-value store</span><br><span class="line">leave          Gracefully leaves the Consul cluster and shuts down</span><br><span class="line">lock           Execute a command holding a lock</span><br><span class="line">maint          Controls node or service maintenance mode</span><br><span class="line">members        Lists the members of a Consul cluster</span><br><span class="line">monitor        Stream logs from a Consul agent</span><br><span class="line">operator       Provides cluster-level tools for Consul operators</span><br><span class="line">reload         Triggers the agent to reload configuration files</span><br><span class="line">rtt            Estimates network round trip time between nodes</span><br><span class="line">snapshot       Saves, restores and inspects snapshots of Consul server state</span><br><span class="line">validate       Validate config files&#x2F;directories</span><br><span class="line">version        Prints the Consul version</span><br><span class="line">watch          Watch for changes in Consul</span><br></pre></td></tr></table></figure>
+
+<p>如上所示， consul提供的命令很多，下面就逐个学习下每个命令的作用和用法。</p>
+<h2 id="agent"><a href="#agent" class="headerlink" title="agent"></a>agent</h2><p><code>agent</code> 命令的作用是启动一个<code>consul</code> 进程， 该进程的具体作用和该命令的参数有关。</p>
+<p>通过 <code>consul agent --help</code> 可以获取该命令的详细用法</p>
+<h3 id="datacenter"><a href="#datacenter" class="headerlink" title="datacenter"></a>datacenter</h3><p>该参数指定该<code>agent</code>所在的数据中心名称。格式如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">-datacenter&#x3D;&lt;value&gt;</span><br></pre></td></tr></table></figure>
+
+<p>该参数用来设置<code>advertise</code>所使用的地址。默认值和<code>-bind</code>指定的地址一样</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">-advertise&#x3D;&lt;value&gt;</span><br></pre></td></tr></table></figure>
+
+<h3 id="advertise-wan"><a href="#advertise-wan" class="headerlink" title="advertise-wan"></a>advertise-wan</h3><p>设置广域网环境的的<code>advertise</code>地址。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">-advertise-wan&#x3D;&lt;value&gt;</span><br></pre></td></tr></table></figure>
+
+<h3 id="bind"><a href="#bind" class="headerlink" title="-bind"></a>-bind</h3><p>设置集群通信所使用的IP地址。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">-bind&#x3D;&lt;value&gt;</span><br></pre></td></tr></table></figure>
+
+<h3 id="bootstrap"><a href="#bootstrap" class="headerlink" title="bootstrap"></a>bootstrap</h3><p>将Server设置为<code>boostrap</code>模式。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">-bootstrap</span><br></pre></td></tr></table></figure>
+
+<h3 id="bootstrap-expect"><a href="#bootstrap-expect" class="headerlink" title="bootstrap-expect"></a>bootstrap-expect</h3><p>将Server设置为<code>expect boostrap</code>模式。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">-bootstrap-expect&#x3D;&lt;value&gt;</span><br></pre></td></tr></table></figure>
+
+<h3 id="client"><a href="#client" class="headerlink" title="client"></a>client</h3><p>设置客户端访问所使用的IP地址。 该地址可用于RPC, DNS,HTTP,HTTPS通信使用。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">-client&#x3D;&lt;value&gt;</span><br></pre></td></tr></table></figure>
+
+<h3 id="config-dir"><a href="#config-dir" class="headerlink" title="config-dir"></a>config-dir</h3><p>设置配置文件所在的目录的路径。consul会读取该目录下所有以<code>.json</code>结尾的文件作为配置文件，并且以文件名字典序来应用这些配置文件。</p>
+<p>该参数可以多次使用，来指定多个配置文件目录。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">-config-dir&#x3D;&lt;value&gt;</span><br></pre></td></tr></table></figure>
+
+<h3 id="config-file"><a href="#config-file" class="headerlink" title="config-file"></a>config-file</h3><p>指定配置文件路径，可以多次多次使用，用来指定多个配置文件。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">-config-file&#x3D;&lt;value&gt;</span><br></pre></td></tr></table></figure>
+
+<h3 id="config-format"><a href="#config-format" class="headerlink" title="config-format"></a>config-format</h3><p>设置配置文件的格式。 <code>json</code>或<code>hcl</code></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">-config-format&#x3D;&lt;value&gt;</span><br></pre></td></tr></table></figure>
+
+<h3 id="data-dir"><a href="#data-dir" class="headerlink" title="data-dir"></a>data-dir</h3><p>设置保存<code>agent</code>状态数据的目录。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">-data-dir&#x3D;&lt;value&gt;</span><br></pre></td></tr></table></figure>
+
+<h3 id="dev"><a href="#dev" class="headerlink" title="dev"></a>dev</h3><p>该<code>agent</code>以开发模式运行。会输出详细的日子信息</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">-dev</span><br></pre></td></tr></table></figure>
+
+<h3 id="disable-host-node-id"><a href="#disable-host-node-id" class="headerlink" title="disable-host-node-id"></a>disable-host-node-id</h3><p>该该选项设置为true, 则consul不会使用所在主机的信息生成集群结点id。 从而每次都生成一个随机值。<br>建议不要开始该选项。默认的结点id将会是主机名<code>hostname</code></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">-disable-host-node-id</span><br></pre></td></tr></table></figure>
+
+<h3 id="disable-keyring-file"><a href="#disable-keyring-file" class="headerlink" title="disable-keyring-file"></a>disable-keyring-file</h3><p>禁止将<code>keyring</code>备份到文件中。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">-disable-keyring-file</span><br></pre></td></tr></table></figure>
+
+<h3 id="dns-port"><a href="#dns-port" class="headerlink" title="dns-port"></a>dns-port</h3><p>设置DNS 查询所使用的端口。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">-dns-port&#x3D;&lt;value&gt;</span><br></pre></td></tr></table></figure>
+
+<h3 id="domain"><a href="#domain" class="headerlink" title="domain"></a>domain</h3><p>DNS 接口所使用的域名。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">-domain&#x3D;&lt;value&gt;</span><br></pre></td></tr></table></figure>
+
+<h3 id="enable-script-checks"><a href="#enable-script-checks" class="headerlink" title="enable-script-checks"></a>enable-script-checks</h3><p>启用健康检测脚本。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">-enable-script-checks</span><br></pre></td></tr></table></figure>
+
+<h3 id="encrypt"><a href="#encrypt" class="headerlink" title="encrypt"></a>encrypt</h3><p>提供<code>gossip</code>广播加密数据所使用的key.</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">-encrypt&#x3D;&lt;value&gt;</span><br></pre></td></tr></table></figure>
+
+<h3 id="hcl"><a href="#hcl" class="headerlink" title="hcl"></a>hcl</h3><p><code>hcl</code> 配置片段。 可以多次使用。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">-hcl&#x3D;&lt;value&gt;</span><br></pre></td></tr></table></figure>
+
+<h3 id="http-port"><a href="#http-port" class="headerlink" title="http-port"></a>http-port</h3><p>设置http API 服务监听的端口。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">-http-port&#x3D;&lt;value&gt;</span><br></pre></td></tr></table></figure>
+
+<h3 id="join"><a href="#join" class="headerlink" title="join"></a>join</h3><p>设置该<code>agent</code>启动时加入所在集群的成员IP地址。可以多次使用。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">-join&#x3D;&lt;value&gt;</span><br></pre></td></tr></table></figure>
+
+<h3 id="join-wan"><a href="#join-wan" class="headerlink" title="join-wan"></a>join-wan</h3><p>设置该<code>agent</code>启动时加入所在跨IDC集群的成员IP地址。可以多次使用。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">-join-wan&#x3D;&lt;value&gt;</span><br></pre></td></tr></table></figure>
+
+<h3 id="log-level"><a href="#log-level" class="headerlink" title="log-level"></a>log-level</h3><p>设置<code>agent</code>的日志输出级别。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">-log-level&#x3D;&lt;value&gt;</span><br></pre></td></tr></table></figure>
+
+<h3 id="node"><a href="#node" class="headerlink" title="node"></a>node</h3><p>设置该结点在集群中的名称，必须唯一。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">-node&#x3D;&lt;value&gt;</span><br></pre></td></tr></table></figure>
+
+<h3 id="node-id"><a href="#node-id" class="headerlink" title="node-id"></a>node-id</h3><p>设置该结点在集群中永恒的ID，默认是一个随机生成的值，并保存的数据目录中。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">-node-id&#x3D;&lt;value&gt;</span><br></pre></td></tr></table></figure>
+
+<h3 id="node-meta"><a href="#node-meta" class="headerlink" title="node-meta"></a>node-meta</h3><p>给该结点设置元数据。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">-node-meta&#x3D;&lt;key:value&gt;</span><br></pre></td></tr></table></figure>
+
+<h3 id="non-voting-server"><a href="#non-voting-server" class="headerlink" title="non-voting-server"></a>non-voting-server</h3><p>该选项使该Server不参于Raft协议的选举流程，仅仅进行数据同步。这样角色的结点主要用来扩展consul集群的读能力。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">-non-voting-server</span><br></pre></td></tr></table></figure>
+
+<h3 id="pid-file"><a href="#pid-file" class="headerlink" title="pid-file"></a>pid-file</h3><p>指定保存pid的文件路径。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">-pid-file&#x3D;&lt;value&gt;</span><br></pre></td></tr></table></figure>
+
+<h3 id="protocol"><a href="#protocol" class="headerlink" title="protocol"></a>protocol</h3><p>设置协议版本。默认使用最新版本。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">-protocol&#x3D;&lt;value&gt;</span><br></pre></td></tr></table></figure>
+
+<h3 id="raft-protocol"><a href="#raft-protocol" class="headerlink" title="raft-protocol"></a>raft-protocol</h3><p>设置Raft协议的版本。默认使用最新版本。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">-raft-protocol&#x3D;&lt;value&gt;</span><br></pre></td></tr></table></figure>
+
+<h3 id="recursor"><a href="#recursor" class="headerlink" title="recursor"></a>recursor</h3><p>上游DNS服务器的地址。可以多次使用，指定多个地址。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">-recursor&#x3D;&lt;value&gt;</span><br></pre></td></tr></table></figure>
+
+<h3 id="rejoin"><a href="#rejoin" class="headerlink" title="rejoin"></a>rejoin</h3><p>忽略上次的离开，并尝试从新加入集群。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">-rejoin</span><br></pre></td></tr></table></figure>
+
+<h3 id="retry-interval"><a href="#retry-interval" class="headerlink" title="retry-interval"></a>retry-interval</h3><p>每次尝试重试加入集群的重试时间间隔。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">-retry-interval&#x3D;&lt;value&gt;</span><br></pre></td></tr></table></figure>
+
+<h3 id="retry-interval-wan"><a href="#retry-interval-wan" class="headerlink" title="retry-interval-wan"></a>retry-interval-wan</h3><p>同样用来指定加入集群的重试时间间隔，不过针对的广域网。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">-retry-interval-wan&#x3D;&lt;value&gt;</span><br></pre></td></tr></table></figure>
+
+<h3 id="retry-join"><a href="#retry-join" class="headerlink" title="retry-join"></a>retry-join</h3><p>Address of an agent to join at start time with retries enabled. Can<br>be specified multiple times.</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">-retry-join&#x3D;&lt;value&gt;</span><br></pre></td></tr></table></figure>
+
+<h3 id="retry-join-wan"><a href="#retry-join-wan" class="headerlink" title="retry-join-wan"></a>retry-join-wan</h3><p>Address of an agent to join -wan at start time with retries<br>enabled. Can be specified multiple times.</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">-retry-join-wan&#x3D;&lt;value&gt;</span><br></pre></td></tr></table></figure>
+
+<h3 id="retry-max"><a href="#retry-max" class="headerlink" title="retry-max"></a>retry-max</h3><p>设置重试的最大次数。默认值是<code>0</code>, 意味着一直进行尝试。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">-retry-max&#x3D;&lt;value&gt;</span><br></pre></td></tr></table></figure>
+
+<h3 id="retry-max-wan"><a href="#retry-max-wan" class="headerlink" title="retry-max-wan"></a>retry-max-wan</h3><p>设置重试的最大次数。针对的是广域网。默认值是<code>0</code>, 意味着一直进行尝试。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">-retry-max-wan&#x3D;&lt;value&gt;</span><br></pre></td></tr></table></figure>
+
+<h3 id="segment"><a href="#segment" class="headerlink" title="segment"></a>segment</h3><p>(企业级版本才有的功能) 设置加入的网络段。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">-segment&#x3D;&lt;value&gt;</span><br></pre></td></tr></table></figure>
+
+<h3 id="serf-lan-bind"><a href="#serf-lan-bind" class="headerlink" title="serf-lan-bind"></a>serf-lan-bind</h3><p>Address to bind Serf LAN listeners to.</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">-serf-lan-bind&#x3D;&lt;value&gt;</span><br></pre></td></tr></table></figure>
+
+<h3 id="serf-wan-bind"><a href="#serf-wan-bind" class="headerlink" title="serf-wan-bind"></a>serf-wan-bind</h3><p>Address to bind Serf WAN listeners to.</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">-serf-wan-bind&#x3D;&lt;value&gt;</span><br></pre></td></tr></table></figure>
+
+<h3 id="server"><a href="#server" class="headerlink" title="-server"></a>-server</h3><p>以<code>server</code>模式启动，默认是<code>client</code></p>
+<h3 id="syslog"><a href="#syslog" class="headerlink" title="syslog"></a>syslog</h3><p>将日志输出到syslog.</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">-syslog</span><br></pre></td></tr></table></figure>
+
+<h3 id="ui"><a href="#ui" class="headerlink" title="ui"></a>ui</h3><p>启用consul内置的静态wei UI服务器。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">-ui</span><br></pre></td></tr></table></figure>
+
+<h3 id="ui-dir"><a href="#ui-dir" class="headerlink" title="ui-dir"></a>ui-dir</h3><p>指定包含web界面的资源目录。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">-ui-dir&#x3D;&lt;value&gt;</span><br></pre></td></tr></table></figure>
+
+<h2 id="catalog"><a href="#catalog" class="headerlink" title="catalog"></a>catalog</h2><p>此命令具有与Consul目录交互的子命令。该目录不应与代理混淆，尽管API和回应可能类似。</p>
+<p>以下是一些简单示例，并提供了更详细的示例在子命令或文档中。</p>
+<p>列出所有数据中心</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ consul catalog datacenters</span><br></pre></td></tr></table></figure>
+
+<p>列出所有结点</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ consul catalog nodes</span><br></pre></td></tr></table></figure>
+
+<p>列出所有服务</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ consul catalog services</span><br></pre></td></tr></table></figure>
+
+<h2 id="event"><a href="#event" class="headerlink" title="event"></a>event</h2><p>跨数据中心发布自定义用户事件。 必须提供事件名称，但事件的内容是可选的。</p>
+<p>支持通过正则表达式，节点名称，服务名称，或标签进行过滤。</p>
+<h3 id="name"><a href="#name" class="headerlink" title="name"></a>name</h3><p>事件的名称</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">-name&#x3D;&lt;string&gt;</span><br></pre></td></tr></table></figure>
+
+<h3 id="node-1"><a href="#node-1" class="headerlink" title="node"></a>node</h3><p>用来指定通过正则表达式过滤的节点名称。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">-node&#x3D;&lt;string&gt;</span><br></pre></td></tr></table></figure>
+
+<h3 id="service"><a href="#service" class="headerlink" title="service"></a>service</h3><p>用来指定通过正则表达式过滤的服务名称。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">-service&#x3D;&lt;string&gt;</span><br></pre></td></tr></table></figure>
+
+<h3 id="tag"><a href="#tag" class="headerlink" title="tag"></a>tag</h3><p>用来指定通过正则表达式过滤的服务的标签名称。必须和<code>-service</code>选项一起使用。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">-tag&#x3D;&lt;string&gt;</span><br></pre></td></tr></table></figure>
+
+<h2 id="exec"><a href="#exec" class="headerlink" title="exec"></a>exec</h2><p>在远程Consul节点上执行命令。 节点的响应内容可以通过正则表达式进行过滤。</p>
+<p>可用的选项如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line">-node&#x3D;&lt;string&gt;</span><br><span class="line"></span><br><span class="line">Regular expression to filter on node names.</span><br><span class="line"></span><br><span class="line">-prefix&#x3D;&lt;string&gt;</span><br><span class="line"></span><br><span class="line">Prefix in the KV store to use for request data.</span><br><span class="line"></span><br><span class="line">-service&#x3D;&lt;string&gt;</span><br><span class="line"></span><br><span class="line">Regular expression to filter on service instances.</span><br><span class="line"></span><br><span class="line">-shell</span><br><span class="line"></span><br><span class="line">Use a shell to run the command.</span><br><span class="line"></span><br><span class="line">-tag&#x3D;&lt;string&gt;</span><br><span class="line"></span><br><span class="line">Regular expression to filter on service tags. Must be used with</span><br><span class="line">-service.</span><br><span class="line"></span><br><span class="line">-verbose</span><br><span class="line"></span><br><span class="line">Enables verbose output.</span><br><span class="line"></span><br><span class="line">-wait&#x3D;&lt;duration&gt;</span><br><span class="line"></span><br><span class="line">Period to wait with no responses before terminating execution.</span><br><span class="line"></span><br><span class="line">-wait-repl&#x3D;&lt;duration&gt;</span><br><span class="line"></span><br><span class="line">Period to wait for replication before firing event. This is an</span><br><span class="line">optimization to allow stale reads to be performed.</span><br></pre></td></tr></table></figure>
+
+<h2 id="leave"><a href="#leave" class="headerlink" title="leave"></a>leave</h2><p>将一个结点优雅进入<code>leave</code>状态，并关闭。</p>
+<h2 id="force-leave"><a href="#force-leave" class="headerlink" title="force-leave"></a>force-leave</h2><p>强制一个集群的节点进入<code>left</code>状态。</p>
+<h2 id="info"><a href="#info" class="headerlink" title="info"></a>info</h2><p>提供操作命令的调试信息。</p>
+<h2 id="join-1"><a href="#join-1" class="headerlink" title="join"></a>join</h2><p>使一个运行中的agent加入到集群中。</p>
+<h3 id="wan"><a href="#wan" class="headerlink" title="wan"></a>wan</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">-wan</span><br></pre></td></tr></table></figure>
+
+<h2 id="keygen"><a href="#keygen" class="headerlink" title="keygen"></a>keygen</h2><p>生成一个新的加密用的key，用来供agent对网络流量就行加密。</p>
+<h2 id="keyring"><a href="#keyring" class="headerlink" title="keyring"></a>keyring</h2><p>管理用来加密<code>gossip</code>消息的秘钥。<code>Gossip</code>加密是可以选的。当启用<code>Gossip</code>加密，该命令可以用来检查集群中处于激活状态下的加密key，添加新的key，删除老的key。把这些功能结合起来，就可以实现不破坏集群的前提下，更新加密秘钥的功能。</p>
+<p>该命令提供的所有操作都只能在<code>Server</code>模式的结点上执行， 并且影响范围包括<code>LAN</code>和<code>WAN</code>。</p>
+<p>当所有结点正确返回时，该命令输出:0, 否则其他任何情况都输出1。</p>
+<p>该命令的选项如下：</p>
+<h3 id="install"><a href="#install" class="headerlink" title="install"></a>install</h3><p>安装一个新的秘钥，并广播到集群的所有结点中。秘钥的格式是base64的。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">-install&#x3D;&lt;string&gt;</span><br></pre></td></tr></table></figure>
+
+<h3 id="list"><a href="#list" class="headerlink" title="list"></a>list</h3><p>列出所有正在集群中使用的秘钥。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">-list</span><br></pre></td></tr></table></figure>
+
+<h3 id="relay-factor"><a href="#relay-factor" class="headerlink" title="relay-factor"></a>relay-factor</h3><p>Setting this to a non-zero value will cause nodes to relay their<br>response to the operation through this many randomly-chosen other<br>nodes in the cluster. The maximum allowed value is 5.</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">-relay-factor&#x3D;&lt;int&gt;</span><br></pre></td></tr></table></figure>
+
+<h3 id="remove"><a href="#remove" class="headerlink" title="remove"></a>remove</h3><p>从集群中删除秘钥。 该操作只能针对哪些当前不是主秘钥的秘钥。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">-remove&#x3D;&lt;string&gt;</span><br></pre></td></tr></table></figure>
+
+<h3 id="use"><a href="#use" class="headerlink" title="use"></a>use</h3><p>Change the primary encryption key, which is used to encrypt<br>messages. The key must already be installed before this operation<br>can succeed.</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">-use&#x3D;&lt;string&gt;</span><br></pre></td></tr></table></figure>
+
+<h2 id="kv"><a href="#kv" class="headerlink" title="kv"></a>kv</h2><p>该命令包含一些操作Consul K-V 存储的子命令。</p>
+<p>下面是一些简单的例子：</p>
+<p>创建或更新一个名称为<code>redis/config/connections</code>，值为5的键值对。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ consul kv put redis&#x2F;config&#x2F;connections 5</span><br></pre></td></tr></table></figure>
+
+<p>获取该键值对的值</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ consul kv get redis&#x2F;config&#x2F;connections</span><br></pre></td></tr></table></figure>
+
+<p>获取该键值对的详细信息</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ consul kv get -detailed redis&#x2F;config&#x2F;connections</span><br></pre></td></tr></table></figure>
+
+<p>删除该键值对</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ consul kv delete redis&#x2F;config&#x2F;connections</span><br></pre></td></tr></table></figure>
+
+<h3 id="子命令"><a href="#子命令" class="headerlink" title="子命令"></a>子命令</h3><p>delete Removes data from the KV store<br>export Exports a tree from the KV store as JSON<br>get Retrieves or lists data from the KV store<br>import Imports a tree stored as JSON to the KV store<br>put Sets or updates data in the KV store</p>
+<h2 id="lock"><a href="#lock" class="headerlink" title="lock"></a>lock</h2><p>Acquires a lock or semaphore at a given path, and invokes a child process<br>when successful. The child process can assume the lock is held while it<br>executes. If the lock is lost or communication is disrupted the child<br>process will be sent a SIGTERM signal and given time to gracefully exit.<br>After the grace period expires the process will be hard terminated.</p>
+<p>For Consul agents on Windows, the child process is always hard terminated<br>with a SIGKILL, since Windows has no POSIX compatible notion for SIGTERM.</p>
+<p>When -n=1, only a single lock holder or leader exists providing mutual<br>exclusion. Setting a higher value switches to a semaphore allowing multiple<br>holders to coordinate.</p>
+<p>The prefix provided must have write privileges.</p>
+<h2 id="maint"><a href="#maint" class="headerlink" title="maint"></a>maint</h2><p>该命令的作用是将节点或服务置于维护模式。在维护模式下，无论通过DNS查询还是HTTP接口，都不再返回节点或服务的信息。命令有效地将其从可用池中取出节点。该命令的执行原理是通过注册节点或服务的健康检查来完成的。</p>
+<p>为节点或服务启用维护模式时，你可以选择指定一个字符串来表明原因。该字符串将出现在“Notes”字段中<br>对节点或注册的重要健康检查服务。如果没有提供原因，将使用默认值。</p>
+<p>维护模式是持久的，并且会在agent重启启动的时候恢复。 因此，在将给定节点或服务将被放回可以池中之前需要禁用维护模式。</p>
+<p>默认情况下，我们将一个节点作为一个整体进行操作。通过指定<code>-service</code>参数，可以操作具体的服务。</p>
+<p>如果没有给出参数，将显示agent的维护状态。如果当前没有任何维护，则返回空白。</p>
+<h3 id="disable"><a href="#disable" class="headerlink" title="disable"></a>disable</h3><p>禁用维护模式</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">-disable</span><br></pre></td></tr></table></figure>
+
+<h3 id="enable"><a href="#enable" class="headerlink" title="enable"></a>enable</h3><p>启用维护模式</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">-enable</span><br></pre></td></tr></table></figure>
+
+<h3 id="reason"><a href="#reason" class="headerlink" title="reason"></a>reason</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">-reason&#x3D;&lt;string&gt;</span><br></pre></td></tr></table></figure>
+
+<p>指定本次操作的原因描述信息</p>
+<h3 id="service-1"><a href="#service-1" class="headerlink" title="service"></a>service</h3><p>指定操作的服务ID。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">-service&#x3D;&lt;string&gt;</span><br></pre></td></tr></table></figure>
+
+<h2 id="members"><a href="#members" class="headerlink" title="members"></a>members</h2><p>该命令的作用是：输出集群成员信息</p>
+<p>可用的参数有：</p>
+<h3 id="detailed"><a href="#detailed" class="headerlink" title="-detailed"></a>-detailed</h3><p>输出更详细的节点信息。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">consul members -detailed</span><br><span class="line">Node   Address         Status  Tags</span><br><span class="line">bogon  127.0.0.1:8301  alive   build&#x3D;1.0.2:b55059f,dc&#x3D;dc1,id&#x3D;fc1742c4-d97b-8a5b-ff3c-ab11941e2fea,port&#x3D;8300,raft_vsn&#x3D;3,role&#x3D;consul,segment&#x3D;&lt;all&gt;,vsn&#x3D;2,vsn_max&#x3D;3,vsn_min&#x3D;2,wan_join_port&#x3D;8302</span><br></pre></td></tr></table></figure>
+
+<h3 id="segment-1"><a href="#segment-1" class="headerlink" title="segment"></a>segment</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">-segment&#x3D;&lt;string&gt;</span><br></pre></td></tr></table></figure>
+
+<p>企业级版本才有的功能。 可以只输出所属segment的结点信息。</p>
+<h3 id="status"><a href="#status" class="headerlink" title="status"></a>status</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">-status&#x3D;&lt;string&gt;</span><br></pre></td></tr></table></figure>
+
+<p>根据状态进行过滤需要输出的结点。</p>
+<h3 id="wan-1"><a href="#wan-1" class="headerlink" title="wan"></a>wan</h3><p>如果agent允许在server模式下，该选项可以输出其它在<code>WAN</code>广域网的节点信息。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">-wan</span><br></pre></td></tr></table></figure>
+
+<h2 id="monitor"><a href="#monitor" class="headerlink" title="monitor"></a>monitor</h2><p>显示Consul agent 的最近日志消息，并连接到agent，实时输出agent上日志消息。 而且可以通过参数来指定需要查看的日志级别。默认输出的是DEBUG级别的日志。</p>
+<h2 id="operator"><a href="#operator" class="headerlink" title="operator"></a>operator</h2><p>该命令提供了Consul集群级别的操作能力， 在使用时需要非常小心。使用不当有可能造成，节点数据过期或数据丢失。</p>
+<p>子命令如下：</p>
+<h3 id="autopilot"><a href="#autopilot" class="headerlink" title="autopilot"></a>autopilot</h3><p><code>autopilot</code> 命令用于与Consul的<code>autopilot</code>子系统进行交互。 该命令可用于查看或修改当前配置。</p>
+<h4 id="get-config"><a href="#get-config" class="headerlink" title="get-config"></a>get-config</h4><p>显示当前的自动驾驶仪配置</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">consul operator autopilot get-config</span><br><span class="line">CleanupDeadServers &#x3D; true</span><br><span class="line">LastContactThreshold &#x3D; 200ms</span><br><span class="line">MaxTrailingLogs &#x3D; 250</span><br><span class="line">ServerStabilizationTime &#x3D; 10s</span><br><span class="line">RedundancyZoneTag &#x3D; &quot;&quot;</span><br><span class="line">DisableUpgradeMigration &#x3D; false</span><br><span class="line">UpgradeVersionTag &#x3D; &quot;&quot;</span><br></pre></td></tr></table></figure>
+
+<h4 id="set-config"><a href="#set-config" class="headerlink" title="set-config"></a>set-config</h4><p>修改当前的自动驾驶仪配置</p>
+<h3 id="raft"><a href="#raft" class="headerlink" title="raft"></a>raft</h3><h4 id="list-peers"><a href="#list-peers" class="headerlink" title="list-peers"></a>list-peers</h4><p>Display the current Raft peer configuration</p>
+<h4 id="remove-peer"><a href="#remove-peer" class="headerlink" title="remove-peer"></a>remove-peer</h4><p>Remove a Consul server from the Raft configuration</p>
+<h2 id="reload"><a href="#reload" class="headerlink" title="reload"></a>reload</h2><p>该命令的作用是重新加载配置文件，以此来替代<code>SIGHUP</code>信号。</p>
+<h2 id="rtt"><a href="#rtt" class="headerlink" title="rtt"></a>rtt</h2><p><code>rtt</code>命令的用法如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Usage: consul rtt [options] node1 [node2]</span><br></pre></td></tr></table></figure>
+
+<p>该命令的作用是：预估2个结点间一次通信的耗时状况的。至少需要提供一个节点名称。如果只提供了一个节点的名称，<br>则第二个结点的名称默认就是agent所在的结点名称。</p>
+<blockquote>
+<p>需要注意的是：这些节点名称和<code>consul members</code>输出中的结点名称相同，不是一个IP地址。</p>
+</blockquote>
+<p>默认情况下，都是假设2个节点在同一个数据中心内，并使用局域网的网络协调器。如果有<code>-wan</code>参数，那么使用格式如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">consul rtt -wan bogon.dc1</span><br><span class="line">Estimated bogon.dc1 &lt;-&gt; bogon.dc1 rtt: 0.020 ms (using WAN coordinates)</span><br></pre></td></tr></table></figure>
+
+<p>节点的名称后面需要添加所属数据中心的名称。</p>
+<p>该命令不能用来测量局域网和广域网2个节点间的网络通信耗时，因为他们位于不同的<code>gossip</code>域。</p>
+<p>该命令可以使用的参数如下：</p>
+<h3 id="ca-file"><a href="#ca-file" class="headerlink" title="ca-file"></a>ca-file</h3><p>指定TLS通信是使用的<code>CA</code>文件。 该选项的值也可以通过环境变量<code>CONSUL_CACERT</code>的值获取。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">-ca-file&#x3D;&lt;value&gt;</span><br></pre></td></tr></table></figure>
+
+<h3 id="ca-path"><a href="#ca-path" class="headerlink" title="ca-path"></a>ca-path</h3><p>指定TLS通信是使用的<code>CA</code>文件所在的目录。 该选项的值也可以通过环境变量<code>CONSUL_CAPATH</code>的值获取。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">-ca-path&#x3D;&lt;value&gt;</span><br></pre></td></tr></table></figure>
+
+<h3 id="client-cert"><a href="#client-cert" class="headerlink" title="client-cert"></a>client-cert</h3><p>指定在使用TLS进行通信时，并且启用了<code>verify_incoming</code>功能时，客户端所使用的证书文件，<br>也可以通过环境变量<code>CONSUL_CLIENT_CERT</code> 来指定。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">-client-cert&#x3D;&lt;value&gt;</span><br></pre></td></tr></table></figure>
+
+<h3 id="client-key"><a href="#client-key" class="headerlink" title="client-key"></a>client-key</h3><p>指定在使用TLS进行通信时，并且启用了<code>verify_incoming</code>功能时，客户端所使用的key文件。也可以通过环境变量<code>CONSUL_CLIENT_KEY</code> 来指定。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">-client-key&#x3D;&lt;value&gt;</span><br></pre></td></tr></table></figure>
+
+<h3 id="http-addr"><a href="#http-addr" class="headerlink" title="http-addr"></a>http-addr</h3><p>指定提供http服务的Consul agent 的IP地址和端口号。也可以通过环境变量<code>CONSUL_HTTP_ADDR</code>的值来指定。</p>
+<p>默认的值是：<code>http://127.0.0.1:8500</code>。 也可以通过设置环境变量<code>CONSUL_HTTP_SSL=true</code>来启用https进行通信。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">-http-addr&#x3D;&lt;address&gt;</span><br></pre></td></tr></table></figure>
+
+<h3 id="tls-server-name"><a href="#tls-server-name" class="headerlink" title="tls-server-name"></a>tls-server-name</h3><p>指定当通过TLS进行通信时作为<code>SNI</code>主机的服务器名称。也可以通过<code>CONSUL_TLS_SERVER_NAME</code>环境变量来指定。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">-tls-server-name&#x3D;&lt;value&gt;</span><br></pre></td></tr></table></figure>
+
+<h3 id="token"><a href="#token" class="headerlink" title="token"></a>token</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">-token&#x3D;&lt;value&gt;</span><br></pre></td></tr></table></figure>
+
+<p>指定请求中使用的ACL token的值。也可以通过环境变量<code>CONSUL_HTTP_TOKEN</code>来指定。如果没有指定，则使用通过http 访问Consul agent 所使用的token值。</p>
+<h3 id="wan-2"><a href="#wan-2" class="headerlink" title="wan"></a>wan</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">-wan</span><br></pre></td></tr></table></figure>
+
+<p>使用广域网协调器来替代局域网协调器。</p>
+<h2 id="snapshot"><a href="#snapshot" class="headerlink" title="snapshot"></a>snapshot</h2><p>该命令包含一些子命令，作用是保存，重新加载 或在故障恢复时检查 Consul Server 的状态。</p>
+<p>这些操作都是原子性的，保存当前时间点 包括<code>键/值条目</code>，<code>服务目录</code>，<code>准备好的查询</code>，<code>会话和ACL</code>信息的快照。</p>
+<p>如果启用了<code>ACLS</code>功能，那么在使用这些子命令时，需要提供管理token来进行快照的操作。</p>
+<h3 id="创建一个快照"><a href="#创建一个快照" class="headerlink" title="创建一个快照"></a>创建一个快照</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">$ consul snapshot save backup.snap</span><br><span class="line">​&#96;&#96;&#96;      </span><br><span class="line"></span><br><span class="line">### 从快照中恢复</span><br></pre></td></tr></table></figure>
+
+<p>$ consul snapshot restore backup.snap</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">先启动一个没有任何数据的agent,然后执行该命令，加载指定的快照信息。</span><br><span class="line"></span><br><span class="line">### 检查快照信息</span><br></pre></td></tr></table></figure>
+
+
+
+<p>$ consul snapshot inspect backup.snap</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">输出：</span><br></pre></td></tr></table></figure>
+
+
+
+<p>leo@bogon consul snapshot inspect a.snap<br>ID 2-110-1532832078752<br>Size 1175<br>Index 110<br>Term 2<br>Version 1<br>```</p>
+<p>可以允许一个Consul agent, 每小时保存一次快照信息。 不过该功能只有企业级版本才有。</p>
+<h2 id="validate"><a href="#validate" class="headerlink" title="validate"></a>validate</h2><p>校验consul配置文件，或配置文件目录下配置文件的正确性</p>
+<h2 id="version"><a href="#version" class="headerlink" title="version"></a>version</h2><p>打印consul的版本</p>
+<h2 id="watch"><a href="#watch" class="headerlink" title="watch"></a>watch</h2><p><strong>本文标题:</strong><a href="https://leokongwq.github.io/2018/07/29/consul-command-intro.html" target="_blank" rel="noopener">consul 命令介绍</a></p>
+
+    </div>
+
+    
+    
+    
+
+    <div>
+      
+        <div>
+    
+        <div style="text-align:center;color: #ccc;font-size:14px;">-------------本文结束<i class="fa fa-paw"></i>感谢您的阅读-------------</div>
+    
+</div>
+
+      
+    </div>
+        <div class="reward-container">
+  <div>坚持原创技术分享，您的支持将鼓励我继续创作！</div>
+  <button disable="enable" onclick="var qr = document.getElementById(&quot;qr&quot;); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+    打赏
+  </button>
+  <div id="qr" style="display: none;">
+      
+      <div style="display: inline-block;">
+        <img src="/images/wechatpay.jpg" alt="sunrise 微信支付">
+        <p>微信支付</p>
+      </div>
+      
+      <div style="display: inline-block;">
+        <img src="/images/alipay.jpg" alt="sunrise 支付宝">
+        <p>支付宝</p>
+      </div>
+
+  </div>
+</div>
+
+        
+
+<div>
+<ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者： </strong>sunrise
+  </li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="https://lzhaoyang.github.io/2020/02/06/consul%E5%91%BD%E4%BB%A4%E6%8C%87%E5%8D%97/" title="consul命令指南">https://lzhaoyang.github.io/2020/02/06/consul命令指南/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/zh-CN" rel="noopener" target="_blank"><i class="fa fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/consul/" rel="tag"># consul</a>
+              <a href="/tags/%E5%91%BD%E4%BB%A4/" rel="tag"># 命令</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/02/02/%E4%BD%BF%E7%94%A8docker%E6%90%AD%E5%BB%BAnexus3%E8%BF%90%E8%A1%8Cdocker-registry/" rel="prev" title="使用docker搭建nexus3运行docker-registry">
+      <i class="fa fa-chevron-left"></i> 使用docker搭建nexus3运行docker-registry
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+  </div>
+
+
+          </div>
+          
+    <div class="comments" id="gitalk-container"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let activeClass = CONFIG.comments.activeClass;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#agent"><span class="nav-number">1.</span> <span class="nav-text">agent</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#datacenter"><span class="nav-number">1.1.</span> <span class="nav-text">datacenter</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#advertise-wan"><span class="nav-number">1.2.</span> <span class="nav-text">advertise-wan</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#bind"><span class="nav-number">1.3.</span> <span class="nav-text">-bind</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#bootstrap"><span class="nav-number">1.4.</span> <span class="nav-text">bootstrap</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#bootstrap-expect"><span class="nav-number">1.5.</span> <span class="nav-text">bootstrap-expect</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#client"><span class="nav-number">1.6.</span> <span class="nav-text">client</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#config-dir"><span class="nav-number">1.7.</span> <span class="nav-text">config-dir</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#config-file"><span class="nav-number">1.8.</span> <span class="nav-text">config-file</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#config-format"><span class="nav-number">1.9.</span> <span class="nav-text">config-format</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#data-dir"><span class="nav-number">1.10.</span> <span class="nav-text">data-dir</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#dev"><span class="nav-number">1.11.</span> <span class="nav-text">dev</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#disable-host-node-id"><span class="nav-number">1.12.</span> <span class="nav-text">disable-host-node-id</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#disable-keyring-file"><span class="nav-number">1.13.</span> <span class="nav-text">disable-keyring-file</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#dns-port"><span class="nav-number">1.14.</span> <span class="nav-text">dns-port</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#domain"><span class="nav-number">1.15.</span> <span class="nav-text">domain</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#enable-script-checks"><span class="nav-number">1.16.</span> <span class="nav-text">enable-script-checks</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#encrypt"><span class="nav-number">1.17.</span> <span class="nav-text">encrypt</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#hcl"><span class="nav-number">1.18.</span> <span class="nav-text">hcl</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#http-port"><span class="nav-number">1.19.</span> <span class="nav-text">http-port</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#join"><span class="nav-number">1.20.</span> <span class="nav-text">join</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#join-wan"><span class="nav-number">1.21.</span> <span class="nav-text">join-wan</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#log-level"><span class="nav-number">1.22.</span> <span class="nav-text">log-level</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#node"><span class="nav-number">1.23.</span> <span class="nav-text">node</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#node-id"><span class="nav-number">1.24.</span> <span class="nav-text">node-id</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#node-meta"><span class="nav-number">1.25.</span> <span class="nav-text">node-meta</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#non-voting-server"><span class="nav-number">1.26.</span> <span class="nav-text">non-voting-server</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#pid-file"><span class="nav-number">1.27.</span> <span class="nav-text">pid-file</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#protocol"><span class="nav-number">1.28.</span> <span class="nav-text">protocol</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#raft-protocol"><span class="nav-number">1.29.</span> <span class="nav-text">raft-protocol</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#recursor"><span class="nav-number">1.30.</span> <span class="nav-text">recursor</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#rejoin"><span class="nav-number">1.31.</span> <span class="nav-text">rejoin</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#retry-interval"><span class="nav-number">1.32.</span> <span class="nav-text">retry-interval</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#retry-interval-wan"><span class="nav-number">1.33.</span> <span class="nav-text">retry-interval-wan</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#retry-join"><span class="nav-number">1.34.</span> <span class="nav-text">retry-join</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#retry-join-wan"><span class="nav-number">1.35.</span> <span class="nav-text">retry-join-wan</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#retry-max"><span class="nav-number">1.36.</span> <span class="nav-text">retry-max</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#retry-max-wan"><span class="nav-number">1.37.</span> <span class="nav-text">retry-max-wan</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#segment"><span class="nav-number">1.38.</span> <span class="nav-text">segment</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#serf-lan-bind"><span class="nav-number">1.39.</span> <span class="nav-text">serf-lan-bind</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#serf-wan-bind"><span class="nav-number">1.40.</span> <span class="nav-text">serf-wan-bind</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#server"><span class="nav-number">1.41.</span> <span class="nav-text">-server</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#syslog"><span class="nav-number">1.42.</span> <span class="nav-text">syslog</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#ui"><span class="nav-number">1.43.</span> <span class="nav-text">ui</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#ui-dir"><span class="nav-number">1.44.</span> <span class="nav-text">ui-dir</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#catalog"><span class="nav-number">2.</span> <span class="nav-text">catalog</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#event"><span class="nav-number">3.</span> <span class="nav-text">event</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#name"><span class="nav-number">3.1.</span> <span class="nav-text">name</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#node-1"><span class="nav-number">3.2.</span> <span class="nav-text">node</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#service"><span class="nav-number">3.3.</span> <span class="nav-text">service</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#tag"><span class="nav-number">3.4.</span> <span class="nav-text">tag</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#exec"><span class="nav-number">4.</span> <span class="nav-text">exec</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#leave"><span class="nav-number">5.</span> <span class="nav-text">leave</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#force-leave"><span class="nav-number">6.</span> <span class="nav-text">force-leave</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#info"><span class="nav-number">7.</span> <span class="nav-text">info</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#join-1"><span class="nav-number">8.</span> <span class="nav-text">join</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#wan"><span class="nav-number">8.1.</span> <span class="nav-text">wan</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#keygen"><span class="nav-number">9.</span> <span class="nav-text">keygen</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#keyring"><span class="nav-number">10.</span> <span class="nav-text">keyring</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#install"><span class="nav-number">10.1.</span> <span class="nav-text">install</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#list"><span class="nav-number">10.2.</span> <span class="nav-text">list</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#relay-factor"><span class="nav-number">10.3.</span> <span class="nav-text">relay-factor</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#remove"><span class="nav-number">10.4.</span> <span class="nav-text">remove</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#use"><span class="nav-number">10.5.</span> <span class="nav-text">use</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#kv"><span class="nav-number">11.</span> <span class="nav-text">kv</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#子命令"><span class="nav-number">11.1.</span> <span class="nav-text">子命令</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#lock"><span class="nav-number">12.</span> <span class="nav-text">lock</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#maint"><span class="nav-number">13.</span> <span class="nav-text">maint</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#disable"><span class="nav-number">13.1.</span> <span class="nav-text">disable</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#enable"><span class="nav-number">13.2.</span> <span class="nav-text">enable</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#reason"><span class="nav-number">13.3.</span> <span class="nav-text">reason</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#service-1"><span class="nav-number">13.4.</span> <span class="nav-text">service</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#members"><span class="nav-number">14.</span> <span class="nav-text">members</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#detailed"><span class="nav-number">14.1.</span> <span class="nav-text">-detailed</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#segment-1"><span class="nav-number">14.2.</span> <span class="nav-text">segment</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#status"><span class="nav-number">14.3.</span> <span class="nav-text">status</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#wan-1"><span class="nav-number">14.4.</span> <span class="nav-text">wan</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#monitor"><span class="nav-number">15.</span> <span class="nav-text">monitor</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#operator"><span class="nav-number">16.</span> <span class="nav-text">operator</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#autopilot"><span class="nav-number">16.1.</span> <span class="nav-text">autopilot</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#get-config"><span class="nav-number">16.1.1.</span> <span class="nav-text">get-config</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#set-config"><span class="nav-number">16.1.2.</span> <span class="nav-text">set-config</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#raft"><span class="nav-number">16.2.</span> <span class="nav-text">raft</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#list-peers"><span class="nav-number">16.2.1.</span> <span class="nav-text">list-peers</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#remove-peer"><span class="nav-number">16.2.2.</span> <span class="nav-text">remove-peer</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#reload"><span class="nav-number">17.</span> <span class="nav-text">reload</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#rtt"><span class="nav-number">18.</span> <span class="nav-text">rtt</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#ca-file"><span class="nav-number">18.1.</span> <span class="nav-text">ca-file</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#ca-path"><span class="nav-number">18.2.</span> <span class="nav-text">ca-path</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#client-cert"><span class="nav-number">18.3.</span> <span class="nav-text">client-cert</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#client-key"><span class="nav-number">18.4.</span> <span class="nav-text">client-key</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#http-addr"><span class="nav-number">18.5.</span> <span class="nav-text">http-addr</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#tls-server-name"><span class="nav-number">18.6.</span> <span class="nav-text">tls-server-name</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#token"><span class="nav-number">18.7.</span> <span class="nav-text">token</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#wan-2"><span class="nav-number">18.8.</span> <span class="nav-text">wan</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#snapshot"><span class="nav-number">19.</span> <span class="nav-text">snapshot</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#创建一个快照"><span class="nav-number">19.1.</span> <span class="nav-text">创建一个快照</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#validate"><span class="nav-number">20.</span> <span class="nav-text">validate</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#version"><span class="nav-number">21.</span> <span class="nav-text">version</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#watch"><span class="nav-number">22.</span> <span class="nav-text">watch</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="sunrise"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">sunrise</p>
+  <div class="site-description" itemprop="description">A drop of rain see the whole universe</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">26</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">10</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">36</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/lzhaoyang" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;lzhaoyang" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+  </div>
+
+
+
+      </div>
+      <iframe frameborder="no" border="0" marginwidth="0" marginheight="0" width=330 height=86 src="//music.163.com/outchain/player?type=2&id=520459951&auto=0&height=66"></iframe>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+<div class="copyright">
+  
+  &copy; 2016 – 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">sunrise</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+      <span class="post-meta-item-text">站点总字数：</span>
+    <span title="站点总字数">111k</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+      <span class="post-meta-item-text">站点阅读时长 &asymp;</span>
+    <span title="站点阅读时长">1:41</span>
+</div>
+
+        
+<div class="busuanzi-count">
+  <script pjax async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+  <!-- 网站运行时间的设置 -->
+  <span id="timeDate">载入天数...</span>
+  <span id="times">载入时分秒...</span>  | A drop of rain can see the whole universe.
+  <script>
+      var now = new Date();
+      function createtime() {
+          var grt= new Date("03/03/2016 13:14:21");//此处修改你的建站时间或者网站上线时间
+          now.setTime(now.getTime()+250);
+          days = (now - grt ) / 1000 / 60 / 60 / 24; dnum = Math.floor(days);
+          hours = (now - grt ) / 1000 / 60 / 60 - (24 * dnum); hnum = Math.floor(hours);
+          if(String(hnum).length ==1 ){hnum = "0" + hnum;} minutes = (now - grt ) / 1000 /60 - (24 * 60 * dnum) - (60 * hnum);
+          mnum = Math.floor(minutes); if(String(mnum).length ==1 ){mnum = "0" + mnum;}
+          seconds = (now - grt ) / 1000 - (24 * 60 * 60 * dnum) - (60 * 60 * hnum) - (60 * mnum);
+          snum = Math.round(seconds); if(String(snum).length ==1 ){snum = "0" + snum;}
+          document.getElementById("timeDate").innerHTML = "| 本站已安全运行 "+dnum+" 天 ";
+          document.getElementById("times").innerHTML = hnum + " 小时 " + mnum + " 分 " + snum + " 秒";
+      }
+  setInterval("createtime()",250);
+  </script>
+</div>
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script size="250" alpha="0.6" zIndex="-1" src="/lib/canvas-ribbon/canvas-ribbon.js"></script>
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/pjax/pjax.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/medium-zoom@1/dist/medium-zoom.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+<script src="/js/bookmark.js"></script>
+
+  <script>
+var pjax = new Pjax({
+  selectors: [
+    'head title',
+    '#page-configurations',
+    '.content-wrap',
+    '.post-toc-wrap',
+    '#pjax'
+  ],
+  switches: {
+    '.post-toc-wrap': Pjax.switches.innerHTML
+  },
+  analytics: false,
+  cacheBust: false,
+  scrollTo : !CONFIG.bookmark.enable
+});
+
+window.addEventListener('pjax:success', () => {
+  document.querySelectorAll('script[pjax], script#page-configurations, #pjax script').forEach(element => {
+    var code = element.text || element.textContent || element.innerHTML || '';
+    var parent = element.parentNode;
+    parent.removeChild(element);
+    var script = document.createElement('script');
+    if (element.id) {
+      script.id = element.id;
+    }
+    if (element.className) {
+      script.className = element.className;
+    }
+    if (element.type) {
+      script.type = element.type;
+    }
+    if (element.src) {
+      script.src = element.src;
+      // Force synchronous loading of peripheral JS.
+      script.async = false;
+    }
+    if (element.getAttribute('pjax') !== null) {
+      element.setAttribute('pjax', '');
+    }
+    if (code !== '') {
+      script.appendChild(document.createTextNode(code));
+    }
+    parent.appendChild(script);
+  });
+  NexT.boot.refresh();
+  // Define Motion Sequence & Bootstrap Motion.
+  if (CONFIG.motion.enable) {
+    NexT.motion.integrator
+      .init()
+      .add(NexT.motion.middleWares.postList)
+      .bootstrap();
+  }
+  NexT.utils.updateSidebarPosition();
+});
+</script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <div id="pjax">
+  
+
+  
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.css">
+
+<script>
+NexT.utils.loadComments(document.querySelector('#gitalk-container'), () => {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js', () => {
+    var gitalk = new Gitalk({
+      clientID: 'a6a5ec8f52a673226f87',
+      clientSecret: '7d8a42f6cd331f78c0cdd38768f026781d0b6eaa',
+      repo: 'lzhaoyang.github.io',
+      owner: 'lzhaoyang',
+      admin: ['lzhaoyang'],
+      id: '2963e13092ad55d2a04988e345081583',
+        language: 'zh-CN',
+      distractionFreeMode: true
+    });
+    gitalk.render('gitalk-container');
+  }, window.Gitalk);
+});
+</script>
+
+    </div>
+
+  <!-- 页面点击小心心 -->
+  <script type="text/javascript" src="/js/love.js"></script>
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","model":{"jsonPath":"/live2dw/assets/assets/koharu.model.json"},"display":{"width":200,"height":350,"position":"right","hOffset":-10,"vOffset":-50},"mobile":{"show":true,"scale":0.35},"log":false,"tagMode":false});</script></body>
+</html>
