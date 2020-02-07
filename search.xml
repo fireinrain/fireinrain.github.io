@@ -1,6 +1,77 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
+    <title>docker搭建nexus并配置docker私有仓库</title>
+    <url>/2020/02/07/docker%E6%90%AD%E5%BB%BAnexus%E5%B9%B6%E9%85%8D%E7%BD%AEdocker%E7%A7%81%E6%9C%89%E4%BB%93%E5%BA%93/</url>
+    <content><![CDATA[<p>众所周知，Nexus在Java开发领域一直是用来做jar包的仓库管理的，但是其实nexus的功能还是挺丰富的，可以管理各种包的。</p>
+<p><img src="/2020/02/07/docker%E6%90%AD%E5%BB%BAnexus%E5%B9%B6%E9%85%8D%E7%BD%AEdocker%E7%A7%81%E6%9C%89%E4%BB%93%E5%BA%93/image-20200207112814107.png" alt="image-20200207112814107"></p>
+<p>可以看到nexus是支持管理docker 镜像的，现在我们来使用docker 来安装nexus吧。</p>
+<h2 id="安装Nexus-docker镜像"><a href="#安装Nexus-docker镜像" class="headerlink" title="安装Nexus docker镜像"></a>安装Nexus docker镜像</h2><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 查找镜像</span></span><br><span class="line">docker search nexus</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/02/07/docker%E6%90%AD%E5%BB%BAnexus%E5%B9%B6%E9%85%8D%E7%BD%AEdocker%E7%A7%81%E6%9C%89%E4%BB%93%E5%BA%93/image-20200207113650551.png" alt="image-20200207113650551"></p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 拉取镜像</span></span><br><span class="line">docker pull sonatype/nexus3</span><br><span class="line"><span class="comment"># 查看镜像</span></span><br><span class="line">docker iamges</span><br><span class="line"><span class="comment"># 启动容器</span></span><br><span class="line">docker run -d --name nexus3 --restart=always \</span><br><span class="line">-p 8081:8081 \</span><br><span class="line">-p 8082:8082 \</span><br><span class="line">--mount <span class="built_in">type</span>=<span class="built_in">bind</span>,src=/Users/sunrise/BackSoftWares/docker/nexus-data,target=/nexus-data \</span><br><span class="line">sonatype/nexus3</span><br><span class="line"></span><br><span class="line"><span class="comment"># --mount 参数挂载本地目录</span></span><br><span class="line"><span class="comment"># type=bind 指绑定</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># docker run -d --name nexus3 \</span></span><br><span class="line"><span class="comment"># --restart=always \</span></span><br><span class="line"><span class="comment"># -p 8081:8081 \</span></span><br><span class="line"><span class="comment"># -p 8082:8082  \</span></span><br><span class="line"><span class="comment"># -p 8083:8083  \</span></span><br><span class="line"><span class="comment"># -p 8084:8084  \</span></span><br><span class="line"><span class="comment"># -p 8085:8085   \</span></span><br><span class="line"><span class="comment"># -v /opt/nexus-data:/nexus-data \</span></span><br><span class="line"><span class="comment"># sonatype/nexus3</span></span><br></pre></td></tr></table></figure>
+
+<p>如果不报错，我们可以使用</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">docker logs nexus3</span><br><span class="line">查看启动状态</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/02/07/docker%E6%90%AD%E5%BB%BAnexus%E5%B9%B6%E9%85%8D%E7%BD%AEdocker%E7%A7%81%E6%9C%89%E4%BB%93%E5%BA%93/image-20200207114535932.png" alt="image-20200207114535932"></p>
+<p>以上说明我们的nexus3启动成功。需要注意的是，如果我们指定了我们绑定的本机目录，而且没有创建和赋予全县的话，可能会出现无法启动的情况。</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">mkdir: cannot create directory <span class="string">'../sonatype-work/nexus3/log'</span>: Permission denied</span><br><span class="line"><span class="comment"># 创建目录</span></span><br><span class="line">mkdir -p /home/sunrise/nexus-docker/</span><br><span class="line">chown -R 200:200 /home/sunrise/nexus-docker/</span><br><span class="line"><span class="comment"># 删除停止旧容器，并删除，重新运行容器</span></span><br></pre></td></tr></table></figure>
+
+
+
+<h2 id="配置nexus3"><a href="#配置nexus3" class="headerlink" title="配置nexus3"></a>配置nexus3</h2><p>浏览器访问ip:8081,会弹出一个登陆界面，需要登陆。登录名是admin，密码是在nexus目录中。</p>
+<p><img src="/2020/02/07/docker%E6%90%AD%E5%BB%BAnexus%E5%B9%B6%E9%85%8D%E7%BD%AEdocker%E7%A7%81%E6%9C%89%E4%BB%93%E5%BA%93/image-20200207114950575.png" alt="image-20200207114950575"></p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 我们进入neuxs3 docker容器</span></span><br><span class="line">docker <span class="built_in">exec</span> -it 容器id bash</span><br><span class="line"><span class="built_in">cd</span> /</span><br><span class="line"><span class="built_in">cd</span> nexus-data</span><br><span class="line"><span class="comment"># 可以看到密码</span></span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/02/07/docker%E6%90%AD%E5%BB%BAnexus%E5%B9%B6%E9%85%8D%E7%BD%AEdocker%E7%A7%81%E6%9C%89%E4%BB%93%E5%BA%93/image-20200207140404138.png" alt="image-20200207140404138"></p>
+<p><img src="/2020/02/07/docker%E6%90%AD%E5%BB%BAnexus%E5%B9%B6%E9%85%8D%E7%BD%AEdocker%E7%A7%81%E6%9C%89%E4%BB%93%E5%BA%93/image-20200207140437851.png" alt="image-20200207140437851"></p>
+<p>输入账号和密码登录nexus3。登陆之后会要求修改密码，这个修改后的密码需要记下来，在服务修改了密码之后，容器中的admin.password会被自动的删除。</p>
+<h2 id="配置docker-仓库"><a href="#配置docker-仓库" class="headerlink" title="配置docker 仓库"></a>配置docker 仓库</h2><p><img src="/2020/02/07/docker%E6%90%AD%E5%BB%BAnexus%E5%B9%B6%E9%85%8D%E7%BD%AEdocker%E7%A7%81%E6%9C%89%E4%BB%93%E5%BA%93/image-20200207141942651.png" alt="image-20200207141942651"></p>
+<p>创建新仓库，选择docker hosted</p>
+<p><img src="/2020/02/07/docker%E6%90%AD%E5%BB%BAnexus%E5%B9%B6%E9%85%8D%E7%BD%AEdocker%E7%A7%81%E6%9C%89%E4%BB%93%E5%BA%93/image-20200207142013665.png" alt="image-20200207142013665"></p>
+<p><img src="/2020/02/07/docker%E6%90%AD%E5%BB%BAnexus%E5%B9%B6%E9%85%8D%E7%BD%AEdocker%E7%A7%81%E6%9C%89%E4%BB%93%E5%BA%93/image-20200207142150994.png" alt="image-20200207142150994"></p>
+<p>填写完，得到如下的信息。</p>
+<p><img src="/2020/02/07/docker%E6%90%AD%E5%BB%BAnexus%E5%B9%B6%E9%85%8D%E7%BD%AEdocker%E7%A7%81%E6%9C%89%E4%BB%93%E5%BA%93/image-20200207141703692.png" alt="image-20200207141703692"></p>
+<p><img src="/2020/02/07/docker%E6%90%AD%E5%BB%BAnexus%E5%B9%B6%E9%85%8D%E7%BD%AEdocker%E7%A7%81%E6%9C%89%E4%BB%93%E5%BA%93/image-20200207141748257.png" alt="image-20200207141748257"></p>
+<p>上面的8082端口很重要，我们docker 推送仓库的相关命令都是需要和这个端口打交道的，而不是nexus本身对外暴露的端口。另外如果允许设置通过匿名的方式拉取镜像，需要设置Realms。</p>
+<h2 id="设置Realms允许匿名拉取"><a href="#设置Realms允许匿名拉取" class="headerlink" title="设置Realms允许匿名拉取"></a>设置Realms允许匿名拉取</h2><p><img src="/2020/02/07/docker%E6%90%AD%E5%BB%BAnexus%E5%B9%B6%E9%85%8D%E7%BD%AEdocker%E7%A7%81%E6%9C%89%E4%BB%93%E5%BA%93/image-20200207142547835.png" alt="image-20200207142547835"></p>
+<p>并对匿名方式进行设置，允许通过匿名方式访问服务器，如下图进行设置：</p>
+<p><img src="/2020/02/07/docker%E6%90%AD%E5%BB%BAnexus%E5%B9%B6%E9%85%8D%E7%BD%AEdocker%E7%A7%81%E6%9C%89%E4%BB%93%E5%BA%93/image-20200207142716521.png" alt="image-20200207142716521"></p>
+<h2 id="配置docker-客户端文件"><a href="#配置docker-客户端文件" class="headerlink" title="配置docker 客户端文件"></a>配置docker 客户端文件</h2><p>在完成私有镜像仓库的设置后，由于使用的是HTTP协议，因此需要在客户端对docker进行配置。通过编译工具打开daemon.json:</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="comment"># vim /etc/docker/daemon.json</span></span><br><span class="line">在文件中添加如下的内容，告诉客户端私有镜像仓库是一个安全的仓库：</span><br><span class="line">&#123;<span class="string">"insecure-registries"</span>:[<span class="string">"127.0.0.1:8082"</span>]&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment"># 重启docker 进程</span></span><br><span class="line">systemctl daemon-reload</span><br><span class="line">systemctl restart docker</span><br></pre></td></tr></table></figure>
+
+<h2 id="测试"><a href="#测试" class="headerlink" title="测试"></a>测试</h2><h3 id="登录docker-registry"><a href="#登录docker-registry" class="headerlink" title="登录docker registry"></a>登录docker registry</h3><p>在通过nexus完成私有镜像仓库的构建后，首先需要进行登录认证才能进行后续的操作，私有镜像仓库登录认证的语法和格式：docker login <nexus-hostname>:<repository-port>。假设上述的nexus部署在IP地址为192.168.88.128主机上，私有镜像的端口为8082，则通过执行如下的命令登录私有镜像仓库：</repository-port></nexus-hostname></p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 这里我们使用本机地址</span></span><br><span class="line">docker login 127.0.0.1:8082</span><br><span class="line"><span class="comment"># 输入我们的admin账户 密码</span></span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/02/07/docker%E6%90%AD%E5%BB%BAnexus%E5%B9%B6%E9%85%8D%E7%BD%AEdocker%E7%A7%81%E6%9C%89%E4%BB%93%E5%BA%93/image-20200207143503334.png" alt="image-20200207143503334">以以上说明我们登录成功。</p>
+<h3 id="推送镜像"><a href="#推送镜像" class="headerlink" title="推送镜像"></a>推送镜像</h3><p>要共享一个镜像，可以通过将其发布到托管存储库，然后其它人员就可以通过存储库获取自己需要的镜像。在将镜像推送到存储库之前，需要对镜像进行标记。当标记图像时，可以使用镜像标识符（imageId）或者镜像名称（imageName）。标识镜像的语法和格式：docker tag <imageId or imagename> <nexus-hostname>:<repository-port>/<image>:<tag>。假设这里将hello-world镜像标识为私有镜像仓库(192.168.88.128:8082)中的镜像，标识的执行命令如下：</tag></image></repository-port></nexus-hostname></imageId></p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">docker tag nginx 127.0.0.1:8082/mynginx:v1.0</span><br></pre></td></tr></table></figure>
+
+<p>一旦镜像标识完成后，就可以通过的docker push命令将镜像推送到私有仓库中。推送镜像到私有镜像仓库的语法和格式为docker push <nexus-hostname>:<repository-port>/<image>:<tag>，通过下面的命令，将上述打完标签的镜像上传至私有镜像仓库：</tag></image></repository-port></nexus-hostname></p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">docker push 127.0.0.1:8082/mynginx:v1.0</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/02/07/docker%E6%90%AD%E5%BB%BAnexus%E5%B9%B6%E9%85%8D%E7%BD%AEdocker%E7%A7%81%E6%9C%89%E4%BB%93%E5%BA%93/image-20200207144337272.png" alt="image-20200207144337272"></p>
+<p>查看nexus仓库</p>
+<p><img src="/2020/02/07/docker%E6%90%AD%E5%BB%BAnexus%E5%B9%B6%E9%85%8D%E7%BD%AEdocker%E7%A7%81%E6%9C%89%E4%BB%93%E5%BA%93/image-20200207161626917.png" alt="image-20200207161626917"></p>
+<p>我们的镜像确实上传了。</p>
+<h3 id="拉取镜像"><a href="#拉取镜像" class="headerlink" title="拉取镜像"></a>拉取镜像</h3><p>我们先删除本地的镜像</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">docker rmi container-id</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2020/02/07/docker%E6%90%AD%E5%BB%BAnexus%E5%B9%B6%E9%85%8D%E7%BD%AEdocker%E7%A7%81%E6%9C%89%E4%BB%93%E5%BA%93/image-20200208004323101.png" alt="image-20200208004323101"></p>
+<h3 id="搜索镜像"><a href="#搜索镜像" class="headerlink" title="搜索镜像"></a>搜索镜像</h3><p><img src="/2020/02/07/docker%E6%90%AD%E5%BB%BAnexus%E5%B9%B6%E9%85%8D%E7%BD%AEdocker%E7%A7%81%E6%9C%89%E4%BB%93%E5%BA%93/image-20200208004529832.png" alt="image-20200208004529832"></p>
+<h3 id="退出登录"><a href="#退出登录" class="headerlink" title="退出登录"></a>退出登录</h3><p><img src="/2020/02/07/docker%E6%90%AD%E5%BB%BAnexus%E5%B9%B6%E9%85%8D%E7%BD%AEdocker%E7%A7%81%E6%9C%89%E4%BB%93%E5%BA%93/image-20200208004652673.png" alt="image-20200208004652673"></p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>以上就是使用docker 安装nexus3 搭建docker 仓库的内容，使用它来管理公司的一些常用的镜像非常方便，官网的docker 仓库就算是搭建了代理，速度也不是非常的理想的。</p>
+]]></content>
+      <categories>
+        <category>docker</category>
+      </categories>
+      <tags>
+        <tag>nexus</tag>
+        <tag>docker仓库</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>centos搭建fastdfs-nginx</title>
     <url>/2020/02/06/centos%E6%90%AD%E5%BB%BAfastdfs-nginx/</url>
     <content><![CDATA[<p>我们在做一下简单的网站服务时，遇到需要存储一些文件的，比如mp3，图片，视频，我们可能会直接保存在服务器的一个目录下，但是如果我们的文件比较多，种类也比较多的话，这种做法显然是不合理的。我们其实还可以使用各种云服务的oss 对象存储，但是需要钱来买这些服务。对于这种多文件存储的需求，使用分布式文件存储服务也是一个不错的选择。本着从简的原则，在centos上搭建一个单机版本的fastdfs，记录一下。</p>
@@ -566,14 +637,6 @@
         <tag>consul</tag>
         <tag>命令</tag>
       </tags>
-  </entry>
-  <entry>
-    <title>使用docker搭建nexus3运行docker-registry</title>
-    <url>/2020/02/02/%E4%BD%BF%E7%94%A8docker%E6%90%AD%E5%BB%BAnexus3%E8%BF%90%E8%A1%8Cdocker-registry/</url>
-    <content><![CDATA[]]></content>
-      <categories>
-        <category>x</category>
-      </categories>
   </entry>
   <entry>
     <title>volatile为什么不能保证原子性</title>
